@@ -1,0 +1,30 @@
+#!/bin/bash
+
+mkl_require good_cflags
+mkl_require gitversion as GITVERSION
+
+mkl_mkvar_append CPPFLAGS CPPFLAGS "-DFORTIFY_SOURCE=2"
+mkl_mkvar_append CPPFLAGS CPPFLAGS "-DNDEBUG"
+mkl_mkvar_append CPPFLAGS CPPFLAGS "-Wunused -Wcast-qual -Wextra -Wsign-conversion -Wshadow"
+#mkl_mkvar_append CPPFLAGS CPPFLAGS "-ftrack-macro-expansion=2" # Not in gcc 4.4
+#mkl_mkvar_append CPPFLAGS CPPFLAGS "-Wjump-misses-init" # New in gcc 4.5
+#mkl_mkvar_append CPPFLAGS CPPFLAGS "-Wdouble-promotion" # New in gcc 4.6
+#mkl_mkvar_append CPPFLAGS CPPFLAGS "-Wunused-local-typedefs" # New in gcc 4.7
+mkl_mkvar_append CPPFLAGS CPPFLAGS "-Wcast-align -Wdisabled-optimization -Winit-self -Wlogical-op"
+mkl_mkvar_append CPPFLAGS CPPFLAGS "-Wmissing-include-dirs -Wstrict-overflow=5 -Wundef -Wswitch-default"
+mkl_mkvar_append CPPFLAGS CPPFLAGS "-Wmissing-declarations -Wdisabled-optimization"
+
+function checks {
+    # Check that libcurl is available, and allow to link it statically.
+    mkl_meta_set "lcurl" "desc" "Free and easy-to-use client-side URL transfer library"
+    mkl_meta_set "lcurl" "deb" "libcurl4-gnutls-dev"
+    mkl_lib_check --static=-lcurl "libcurl" "" fail CC "-lcurl -lpthread -lz" \
+       "#include <curl/curl.h>"
+
+    # Check that librd is available, and allow to link it statically.
+    mkl_meta_set "librd" "desc" "Magnus Edenhill's librd is available at http://github.com/edenhill/librd"
+    mkl_lib_check --static=-lrdkafka "librd" "" fail CC "-lrd -lpthread -lz -lrt" \
+       "#include <librd/rd.h>"
+
+    mkl_in_list "$*" "--disable-optimization" || mkl_mkvar_append CPPFLAGS CPPFLAGS "-DNDEBUG"
+}
