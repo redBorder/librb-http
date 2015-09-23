@@ -17,7 +17,7 @@ static void test_rb_http_handler_url (void ** state) {
 	struct rb_http_handler_t * handler = NULL;
 	char * url = strdup ("http://localhost:8080/librb-http");
 
-	handler = rb_http_handler (url);
+	handler = rb_http_handler (url, 4L);
 
 	assert_non_null (handler);
 	free (url);
@@ -28,7 +28,7 @@ static void test_rb_http_handler_url_null (void ** state) {
 
 	struct rb_http_handler_t * handler = NULL;
 
-	handler = rb_http_handler (NULL);
+	handler = rb_http_handler (NULL, 4L);
 
 	assert_null (handler);
 }
