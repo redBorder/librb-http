@@ -12,12 +12,12 @@ all: $(BIN)
 
 include mklove/Makefile.base
 
-tests: bin/run_tests test
+test: bin/run_tests build-test
 
 bin/run_tests:
 	$(CC) $(TESTS) src/rb_http_handler.c $(LIBS) -lcmocka -o bin/run_tests
 
-test:
+build-test:
 	bin/run_tests
 	rm bin/run_tests
 
