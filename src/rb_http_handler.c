@@ -1,3 +1,10 @@
+/**
+ * @file rb_http_handler.c
+ * @author Diego Fernández Barrera
+ * @brief File containing the main library.
+ *
+ */
+
 #include <stdio.h>
 #include <curl/curl.h>
 #include <assert.h>
@@ -15,6 +22,7 @@
 ////////////////////
 struct rb_http_handler_t {
 	char ** urls;
+	long curlmopt_maxconnects;
 	rd_fifoq_t msgs;
 };
 
@@ -35,11 +43,13 @@ static char** str_split (char* a_str, const char a_delim);
 static void * curl_send_message (void * arg);
 
 /**
- * Initialize a handler for send messages to a server
- * @param  urls Comma separated URLs
- * @return NULL
+ * @brief Creates a handler to produce messages.
+ * @param  urls_str List of comma sepparated URLs. If the first URL doesn't work
+ * it will try the next one.
+ * @return          Handler for send messages to the provided URL.
  */
-struct rb_http_handler_t * rb_http_handler (char * urls_str) {
+struct rb_http_handler_t * rb_http_handler (char * urls_str,
+        long curlmopt_maxconnects) {
 
 	struct rb_http_handler_t * rb_http_handler = NULL;
 	struct thread_arguments_t * thread_arguments = NULL;
@@ -49,8 +59,10 @@ struct rb_http_handler_t * rb_http_handler (char * urls_str) {
 		thread_arguments = calloc (1, sizeof (struct thread_arguments_t));
 
 		rd_fifoq_init (&rb_http_handler->msgs);
-		rb_http_handler->urls = str_split (urls_str, ',');
 
+		rb_http_handler->curlmopt_maxconnects = curlmopt_maxconnects;
+
+		rb_http_handler->urls = str_split (urls_str, ',');
 		rb_http_handler->urls = calloc (1, sizeof (char*));
 		rb_http_handler->urls[0] = urls_str;
 
@@ -67,8 +79,9 @@ struct rb_http_handler_t * rb_http_handler (char * urls_str) {
 }
 
 /**
- * Enqueues a message
- * @param message Message to be sent
+ * @brief Enqueues a message (non-blocking)
+ * @param handler The handler that will be used to send the message.
+ * @param message Message to be enqueued.
  * @param options Options
  */
 void rb_http_produce (struct rb_http_handler_t * handler,
@@ -78,9 +91,9 @@ void rb_http_produce (struct rb_http_handler_t * handler,
 }
 
 /**
- * [curl_send_message0  description]
- * @param  arg [description]
- * @return     [description]
+ * @brief Send a message from the queue
+ * @param  arg Opaque that contains a struct thread_arguments_t with the URL
+ * and message queue.
  */
 void * curl_send_message (void * arg) {
 	int still_running = 1;
@@ -106,6 +119,7 @@ void * curl_send_message (void * arg) {
 				curl_easy_setopt (handle, CURLOPT_URL, url);
 				curl_easy_setopt (handle, CURLOPT_TIMEOUT_MS, 3000L);
 				curl_easy_setopt (handle, CURLOPT_FAILONERROR, 1L);
+				// curl_easy_setopt (handle, CURLOPT_VERBOSE, 1L);
 
 				struct curl_slist * headers = NULL;
 				headers = curl_slist_append (headers, "Accept: application/json");
@@ -186,7 +200,7 @@ void * curl_send_message (void * arg) {
 				/* See how the transfers went */
 				while ((msg = curl_multi_info_read (multi_handle, &msgs_left))) {
 					if (msg->msg == CURLMSG_DONE) {
-						printf ("HTTP transfer completed with status %d\n", msg->data.result);
+						// printf ("HTTP transfer completed with status %d\n", msg->data.result);
 					}
 				}
 
