@@ -6,6 +6,7 @@
 #include <librd/rdqueue.h>
 #include <librd/rdlog.h>
 #include <pthread.h>
+#include <librd/rdthread.h>
 
 #include "librb-http.h"
 
@@ -31,9 +32,7 @@ struct thread_arguments_t {
 // Private functions
 ////////////////////
 static char** str_split (char* a_str, const char a_delim);
-static void * curl_send_message0 (void * arg);
-static void curl_send_message();
-
+static void * curl_send_message (void * arg);
 
 /**
  * Initialize a handler for send messages to a server
@@ -41,7 +40,6 @@ static void curl_send_message();
  * @return NULL
  */
 struct rb_http_handler_t * rb_http_handler (char * urls_str) {
-	pthread_t worker;
 
 	struct rb_http_handler_t * rb_http_handler = NULL;
 	struct thread_arguments_t * thread_arguments = NULL;
@@ -50,36 +48,22 @@ struct rb_http_handler_t * rb_http_handler (char * urls_str) {
 		rb_http_handler = calloc (1, sizeof (struct rb_http_handler_t));
 		thread_arguments = calloc (1, sizeof (struct thread_arguments_t));
 
-		curl_global_init (CURL_GLOBAL_ALL);
 		rd_fifoq_init (&rb_http_handler->msgs);
+		rb_http_handler->urls = str_split (urls_str, ',');
 
-		// rb_http_handler->urls = str_split (urls_str, ',');
 		rb_http_handler->urls = calloc (1, sizeof (char*));
 		rb_http_handler->urls[0] = urls_str;
 
 		thread_arguments->msgs = &rb_http_handler->msgs;
 		thread_arguments->url = rb_http_handler->urls[0];
 
-		pthread_create (&worker, NULL, &curl_send_message0, thread_arguments);
+		rd_threads_create ("curl_send_message", 4, NULL, curl_send_message,
+		                   thread_arguments);
 
 		return rb_http_handler;
 	} else {
 		return NULL;
 	}
-}
-
-/**
- * Global initialize CURL
- */
-void rb_http_init() {
-	curl_global_init (CURL_GLOBAL_ALL);
-}
-
-/**
- * Global cleanup CURL
- */
-void rb_http_clean() {
-	curl_global_cleanup ();
 }
 
 /**
@@ -89,6 +73,7 @@ void rb_http_clean() {
  */
 void rb_http_produce (struct rb_http_handler_t * handler,
                       char * message) {
+	// printf ("PUSH: %s\n", message);
 	rd_fifoq_add (&handler->msgs, message);
 }
 
@@ -97,63 +82,122 @@ void rb_http_produce (struct rb_http_handler_t * handler,
  * @param  arg [description]
  * @return     [description]
  */
-void * curl_send_message0 (void * arg) {
+void * curl_send_message (void * arg) {
+	int still_running = 1;
+	int msgs_left;
+
+	CURLM *multi_handle = NULL;
+	CURL * handle = NULL;
+	CURLMsg *msg = NULL;
+
+	char * url = ((struct thread_arguments_t *) arg)->url;
+	rd_fifoq_t	* rfq = ((struct thread_arguments_t *) arg)->msgs;
 	rd_fifoq_elm_t * rfqe = NULL;
 
-	while (1) {
-		if (arg != NULL) {
-			rfqe = rd_fifoq_pop_wait (((struct thread_arguments_t *) arg)->msgs);
-			if (rfqe != NULL) {
-				if (rfqe->rfqe_ptr != NULL) {
-					printf ("Leído de la cola mensaje: [%s]\n", (char*) rfqe->rfqe_ptr);
-					curl_send_message (rfqe->rfqe_ptr, ((struct thread_arguments_t *) arg)->url);
+	multi_handle = curl_multi_init();
+
+	if (arg != NULL) {
+		while (1) {
+			rfqe = rd_fifoq_pop (rfq);
+
+			if (rfqe != NULL && rfqe->rfqe_ptr != NULL) {
+				// printf ("POP: %s\n", rfqe->rfqe_ptr);
+				handle =  curl_easy_init();
+				curl_easy_setopt (handle, CURLOPT_URL, url);
+				curl_easy_setopt (handle, CURLOPT_TIMEOUT_MS, 3000L);
+				curl_easy_setopt (handle, CURLOPT_FAILONERROR, 1L);
+
+				struct curl_slist * headers = NULL;
+				headers = curl_slist_append (headers, "Accept: application/json");
+				headers = curl_slist_append (headers,
+				                             "Content-Type: application/json");
+				headers = curl_slist_append (headers, "charsets: utf-8");
+
+				curl_easy_setopt (handle, CURLOPT_HTTPHEADER, headers);
+				curl_easy_setopt (handle, CURLOPT_POSTFIELDS, rfqe->rfqe_ptr);
+
+				curl_multi_add_handle (multi_handle, handle);
+				curl_multi_perform (multi_handle, &still_running);
+
+				do {
+					struct timeval timeout;
+					int rc; /* select() return code */
+					CURLMcode mc; /* curl_multi_fdset() return code */
+
+					fd_set fdread;
+					fd_set fdwrite;
+					fd_set fdexcep;
+					int maxfd = -1;
+
+					long curl_timeo = -1;
+
+					FD_ZERO (&fdread);
+					FD_ZERO (&fdwrite);
+					FD_ZERO (&fdexcep);
+
+					/* set a suitable timeout to play around with */
+					timeout.tv_sec = 1;
+					timeout.tv_usec = 0;
+
+					curl_multi_timeout (multi_handle, &curl_timeo);
+					if (curl_timeo >= 0) {
+						timeout.tv_sec = curl_timeo / 1000;
+						if (timeout.tv_sec > 1)
+							timeout.tv_sec = 1;
+						else
+							timeout.tv_usec = (curl_timeo % 1000) * 1000;
+					}
+
+					/* get file descriptors from the transfers */
+					mc = curl_multi_fdset (multi_handle, &fdread, &fdwrite, &fdexcep, &maxfd);
+
+					if (mc != CURLM_OK) {
+						fprintf (stderr, "curl_multi_fdset() failed, code %d.\n", mc);
+						break;
+					}
+
+					/* On success the value of maxfd is guaranteed to be >= -1. We call
+					   select(maxfd + 1, ...); specially in case of (maxfd == -1) there are
+					   no fds ready yet so we call select(0, ...) --or Sleep() on Windows--
+					   to sleep 100ms, which is the minimum suggested value in the
+					   curl_multi_fdset() doc. */
+
+					if (maxfd == -1) {
+						/* Portable sleep for platforms other than Windows. */
+						struct timeval wait = { 0, 100 * 1000 }; /* 100ms */
+						rc = select (0, NULL, NULL, NULL, &wait);
+					} else {
+						/* Note that on some platforms 'timeout' may be modified by select().
+						   If you need access to the original value save a copy beforehand. */
+						rc = select (maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
+					}
+
+					switch (rc) {
+					case -1:
+						/* select error */
+						break;
+					case 0: /* timeout */
+					default: /* action */
+						curl_multi_perform (multi_handle, &still_running);
+						break;
+					}
+				} while (still_running);
+
+				/* See how the transfers went */
+				while ((msg = curl_multi_info_read (multi_handle, &msgs_left))) {
+					if (msg->msg == CURLMSG_DONE) {
+						printf ("HTTP transfer completed with status %d\n", msg->data.result);
+					}
 				}
+
+				curl_easy_cleanup (handle);
+				rd_fifoq_elm_release (rfq, rfqe);
 			}
 		}
 	}
+	curl_multi_cleanup (multi_handle);
 
 	return NULL;
-}
-
-/**
- * [rb_http_send  description]
- * @param  handler [description]
- * @return         [description]
- */
-void curl_send_message (char * message, char * url) {
-	CURL * curl;
-	CURLcode res_code = 0;
-
-	curl = curl_easy_init();
-
-	if (curl) {
-		// Set remote host and write_callback
-		curl_easy_setopt (curl, CURLOPT_URL, url);
-		curl_easy_setopt (curl, CURLOPT_TIMEOUT_MS, 3000L);
-		curl_easy_setopt (curl, CURLOPT_FAILONERROR, 1L);
-
-		// Set request headers
-		struct curl_slist * headers = NULL;
-		headers = curl_slist_append (headers, "Accept: application/json");
-		headers = curl_slist_append (headers,
-		                             "Content-Type: application/json");
-		headers = curl_slist_append (headers, "charsets: utf-8");
-		curl_easy_setopt (curl, CURLOPT_HTTPHEADER, headers);
-
-		// Set request payload
-		curl_easy_setopt (curl, CURLOPT_POSTFIELDS, message);
-
-		//  Perform the request, res will get the return code
-		res_code = curl_easy_perform (curl);
-
-		// Check for errors
-		if (res_code != CURLE_OK) {
-			rdlog (LOG_ERR, "FAIL: %s", curl_easy_strerror (res_code));
-		}
-
-		// Always cleanup
-		curl_easy_cleanup (curl);
-	}
 }
 
 /**
