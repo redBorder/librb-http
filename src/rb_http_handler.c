@@ -2,7 +2,6 @@
  * @file rb_http_handler.c
  * @author Diego Fernández Barrera
  * @brief Main library.
- *
  */
 
 #include <stdio.h>
@@ -25,23 +24,27 @@
  *  @struct rb_http_handler_t rb_http_handler.h "rb_http_handler.h"
  *  @brief Contains the "handler" information.
  */
-struct rb_http_handler_t {
+struct rb_http_handler_s {
 	int still_running;
+	int thread_running;
 	int msgs_left;
 	long curlmopt_maxconnects;
 	char ** urls;
 	CURLM * multi_handle;
 	CURLMsg * msg;
 	rd_fifoq_t rfq;
+	rd_thread_t * rd_thread;
 };
 
 /**
  *  @struct message_t rb_http_handler.h "rb_http_handler.h"
  *  @brief The message to send.
  */
-struct message_t {
-	uint8_t * payload;
+struct rb_http_message_s {
+	char * payload;
 	size_t len;
+	int free_message;
+	int copy;
 };
 
 ////////////////////
@@ -56,27 +59,28 @@ static void * curl_send_message (void * arg);
  * it will try the next one.
  * @return          Handler for send messages to the provided URL.
  */
-struct rb_http_handler_t * rb_http_handler (char * urls_str,
+struct rb_http_handler_s * rb_http_handler (char * urls_str,
         long curlmopt_maxconnects) {
 
-	struct rb_http_handler_t * rb_http_handler = NULL;
+	struct rb_http_handler_s * rb_http_handler = NULL;
 
 	if (urls_str != NULL) {
-		rb_http_handler = calloc (1, sizeof (struct rb_http_handler_t));
+		rb_http_handler = calloc (1, sizeof (struct rb_http_handler_s));
 
 		rd_fifoq_init (&rb_http_handler->rfq);
 
 		rb_http_handler->curlmopt_maxconnects = curlmopt_maxconnects;
 
 		rb_http_handler->urls = str_split (urls_str, ',');
-		rb_http_handler->urls = calloc (1, sizeof (char*));
 		rb_http_handler->urls[0] = urls_str;
 		rb_http_handler->still_running = 1;
 		rb_http_handler->msg = NULL;
 		rb_http_handler->msgs_left = 0;
 		rb_http_handler->multi_handle = curl_multi_init();
+		rb_http_handler->thread_running = 1;
 
-		rd_thread_create (NULL, "curl_send_message", NULL, curl_send_message,
+		rd_thread_create (&rb_http_handler->rd_thread, "curl_send_message", NULL,
+		                  curl_send_message,
 		                  rb_http_handler);
 
 		return rb_http_handler;
@@ -86,15 +90,60 @@ struct rb_http_handler_t * rb_http_handler (char * urls_str,
 }
 
 /**
+ * @brief Free memory from a handler
+ * @param rb_http_handler Handler that will freed
+ */
+void rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler) {
+	rb_http_handler->thread_running = 0;
+	rd_thread_kill_join (rb_http_handler->rd_thread, NULL);
+
+	curl_multi_cleanup (rb_http_handler->multi_handle);
+	rd_fifoq_destroy (&rb_http_handler->rfq);
+
+	if (rb_http_handler->urls) {
+		int i;
+		for (i = 0; * (rb_http_handler->urls + i); i++) {
+			free (* (rb_http_handler->urls + i));
+		}
+		free (rb_http_handler->urls);
+	}
+
+	free (rb_http_handler->msg);
+	free (rb_http_handler);
+}
+
+/**
  * @brief Enqueues a message (non-blocking)
  * @param handler The handler that will be used to send the message.
  * @param message Message to be enqueued.
  * @param options Options
  */
-void rb_http_produce (struct rb_http_handler_t * handler,
-                      char * message) {
-	// printf ("PUSH: %s\n", message);
-	rd_fifoq_add (&handler->rfq, message);
+void rb_http_produce (struct rb_http_handler_s * handler,
+                      char * buff,
+                      size_t len,
+                      int flags) {
+
+	struct rb_http_message_s * message = calloc (1,
+	                                     sizeof (struct rb_http_message_s));
+
+	message->len = len;
+
+	if (flags & RB_HTTP_MESSAGE_F_COPY) {
+		message->payload = calloc (len, sizeof (char));
+		memcpy (message->payload, buff, len);
+	} else {
+		message->payload = buff;
+	}
+
+	if (flags & RB_HTTP_MESSAGE_F_FREE) {
+		message->free_message = 1;
+	} else {
+		message->free_message = 0;
+	}
+
+	if (message != NULL && message->len > 0 && message->payload != NULL) {
+		rd_fifoq_add (&handler->rfq, message);
+	}
 }
 
 /**
@@ -104,23 +153,24 @@ void rb_http_produce (struct rb_http_handler_t * handler,
  */
 void * curl_send_message (void * arg) {
 
-	struct rb_http_handler_t * rb_http_handler = (struct rb_http_handler_t *)
+	struct rb_http_handler_s * rb_http_handler = (struct rb_http_handler_s *)
 	        arg;
 
 	CURL * handle = NULL;
+	struct rb_http_message_s * message = NULL;
 	rd_fifoq_elm_t * rfqe = NULL;
 
 	if (arg != NULL) {
-		while (1) {
+		while (rb_http_handler->thread_running) {
 			rfqe = rd_fifoq_pop (&rb_http_handler->rfq);
-
 			if (rfqe != NULL && rfqe->rfqe_ptr != NULL) {
-				// printf ("POP: %s\n", rfqe->rfqe_ptr);
+				message = rfqe->rfqe_ptr;
+
 				handle =  curl_easy_init();
 				curl_easy_setopt (handle, CURLOPT_URL, rb_http_handler->urls[0]);
 				curl_easy_setopt (handle, CURLOPT_TIMEOUT_MS, 3000L);
 				curl_easy_setopt (handle, CURLOPT_FAILONERROR, 1L);
-				curl_easy_setopt (handle, CURLOPT_VERBOSE, 1L);
+				// curl_easy_setopt (handle, CURLOPT_VERBOSE, 1L);
 
 				struct curl_slist * headers = NULL;
 				headers = curl_slist_append (headers, "Accept: application/json");
@@ -129,7 +179,7 @@ void * curl_send_message (void * arg) {
 				headers = curl_slist_append (headers, "charsets: utf-8");
 
 				curl_easy_setopt (handle, CURLOPT_HTTPHEADER, headers);
-				curl_easy_setopt (handle, CURLOPT_POSTFIELDS, rfqe->rfqe_ptr);
+				curl_easy_setopt (handle, CURLOPT_POSTFIELDS, message->payload);
 
 				curl_multi_add_handle (rb_http_handler->multi_handle, handle);
 				curl_multi_perform (rb_http_handler->multi_handle,
@@ -206,17 +256,21 @@ void * curl_send_message (void * arg) {
 				                                   rb_http_handler->multi_handle,
 				                                   &rb_http_handler->msgs_left))) {
 					if (rb_http_handler->msg->msg == CURLMSG_DONE) {
+						if (message->free_message) {
+							free (message->payload);
+						}
 						// printf ("HTTP transfer completed with status %d\n", msg->data.result);
 					}
 				}
-
+				free (message);
 				curl_easy_cleanup (handle);
+				curl_slist_free_all (headers);
 				rd_fifoq_elm_release (&rb_http_handler->rfq, rfqe);
 			}
 		}
 	}
-	curl_multi_cleanup (rb_http_handler->multi_handle);
 
+	rd_thread_cleanup ();
 	return NULL;
 }
 
