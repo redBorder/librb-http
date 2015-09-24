@@ -21,19 +21,18 @@
 // Structures
 ////////////////////
 struct rb_http_handler_t {
-	char ** urls;
+	int still_running;
+	int msgs_left;
 	long curlmopt_maxconnects;
-	rd_fifoq_t msgs;
+	char ** urls;
+	CURLM * multi_handle;
+	CURLMsg * msg;
+	rd_fifoq_t rfq;
 };
 
 struct message_t {
 	uint8_t * payload;
 	size_t len;
-};
-
-struct thread_arguments_t {
-	rd_fifoq_t * msgs;
-	char * url;
 };
 
 ////////////////////
@@ -52,25 +51,24 @@ struct rb_http_handler_t * rb_http_handler (char * urls_str,
         long curlmopt_maxconnects) {
 
 	struct rb_http_handler_t * rb_http_handler = NULL;
-	struct thread_arguments_t * thread_arguments = NULL;
 
 	if (urls_str != NULL) {
 		rb_http_handler = calloc (1, sizeof (struct rb_http_handler_t));
-		thread_arguments = calloc (1, sizeof (struct thread_arguments_t));
 
-		rd_fifoq_init (&rb_http_handler->msgs);
+		rd_fifoq_init (&rb_http_handler->rfq);
 
 		rb_http_handler->curlmopt_maxconnects = curlmopt_maxconnects;
 
 		rb_http_handler->urls = str_split (urls_str, ',');
 		rb_http_handler->urls = calloc (1, sizeof (char*));
 		rb_http_handler->urls[0] = urls_str;
+		rb_http_handler->still_running = 1;
+		rb_http_handler->msg = NULL;
+		rb_http_handler->msgs_left = 0;
+		rb_http_handler->multi_handle = curl_multi_init();
 
-		thread_arguments->msgs = &rb_http_handler->msgs;
-		thread_arguments->url = rb_http_handler->urls[0];
-
-		rd_threads_create ("curl_send_message", 4, NULL, curl_send_message,
-		                   thread_arguments);
+		rd_thread_create (NULL, "curl_send_message", NULL, curl_send_message,
+		                  rb_http_handler);
 
 		return rb_http_handler;
 	} else {
@@ -87,7 +85,7 @@ struct rb_http_handler_t * rb_http_handler (char * urls_str,
 void rb_http_produce (struct rb_http_handler_t * handler,
                       char * message) {
 	// printf ("PUSH: %s\n", message);
-	rd_fifoq_add (&handler->msgs, message);
+	rd_fifoq_add (&handler->rfq, message);
 }
 
 /**
@@ -96,30 +94,24 @@ void rb_http_produce (struct rb_http_handler_t * handler,
  * and message queue.
  */
 void * curl_send_message (void * arg) {
-	int still_running = 1;
-	int msgs_left;
 
-	CURLM *multi_handle = NULL;
+	struct rb_http_handler_t * rb_http_handler = (struct rb_http_handler_t *)
+	        arg;
+
 	CURL * handle = NULL;
-	CURLMsg *msg = NULL;
-
-	char * url = ((struct thread_arguments_t *) arg)->url;
-	rd_fifoq_t	* rfq = ((struct thread_arguments_t *) arg)->msgs;
 	rd_fifoq_elm_t * rfqe = NULL;
-
-	multi_handle = curl_multi_init();
 
 	if (arg != NULL) {
 		while (1) {
-			rfqe = rd_fifoq_pop (rfq);
+			rfqe = rd_fifoq_pop (&rb_http_handler->rfq);
 
 			if (rfqe != NULL && rfqe->rfqe_ptr != NULL) {
 				// printf ("POP: %s\n", rfqe->rfqe_ptr);
 				handle =  curl_easy_init();
-				curl_easy_setopt (handle, CURLOPT_URL, url);
+				curl_easy_setopt (handle, CURLOPT_URL, rb_http_handler->urls[0]);
 				curl_easy_setopt (handle, CURLOPT_TIMEOUT_MS, 3000L);
 				curl_easy_setopt (handle, CURLOPT_FAILONERROR, 1L);
-				// curl_easy_setopt (handle, CURLOPT_VERBOSE, 1L);
+				curl_easy_setopt (handle, CURLOPT_VERBOSE, 1L);
 
 				struct curl_slist * headers = NULL;
 				headers = curl_slist_append (headers, "Accept: application/json");
@@ -130,8 +122,9 @@ void * curl_send_message (void * arg) {
 				curl_easy_setopt (handle, CURLOPT_HTTPHEADER, headers);
 				curl_easy_setopt (handle, CURLOPT_POSTFIELDS, rfqe->rfqe_ptr);
 
-				curl_multi_add_handle (multi_handle, handle);
-				curl_multi_perform (multi_handle, &still_running);
+				curl_multi_add_handle (rb_http_handler->multi_handle, handle);
+				curl_multi_perform (rb_http_handler->multi_handle,
+				                    &rb_http_handler->still_running);
 
 				do {
 					struct timeval timeout;
@@ -153,7 +146,7 @@ void * curl_send_message (void * arg) {
 					timeout.tv_sec = 1;
 					timeout.tv_usec = 0;
 
-					curl_multi_timeout (multi_handle, &curl_timeo);
+					curl_multi_timeout (rb_http_handler->multi_handle, &curl_timeo);
 					if (curl_timeo >= 0) {
 						timeout.tv_sec = curl_timeo / 1000;
 						if (timeout.tv_sec > 1)
@@ -163,7 +156,8 @@ void * curl_send_message (void * arg) {
 					}
 
 					/* get file descriptors from the transfers */
-					mc = curl_multi_fdset (multi_handle, &fdread, &fdwrite, &fdexcep, &maxfd);
+					mc = curl_multi_fdset (rb_http_handler->multi_handle, &fdread, &fdwrite,
+					                       &fdexcep, &maxfd);
 
 					if (mc != CURLM_OK) {
 						fprintf (stderr, "curl_multi_fdset() failed, code %d.\n", mc);
@@ -192,24 +186,27 @@ void * curl_send_message (void * arg) {
 						break;
 					case 0: /* timeout */
 					default: /* action */
-						curl_multi_perform (multi_handle, &still_running);
+						curl_multi_perform (rb_http_handler->multi_handle,
+						                    &rb_http_handler->still_running);
 						break;
 					}
-				} while (still_running);
+				} while (rb_http_handler->still_running);
 
 				/* See how the transfers went */
-				while ((msg = curl_multi_info_read (multi_handle, &msgs_left))) {
-					if (msg->msg == CURLMSG_DONE) {
+				while ((rb_http_handler->msg = curl_multi_info_read (
+				                                   rb_http_handler->multi_handle,
+				                                   &rb_http_handler->msgs_left))) {
+					if (rb_http_handler->msg->msg == CURLMSG_DONE) {
 						// printf ("HTTP transfer completed with status %d\n", msg->data.result);
 					}
 				}
 
 				curl_easy_cleanup (handle);
-				rd_fifoq_elm_release (rfq, rfqe);
+				rd_fifoq_elm_release (&rb_http_handler->rfq, rfqe);
 			}
 		}
 	}
-	curl_multi_cleanup (multi_handle);
+	curl_multi_cleanup (rb_http_handler->multi_handle);
 
 	return NULL;
 }
