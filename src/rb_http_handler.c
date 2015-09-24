@@ -1,7 +1,7 @@
 /**
  * @file rb_http_handler.c
  * @author Diego Fernández Barrera
- * @brief File containing the main library.
+ * @brief Main library.
  *
  */
 
@@ -20,6 +20,11 @@
 ////////////////////
 // Structures
 ////////////////////
+
+/**
+ *  @struct rb_http_handler_t rb_http_handler.h "rb_http_handler.h"
+ *  @brief Contains the "handler" information.
+ */
 struct rb_http_handler_t {
 	int still_running;
 	int msgs_left;
@@ -30,6 +35,10 @@ struct rb_http_handler_t {
 	rd_fifoq_t rfq;
 };
 
+/**
+ *  @struct message_t rb_http_handler.h "rb_http_handler.h"
+ *  @brief The message to send.
+ */
 struct message_t {
 	uint8_t * payload;
 	size_t len;
