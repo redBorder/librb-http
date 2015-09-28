@@ -46,6 +46,7 @@ struct rb_http_message_s {
 	size_t len;
 	int free_message;
 	int copy;
+	struct curl_slist * headers;
 };
 
 ////////////////////
@@ -181,13 +182,15 @@ void * rb_http_send_message (void * arg) {
 				// curl_easy_setopt (handler, CURLOPT_FAILONERROR, 1L);
 				// curl_easy_setopt (handler, CURLOPT_VERBOSE, 1L);
 
-				struct curl_slist * headers = NULL;
-				headers = curl_slist_append (headers, "Accept: application/json");
-				headers = curl_slist_append (headers,
-				                             "Content-Type: application/json");
-				headers = curl_slist_append (headers, "charsets: utf-8");
+				message->headers = NULL;
+				message->headers = curl_slist_append (message->headers,
+				                                      "Accept: application/json");
+				message->headers = curl_slist_append (message->headers,
+				                                      "Content-Type: application/json");
+				message->headers = curl_slist_append (message->headers, "charsets: utf-8");
 
-				curl_easy_setopt (handler, CURLOPT_HTTPHEADER, headers);
+				curl_easy_setopt (handler, CURLOPT_PRIVATE, message);
+				curl_easy_setopt (handler, CURLOPT_HTTPHEADER, message->headers);
 				curl_easy_setopt (handler, CURLOPT_POSTFIELDS,
 				                  message->payload);
 
@@ -293,8 +296,12 @@ void * rb_http_recv_message (void * arg) {
 			if (msg->msg == CURLMSG_DONE) {
 				if (msg->data.result == 0) {
 					curl_multi_remove_handle (rb_http_handler->multi_handle, msg->easy_handle);
-					// curl_slist_free_all (headers);
+					struct rb_http_message_s * message = NULL;
+					CURLcode rc  = curl_easy_getinfo (msg->easy_handle,
+					                                  CURLINFO_PRIVATE, &message);
+					curl_slist_free_all (message->headers);
 					curl_easy_cleanup (msg->easy_handle);
+					free (message);
 				}
 				// printf ("HTTP transfer completed with status %d\n",
 				// msg->data.result);
