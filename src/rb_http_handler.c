@@ -33,6 +33,7 @@ struct rb_http_handler_s {
 	pthread_mutex_t multi_handle_mutex;
 	CURLM * multi_handle;
 	rd_fifoq_t rfq;
+	rd_fifoq_t rfq_reports;
 	rd_thread_t * rd_thread_send;
 	rd_thread_t * rd_thread_recv;
 };
@@ -71,6 +72,7 @@ struct rb_http_handler_s * rb_http_handler (char * urls_str,
 		rb_http_handler = calloc (1, sizeof (struct rb_http_handler_s));
 
 		rd_fifoq_init (&rb_http_handler->rfq);
+		rd_fifoq_init (&rb_http_handler->rfq_reports);
 
 		rb_http_handler->curlmopt_maxconnects = curlmopt_maxconnects;
 
@@ -216,6 +218,7 @@ void * rb_http_recv_message (void * arg) {
 
 	rd_thread_sigmask (SIG_BLOCK, SIGINT, RD_SIG_END);
 	struct rb_http_handler_s * rb_http_handler = (struct rb_http_handler_s *) arg;
+	struct rb_http_message_s * message = NULL;
 	CURLMsg * msg = NULL;
 
 	while (rb_http_handler->thread_running) {
@@ -296,15 +299,12 @@ void * rb_http_recv_message (void * arg) {
 			if (msg->msg == CURLMSG_DONE) {
 				if (msg->data.result == 0) {
 					curl_multi_remove_handle (rb_http_handler->multi_handle, msg->easy_handle);
-					struct rb_http_message_s * message = NULL;
-					CURLcode rc  = curl_easy_getinfo (msg->easy_handle,
-					                                  CURLINFO_PRIVATE, &message);
-					curl_slist_free_all (message->headers);
-					curl_easy_cleanup (msg->easy_handle);
-					free (message);
+					curl_easy_getinfo (msg->easy_handle,
+					                   CURLINFO_PRIVATE, &message);
+					CURLMsg * report = calloc (1, sizeof (CURLMsg));
+					memcpy (report, msg, sizeof (CURLMsg));
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 				}
-				// printf ("HTTP transfer completed with status %d\n",
-				// msg->data.result);
 			}
 		}
 		pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
@@ -313,6 +313,35 @@ void * rb_http_recv_message (void * arg) {
 	rd_thread_exit ();
 	return NULL;
 }
+
+/**
+ *
+ */
+void rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
+                          cb_report report_fn) {
+	rd_fifoq_elm_t * rfqe;
+	CURLMsg * report = NULL;
+	struct rb_http_message_s * message = NULL;
+
+	while ((rfqe = rd_fifoq_pop (&rb_http_handler->rfq_reports))) {
+		if (rfqe != NULL && rfqe->rfqe_ptr != NULL) {
+			report = rfqe->rfqe_ptr;
+			curl_easy_getinfo (report->easy_handle,
+			                   CURLINFO_PRIVATE, &message);
+			report_fn (rb_http_handler, report->data.result, NULL, message->payload, NULL);
+
+			curl_slist_free_all (message->headers);
+			curl_easy_cleanup (report->easy_handle);
+			if (message->free_message) {
+				free (message->payload);
+			}
+			free (message);
+			free (report);
+			rd_fifoq_elm_release (&rb_http_handler->rfq_reports, rfqe);
+		}
+	}
+}
+
 /**
  * Split a string (and specify the delimiter to use)
  * @param  a_str   Single sting separated by delimiter
