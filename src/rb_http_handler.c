@@ -196,7 +196,6 @@ void * curl_send_message (void * arg) {
 				curl_multi_perform (rb_http_handler->multi_handle,
 				                    &rb_http_handler->still_running);
 				pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-				// curl_slist_free_all (headers);
 			}
 		}
 	}
