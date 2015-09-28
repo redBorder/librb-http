@@ -3,6 +3,7 @@
 mkl_require good_cflags
 mkl_require gitversion as GITVERSION
 
+mkl_mkvar_append CPPFLAGS CPPFLAGS "-fPIC"
 mkl_mkvar_append CPPFLAGS CPPFLAGS "-DFORTIFY_SOURCE=2"
 mkl_mkvar_append CPPFLAGS CPPFLAGS "-DNDEBUG"
 mkl_mkvar_append CPPFLAGS CPPFLAGS "-Wunused -Wcast-qual -Wextra -Wsign-conversion -Wshadow"
@@ -28,3 +29,4 @@ function checks {
 
     mkl_in_list "$*" "--disable-optimization" || mkl_mkvar_append CPPFLAGS CPPFLAGS "-DNDEBUG"
 }
+
