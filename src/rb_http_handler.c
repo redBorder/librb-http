@@ -135,12 +135,13 @@ void rb_http_produce (struct rb_http_handler_s * handler,
                       int flags) {
 
 	struct rb_http_message_s * message = calloc (1,
-	                                     sizeof (struct rb_http_message_s));
+	                                     sizeof (struct rb_http_message_s)
+	                                     + ((flags & RB_HTTP_MESSAGE_F_COPY) ? len : 0));
 
 	message->len = len;
 
 	if (flags & RB_HTTP_MESSAGE_F_COPY) {
-		message->payload = calloc (len, sizeof (char));
+		message->payload = (char *) &message[1];
 		memcpy (message->payload, buff, len);
 	} else {
 		message->payload = buff;
