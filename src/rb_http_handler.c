@@ -52,8 +52,8 @@ struct rb_http_message_s {
 // Private functions
 ////////////////////
 static char** str_split (char* a_str, const char a_delim);
-static void * curl_send_message (void * arg);
-static void * curl_recv_message (void * arg);
+static void * rb_http_send_message (void * arg);
+static void * rb_http_recv_message (void * arg);
 
 /**
  * @brief Creates a handler to produce messages.
@@ -82,11 +82,11 @@ struct rb_http_handler_s * rb_http_handler (char * urls_str,
 		rb_http_handler->thread_running = 1;
 
 		rd_thread_create (&rb_http_handler->rd_thread_send, "curl_send_message", NULL,
-		                  curl_send_message,
+		                  rb_http_send_message,
 		                  rb_http_handler);
 
 		rd_thread_create (&rb_http_handler->rd_thread_recv, "curl_recv_message", NULL,
-		                  curl_recv_message,
+		                  rb_http_recv_message,
 		                  rb_http_handler);
 
 		return rb_http_handler;
@@ -159,7 +159,7 @@ void rb_http_produce (struct rb_http_handler_s * handler,
  * @param  arg Opaque that contains a struct thread_arguments_t with the URL
  * and message queue.
  */
-void * curl_send_message (void * arg) {
+void * rb_http_send_message (void * arg) {
 
 	rd_thread_sigmask (SIG_BLOCK, SIGINT, RD_SIG_END);
 	struct rb_http_handler_s * rb_http_handler = (struct rb_http_handler_s *) arg;
@@ -209,7 +209,7 @@ void * curl_send_message (void * arg) {
  * @param  arg [description]
  * @return     [description]
  */
-void * curl_recv_message (void * arg) {
+void * rb_http_recv_message (void * arg) {
 
 	rd_thread_sigmask (SIG_BLOCK, SIGINT, RD_SIG_END);
 	struct rb_http_handler_s * rb_http_handler = (struct rb_http_handler_s *) arg;
