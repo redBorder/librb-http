@@ -292,7 +292,9 @@ void * curl_recv_message (void * arg) {
 		                  &rb_http_handler->msgs_left))) {
 			if (msg->msg == CURLMSG_DONE) {
 				if (msg->data.result == 0) {
-					printf ("Mensaje enviado correctamente\n");
+					curl_multi_remove_handle (rb_http_handler->multi_handle, msg->easy_handle);
+					// curl_slist_free_all (headers);
+					curl_easy_cleanup (msg->easy_handle);
 				}
 				// printf ("HTTP transfer completed with status %d\n",
 				// msg->data.result);
