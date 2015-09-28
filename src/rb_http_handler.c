@@ -102,8 +102,8 @@ struct rb_http_handler_s * rb_http_handler (char * urls_str,
 void rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler) {
 	rb_http_handler->thread_running = 0;
 
-	rd_thread_kill_join (rb_http_handler->rd_thread_send, NULL);
-	rd_thread_kill_join (rb_http_handler->rd_thread_recv, NULL);
+	// rd_thread_kill_join (rb_http_handler->rd_thread_send, NULL);
+	// rd_thread_kill_join (rb_http_handler->rd_thread_recv, NULL);
 
 	curl_multi_cleanup (rb_http_handler->multi_handle);
 	pthread_mutex_destroy (&rb_http_handler->multi_handle_mutex);
