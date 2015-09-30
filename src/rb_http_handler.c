@@ -48,6 +48,7 @@ struct rb_http_message_s {
 	int free_message;
 	int copy;
 	struct curl_slist * headers;
+	void *client_opaque;
 };
 
 ////////////////////
@@ -134,13 +135,15 @@ void rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler) {
 void rb_http_produce (struct rb_http_handler_s * handler,
                       char * buff,
                       size_t len,
-                      int flags) {
+                      int flags,
+                      void *opaque) {
 
 	struct rb_http_message_s * message = calloc (1,
 	                                     sizeof (struct rb_http_message_s)
 	                                     + ((flags & RB_HTTP_MESSAGE_F_COPY) ? len : 0));
 
 	message->len = len;
+	message->client_opaque = opaque;
 
 	if (flags & RB_HTTP_MESSAGE_F_COPY) {
 		message->payload = (char *) &message[1];
@@ -331,7 +334,8 @@ void rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
 			report = rfqe->rfqe_ptr;
 			curl_easy_getinfo (report->easy_handle,
 			                   CURLINFO_PRIVATE, &message);
-			report_fn (rb_http_handler, report->data.result, NULL, message->payload, NULL);
+			report_fn (rb_http_handler, report->data.result, NULL, message->payload, 
+				message->client_opaque);
 
 			curl_slist_free_all (message->headers);
 			curl_easy_cleanup (report->easy_handle);
