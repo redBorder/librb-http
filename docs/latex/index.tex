@@ -4,13 +4,76 @@ Non-\/blocking high-\/level wrapper for libcurl.
 
 
 \begin{DoxyCode}
-\textcolor{comment}{//  Uses only the first URL, if it fails then uses the next one}
-\textcolor{comment}{//  2 Max cached connection}
-\textcolor{comment}{}RBHTTP\_HANDLER * handler = \hyperlink{librb-http_8h_a190d674d1d8cac12e0dd2445c5c8cba4}{rb\_http\_handler}(\textcolor{stringliteral}{"http://host1,http://host2"}, 2L);
+\textcolor{preprocessor}{#include <stdio.h>}
+\textcolor{preprocessor}{#include <string.h>}
+\textcolor{preprocessor}{#include <unistd.h>}
+\textcolor{preprocessor}{#include <signal.h>}
+\textcolor{preprocessor}{#include <signal.h>}
+\textcolor{preprocessor}{#include <librd/rdthread.h>}
+\textcolor{preprocessor}{#include <librbhttp/librb-http.h>}
 
-\textcolor{comment}{// Enqueue a message (non-blocking)}
-\textcolor{comment}{}RBHTTP\_MESSAGE message;
-message.data = \textcolor{stringliteral}{"Hello World!"};
-\hyperlink{librb-http_8h_a6f4b97a63ef87f1f51176db8947ab907}{rb\_http\_produce}(message);
+\textcolor{keyword}{static} \textcolor{keywordtype}{int} running = 1;
+\textcolor{keyword}{struct }\hyperlink{structrb__http__handler__s}{rb\_http\_handler\_s} * handler = NULL;
+
+\textcolor{keyword}{static} \textcolor{keywordtype}{void} sigint\_handler () \{
+    printf (\textcolor{stringliteral}{"Exiting... %ld\(\backslash\)n"}, pthread\_self());
+    running = 0;
+\};
+
+\textcolor{keyword}{static} \textcolor{keywordtype}{void} my\_callback (\textcolor{keyword}{struct} \hyperlink{structrb__http__handler__s}{rb\_http\_handler\_s} * rb\_http\_handler,
+                         \textcolor{keywordtype}{int} status\_code,
+                         \textcolor{keyword}{const} \textcolor{keywordtype}{char} * status\_code\_str,
+                         \textcolor{keywordtype}{char} * buff,
+                         \textcolor{keywordtype}{void} * opaque) \{
+
+    printf (\textcolor{stringliteral}{"STATUS CODE: %d\(\backslash\)n"}, status\_code);
+
+    \textcolor{keywordflow}{if} (status\_code\_str != NULL)
+        printf (\textcolor{stringliteral}{"STATUS CODE DESCRIPTION: %s\(\backslash\)n"}, status\_code\_str);
+
+    \textcolor{keywordflow}{if} (buff != NULL)
+        printf (\textcolor{stringliteral}{"MESSAGE: %s\(\backslash\)n"}, buff);
+
+    \textcolor{keywordflow}{if} (opaque != NULL)
+        printf (\textcolor{stringliteral}{"OPAQUE: %p\(\backslash\)n"}, opaque);
+
+    free (buff);
+
+    (void) rb\_http\_handler;
+\}
+
+\textcolor{keywordtype}{int} \hyperlink{rb__http__handler__example_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}() \{
+    \textcolor{keywordtype}{char} * url = strdup (\textcolor{stringliteral}{"http://localhost:8080/librb-http/"});
+    \textcolor{keywordtype}{long} max\_connections = 4L;
+    \textcolor{keywordtype}{char} \textcolor{keywordtype}{string}[128];
+
+    \textcolor{keyword}{struct }sigaction action;
+    memset (&action, 0, \textcolor{keyword}{sizeof} (action));
+    action.sa\_handler = &sigint\_handler;
+    sigaction (SIGINT, &action, NULL);
+
+    handler = \hyperlink{librb-http_8h_a190d674d1d8cac12e0dd2445c5c8cba4}{rb\_http\_handler} (url, max\_connections, 512, NULL, 0);
+    printf (\textcolor{stringliteral}{"This will send 1024 messages\(\backslash\)n"});
+    printf (\textcolor{stringliteral}{"Press enter to start sending messages:\(\backslash\)n"});
+    \textcolor{keywordtype}{int} i = 0;
+
+    getchar();
+
+    \textcolor{keywordflow}{for} (i = 0 ; i < 1024 && running; i++) \{
+        sprintf (\textcolor{keywordtype}{string}, \textcolor{stringliteral}{"\{\(\backslash\)"message\(\backslash\)": \(\backslash\)"%d\(\backslash\)"\}"}, i);
+        \textcolor{keywordflow}{while} (\hyperlink{librb-http_8h_a6f4b97a63ef87f1f51176db8947ab907}{rb\_http\_produce} (handler, strdup (\textcolor{keywordtype}{string}), strlen (\textcolor{keywordtype}{string}), 0,
+                                NULL) > 0) \{
+            printf (\textcolor{stringliteral}{"Queue is full, sleeping 1s\(\backslash\)n"});
+            sleep (1);
+        \}
+    \}
+
+    \textcolor{keywordflow}{while} (running);
+
+    \hyperlink{librb-http_8h_aa9121154f5242572bfbc47fca33c1310}{rb\_http\_get\_reports} (handler, my\_callback);
+    \hyperlink{librb-http_8h_a57eb6a7b4fba5c589b2a4afbb61f314c}{rb\_http\_handler\_destroy} (handler);
+
+    \textcolor{keywordflow}{return} 0;
+\}
 \end{DoxyCode}
  

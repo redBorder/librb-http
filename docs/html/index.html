@@ -79,18 +79,81 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="contents">
 <div class="textblock"><p>Non-blocking high-level wrapper for libcurl.</p>
 <h2>Example</h2>
-<div class="fragment"><div class="line"><span class="comment">//  Uses only the first URL, if it fails then uses the next one</span></div>
-<div class="line"><span class="comment">//  2 Max cached connection</span></div>
-<div class="line"><span class="comment"></span>RBHTTP_HANDLER * handler = <a class="code" href="librb-http_8h.html#a190d674d1d8cac12e0dd2445c5c8cba4">rb_http_handler</a>(<span class="stringliteral">&quot;http://host1,http://host2&quot;</span>, 2L);</div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;stdio.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;string.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;unistd.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;signal.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;signal.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;librd/rdthread.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;librbhttp/librb-http.h&gt;</span></div>
 <div class="line"></div>
-<div class="line"><span class="comment">// Enqueue a message (non-blocking)</span></div>
-<div class="line"><span class="comment"></span>RBHTTP_MESSAGE message;</div>
-<div class="line">message.data = <span class="stringliteral">&quot;Hello World!&quot;</span>;</div>
-<div class="line"><a class="code" href="librb-http_8h.html#a6f4b97a63ef87f1f51176db8947ab907">rb_http_produce</a>(message);</div>
+<div class="line"><span class="keyword">static</span> <span class="keywordtype">int</span> running = 1;</div>
+<div class="line"><span class="keyword">struct </span><a class="code" href="structrb__http__handler__s.html">rb_http_handler_s</a> * handler = NULL;</div>
+<div class="line"></div>
+<div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span> sigint_handler () {</div>
+<div class="line">    printf (<span class="stringliteral">&quot;Exiting... %ld\n&quot;</span>, pthread_self());</div>
+<div class="line">    running = 0;</div>
+<div class="line">};</div>
+<div class="line"></div>
+<div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span> my_callback (<span class="keyword">struct</span> <a class="code" href="structrb__http__handler__s.html">rb_http_handler_s</a> * rb_http_handler,</div>
+<div class="line">                         <span class="keywordtype">int</span> status_code,</div>
+<div class="line">                         <span class="keyword">const</span> <span class="keywordtype">char</span> * status_code_str,</div>
+<div class="line">                         <span class="keywordtype">char</span> * buff,</div>
+<div class="line">                         <span class="keywordtype">void</span> * opaque) {</div>
+<div class="line"></div>
+<div class="line">    printf (<span class="stringliteral">&quot;STATUS CODE: %d\n&quot;</span>, status_code);</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">if</span> (status_code_str != NULL)</div>
+<div class="line">        printf (<span class="stringliteral">&quot;STATUS CODE DESCRIPTION: %s\n&quot;</span>, status_code_str);</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">if</span> (buff != NULL)</div>
+<div class="line">        printf (<span class="stringliteral">&quot;MESSAGE: %s\n&quot;</span>, buff);</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">if</span> (opaque != NULL)</div>
+<div class="line">        printf (<span class="stringliteral">&quot;OPAQUE: %p\n&quot;</span>, opaque);</div>
+<div class="line"></div>
+<div class="line">    free (buff);</div>
+<div class="line"></div>
+<div class="line">    (void) rb_http_handler;</div>
+<div class="line">}</div>
+<div class="line"></div>
+<div class="line"><span class="keywordtype">int</span> <a class="code" href="rb__http__handler__example_8c.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a>() {</div>
+<div class="line">    <span class="keywordtype">char</span> * url = strdup (<span class="stringliteral">&quot;http://localhost:8080/librb-http/&quot;</span>);</div>
+<div class="line">    <span class="keywordtype">long</span> max_connections = 4L;</div>
+<div class="line">    <span class="keywordtype">char</span> <span class="keywordtype">string</span>[128];</div>
+<div class="line"></div>
+<div class="line">    <span class="keyword">struct </span>sigaction action;</div>
+<div class="line">    memset (&amp;action, 0, <span class="keyword">sizeof</span> (action));</div>
+<div class="line">    action.sa_handler = &amp;sigint_handler;</div>
+<div class="line">    sigaction (SIGINT, &amp;action, NULL);</div>
+<div class="line"></div>
+<div class="line">    handler = <a class="code" href="librb-http_8h.html#a190d674d1d8cac12e0dd2445c5c8cba4">rb_http_handler</a> (url, max_connections, 512, NULL, 0);</div>
+<div class="line">    printf (<span class="stringliteral">&quot;This will send 1024 messages\n&quot;</span>);</div>
+<div class="line">    printf (<span class="stringliteral">&quot;Press enter to start sending messages:\n&quot;</span>);</div>
+<div class="line">    <span class="keywordtype">int</span> i = 0;</div>
+<div class="line"></div>
+<div class="line">    getchar();</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">for</span> (i = 0 ; i &lt; 1024 &amp;&amp; running; i++) {</div>
+<div class="line">        sprintf (<span class="keywordtype">string</span>, <span class="stringliteral">&quot;{\&quot;message\&quot;: \&quot;%d\&quot;}&quot;</span>, i);</div>
+<div class="line">        <span class="keywordflow">while</span> (<a class="code" href="librb-http_8h.html#a6f4b97a63ef87f1f51176db8947ab907">rb_http_produce</a> (handler, strdup (<span class="keywordtype">string</span>), strlen (<span class="keywordtype">string</span>), 0,</div>
+<div class="line">                                NULL) &gt; 0) {</div>
+<div class="line">            printf (<span class="stringliteral">&quot;Queue is full, sleeping 1s\n&quot;</span>);</div>
+<div class="line">            sleep (1);</div>
+<div class="line">        }</div>
+<div class="line">    }</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">while</span> (running);</div>
+<div class="line"></div>
+<div class="line">    <a class="code" href="librb-http_8h.html#aa9121154f5242572bfbc47fca33c1310">rb_http_get_reports</a> (handler, my_callback);</div>
+<div class="line">    <a class="code" href="librb-http_8h.html#a57eb6a7b4fba5c589b2a4afbb61f314c">rb_http_handler_destroy</a> (handler);</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">return</span> 0;</div>
+<div class="line">}</div>
 </div><!-- fragment --> </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 30 2015 17:11:27 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Sep 30 2015 17:14:54 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>
