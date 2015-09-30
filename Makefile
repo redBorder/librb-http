@@ -17,10 +17,16 @@ include mklove/Makefile.base
 
 all: lib
 
+librbhttp.lds: librbhttp.lds.pre
+	cp $< $@
+
 test: bin/run_tests build-test
 
 bin/run_tests:
 	$(CC) $(TESTS) src/rb_http_handler.c $(LIBS) -lcmocka -o bin/run_tests
+
+example:
+	$(CC) src/rb_http_handler_example.c -L/usr/local/lib -lrbhttp -o bin/example
 
 build-test:
 	bin/run_tests
