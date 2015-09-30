@@ -17,7 +17,7 @@ typedef void (*cb_report) (struct rb_http_handler_s * rb_http_handler,
 ////////////////////
 /// Functions
 ////////////////////
-struct rb_http_handler_s * rb_http_handler (char * urls_str,
+struct rb_http_handler_s * rb_http_handler (const char * urls_str,
         long curlmopt_maxconnects,char *err,size_t errbuf);
 void rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler);
 void rb_http_produce (struct rb_http_handler_s * handler,

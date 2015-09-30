@@ -64,7 +64,7 @@ static void * rb_http_recv_message (void * arg);
  * it will try the next one.
  * @return          Handler for send messages to the provided URL.
  */
-struct rb_http_handler_s * rb_http_handler (char * urls_str,
+struct rb_http_handler_s * rb_http_handler (const char * urls_str,
         long curlmopt_maxconnects, char *err,size_t errsize) {
 
 	struct rb_http_handler_s * rb_http_handler = NULL;
