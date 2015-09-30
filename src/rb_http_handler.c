@@ -85,7 +85,7 @@ struct rb_http_handler_s * rb_http_handler (char * urls_str,
 		rb_http_handler->multi_handle = curl_multi_init();
 		rb_http_handler->thread_running = 1;
 		curl_multi_setopt (rb_http_handler->multi_handle,
-		                   CURLMOPT_MAX_TOTAL_CONNECTIONS, 10);
+		                   CURLMOPT_MAX_TOTAL_CONNECTIONS, curlmopt_maxconnects);
 
 		rd_thread_create (&rb_http_handler->rd_thread_send, "curl_send_message", NULL,
 		                  rb_http_send_message,
