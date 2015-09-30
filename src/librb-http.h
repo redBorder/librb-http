@@ -23,6 +23,7 @@ void rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler);
 void rb_http_produce (struct rb_http_handler_s * handler,
                       char * buff,
                       size_t len,
-                      int flags);
+                      int flags,
+                      void *opaque);
 void rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
                           cb_report report_fn);
