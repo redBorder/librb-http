@@ -1,0 +1,16 @@
+Non-\/blocking high-\/level wrapper for libcurl.
+
+\subsection*{Example}
+
+
+\begin{DoxyCode}
+\textcolor{comment}{//  Uses only the first URL, if it fails then uses the next one}
+\textcolor{comment}{//  2 Max cached connection}
+\textcolor{comment}{}RBHTTP\_HANDLER * handler = \hyperlink{librb-http_8h_a190d674d1d8cac12e0dd2445c5c8cba4}{rb\_http\_handler}(\textcolor{stringliteral}{"http://host1,http://host2"}, 2L);
+
+\textcolor{comment}{// Enqueue a message (non-blocking)}
+\textcolor{comment}{}RBHTTP\_MESSAGE message;
+message.data = \textcolor{stringliteral}{"Hello World!"};
+\hyperlink{librb-http_8h_a6f4b97a63ef87f1f51176db8947ab907}{rb\_http\_produce}(message);
+\end{DoxyCode}
+ 
