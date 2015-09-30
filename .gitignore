@@ -35,3 +35,4 @@ version.c
 
 #Binary
 bin/
+librbhttp.lds
