@@ -56,7 +56,7 @@ struct rb_http_message_s {
 ////////////////////
 // Private functions
 ////////////////////
-static char** str_split (char* a_str, const char a_delim);
+static char ** str_split (const char * a_str, const char a_delim);
 static void * rb_http_send_message (void * arg);
 static void * rb_http_recv_message (void * arg);
 
@@ -66,10 +66,16 @@ static void * rb_http_recv_message (void * arg);
  * it will try the next one.
  * @return          Handler for send messages to the provided URL.
  */
-struct rb_http_handler_s * rb_http_handler (char * urls_str,
-        long curlmopt_maxconnects, int max_messages, char * err, size_t errsize) {
+struct rb_http_handler_s * rb_http_handler (
+    const char * urls_str,
+    long curlmopt_maxconnects,
+    int max_messages,
+    char * err,
+    size_t errsize) {
 
 	struct rb_http_handler_s * rb_http_handler = NULL;
+	(void) err;
+	(void) errsize;
 
 	if (urls_str != NULL) {
 		rb_http_handler = calloc (1, sizeof (struct rb_http_handler_s));
@@ -80,7 +86,6 @@ struct rb_http_handler_s * rb_http_handler (char * urls_str,
 		rb_http_handler->curlmopt_maxconnects = curlmopt_maxconnects;
 
 		rb_http_handler->urls = str_split (urls_str, ',');
-		rb_http_handler->urls[0] = urls_str;
 		rb_http_handler->still_running = 0;
 		rb_http_handler->msgs_left = 0;
 		pthread_mutex_init (&rb_http_handler->multi_handle_mutex, NULL);
@@ -371,14 +376,15 @@ void rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
  * @param  a_delim Delimiter
  * @return         Array of strings separated
  */
-char** str_split (char* a_str, const char a_delim) {
+char** str_split (const char * in_str, const char a_delim) {
 	char** result    = 0;
 	size_t count     = 0;
-	char* tmp        = a_str;
 	char* last_comma = 0;
 	char delim[2];
 	delim[0] = a_delim;
 	delim[1] = 0;
+	char * a_str = strdup (in_str);
+	char* tmp        = a_str;
 
 	/* Count how many elements will be extracted. */
 	while (*tmp) {
@@ -411,5 +417,6 @@ char** str_split (char* a_str, const char a_delim) {
 		* (result + idx) = 0;
 	}
 
+	free (a_str);
 	return result;
 }
