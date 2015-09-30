@@ -334,8 +334,8 @@ void rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
 			report = rfqe->rfqe_ptr;
 			curl_easy_getinfo (report->easy_handle,
 			                   CURLINFO_PRIVATE, &message);
-			report_fn (rb_http_handler, report->data.result, NULL, message->payload, 
-				message->client_opaque);
+			report_fn (rb_http_handler, report->data.result, NULL, message->payload,
+			           message->client_opaque);
 
 			curl_slist_free_all (message->headers);
 			curl_easy_cleanup (report->easy_handle);
