@@ -21,9 +21,15 @@ static void my_callback (struct rb_http_handler_s * rb_http_handler,
                          void * opaque) {
 
 	printf ("STATUS CODE: %d\n", status_code);
-	printf ("STATUS CODE DESCRIPTION: %s\n", status_code_str);
-	printf ("MESSAGE: %s\n", buff);
-	printf ("OPAQUE: %p\n", opaque);
+
+	if (status_code_str != NULL)
+		printf ("STATUS CODE DESCRIPTION: %s\n", status_code_str);
+
+	if (buff != NULL)
+		printf ("MESSAGE: %s\n", buff);
+
+	if (opaque != NULL)
+		printf ("OPAQUE: %p\n", opaque);
 
 	free (buff);
 
@@ -40,7 +46,7 @@ int main() {
 	action.sa_handler = &sigint_handler;
 	sigaction (SIGINT, &action, NULL);
 
-	handler = rb_http_handler (url, max_connections);
+	handler = rb_http_handler (url, max_connections, 512);
 	printf ("This will send 1024 messages\n");
 	printf ("Press enter to start sending messages:\n");
 	int i = 0;
@@ -49,7 +55,11 @@ int main() {
 
 	for (i = 0 ; i < 1024 && running; i++) {
 		sprintf (string, "{\"message\": \"%d\"}", i);
-		rb_http_produce (handler, strdup (string), strlen (string), 0, NULL);
+		while (rb_http_produce (handler, strdup (string), strlen (string), 0,
+		                        NULL) > 0) {
+			printf ("Queue is full, sleeping 1s\n");
+			sleep (1);
+		}
 	}
 
 	while (running);

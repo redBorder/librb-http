@@ -17,13 +17,17 @@ typedef void (*cb_report) (struct rb_http_handler_s * rb_http_handler,
 ////////////////////
 /// Functions
 ////////////////////
-struct rb_http_handler_s * rb_http_handler (const char * urls_str,
-        long curlmopt_maxconnects,char *err,size_t errbuf);
+struct rb_http_handler_s * rb_http_handler (
+    const char * urls_str,
+    long curlmopt_maxconnects,
+    int max_messages,
+    char *err,
+    size_t errbuf);
 void rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler);
-void rb_http_produce (struct rb_http_handler_s * handler,
-                      char * buff,
-                      size_t len,
-                      int flags,
-                      void *opaque);
+int rb_http_produce (struct rb_http_handler_s * handler,
+                     char * buff,
+                     size_t len,
+                     int flags,
+                     void *opaque);
 void rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
                           cb_report report_fn);
