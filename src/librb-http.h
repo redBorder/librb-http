@@ -11,7 +11,7 @@ struct rb_http_message_s;
 typedef void (*cb_report) (struct rb_http_handler_s * rb_http_handler,
                            int status_code,
                            const char * status_code_str,
-                           char * buff,
+                           char * buff,size_t bufsiz,
                            void * opaque);
 
 ////////////////////
