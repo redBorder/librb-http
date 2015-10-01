@@ -88,20 +88,41 @@ struct rb_http_handler_s * rb_http_handler (
 		rb_http_handler->urls = str_split (urls_str, ',');
 		rb_http_handler->still_running = 0;
 		rb_http_handler->msgs_left = 0;
-		pthread_mutex_init (&rb_http_handler->multi_handle_mutex, NULL);
-		rb_http_handler->multi_handle = curl_multi_init();
+
+		if (pthread_mutex_init (&rb_http_handler->multi_handle_mutex, NULL) != 0) {
+			err = strdup ("Error initializing mutex");
+			return NULL;
+		}
+		if ((rb_http_handler->multi_handle = curl_multi_init()) == NULL ) {
+			return NULL;
+		}
 		rb_http_handler->thread_running = 1;
 		rb_http_handler->max_messages = max_messages;
-		curl_multi_setopt (rb_http_handler->multi_handle,
-		                   CURLMOPT_MAX_TOTAL_CONNECTIONS, curlmopt_maxconnects);
+		if (CURLM_OK != (curl_multi_setopt (rb_http_handler->multi_handle,
+		                                    CURLMOPT_MAX_TOTAL_CONNECTIONS,
+		                                    curlmopt_maxconnects))) {
+			err = strdup ("Error setting CURLMOPT_MAX_TOTAL_CONNECTIONS");
+			return NULL;
+		}
 
-		rd_thread_create (&rb_http_handler->rd_thread_send, "curl_send_message", NULL,
-		                  rb_http_send_message,
-		                  rb_http_handler);
+		if ((rd_thread_create (&rb_http_handler->rd_thread_send,
+		                       "curl_send_message",
+		                       NULL,
+		                       rb_http_send_message,
+		                       rb_http_handler)
+		    ) < 0) {
+			err = strdup ("Error creating thread for send messages");
+			return NULL;
+		}
 
-		rd_thread_create (&rb_http_handler->rd_thread_recv, "curl_recv_message", NULL,
-		                  rb_http_recv_message,
-		                  rb_http_handler);
+		if ((rd_thread_create (&rb_http_handler->rd_thread_recv, "curl_recv_message",
+		                       NULL,
+		                       rb_http_recv_message,
+		                       rb_http_handler)
+		    ) < 0) {
+			err = strdup ("Error creating thread for receive messages");
+			return NULL;
+		}
 
 		return rb_http_handler;
 	} else {
