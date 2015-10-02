@@ -141,11 +141,14 @@ int rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler,
 
 	if (CURLM_OK != curl_multi_cleanup (rb_http_handler->multi_handle)) {
 		snprintf (err, errsize, "Error cleaning up curl multi");
+		return 1;
 	}
 
 	if (pthread_mutex_destroy (&rb_http_handler->multi_handle_mutex) > 0) {
 		snprintf (err, errsize, "Error destroying mutex");
+		return 1;
 	}
+
 	rd_fifoq_destroy (&rb_http_handler->rfq);
 
 	if (rb_http_handler->urls) {
@@ -157,6 +160,8 @@ int rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler,
 	}
 
 	free (rb_http_handler);
+
+	return 0;
 }
 
 /**
