@@ -30,6 +30,8 @@ int rb_http_produce (struct rb_http_handler_s * handler,
                      char * buff,
                      size_t len,
                      int flags,
+                     char * err,
+                     size_t errsize,
                      void *opaque);
 void rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
                           cb_report report_fn);

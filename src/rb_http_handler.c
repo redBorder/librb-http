@@ -174,13 +174,19 @@ int rb_http_produce (struct rb_http_handler_s * handler,
                      char * buff,
                      size_t len,
                      int flags,
+                     char * err,
+                     size_t errsize,
                      void *opaque) {
 
 	int error = 0;
 
-	pthread_mutex_lock (&handler->multi_handle_mutex);
+	if (pthread_mutex_lock (&handler->multi_handle_mutex)) {
+		snprintf (err, errsize, "Error locking mutex");
+	}
 	if (handler->left < handler->max_messages) {
-		pthread_mutex_unlock (&handler->multi_handle_mutex);
+		if (pthread_mutex_unlock (&handler->multi_handle_mutex)) {
+			snprintf (err, errsize, "Error unlocking mutex");
+		}
 		handler->left++;
 		struct rb_http_message_s * message = calloc (1,
 		                                     sizeof (struct rb_http_message_s)
@@ -207,7 +213,9 @@ int rb_http_produce (struct rb_http_handler_s * handler,
 		}
 	} else {
 		error++;
-		pthread_mutex_unlock (&handler->multi_handle_mutex);
+		if (pthread_mutex_unlock (&handler->multi_handle_mutex)) {
+			snprintf (err, errsize, "Error unlocking mutex");
+		}
 	}
 
 	return error;
