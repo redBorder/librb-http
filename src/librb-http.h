@@ -23,7 +23,9 @@ struct rb_http_handler_s * rb_http_handler (
     int max_messages,
     char *err,
     size_t errbuf);
-void rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler);
+int rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler,
+                             char * err,
+                             size_t errsize);
 int rb_http_produce (struct rb_http_handler_s * handler,
                      char * buff,
                      size_t len,
