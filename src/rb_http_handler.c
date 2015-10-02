@@ -90,7 +90,7 @@ struct rb_http_handler_s * rb_http_handler (
 		rb_http_handler->msgs_left = 0;
 
 		if (pthread_mutex_init (&rb_http_handler->multi_handle_mutex, NULL) != 0) {
-			err = strdup ("Error initializing mutex");
+			snprintf (err, errsize, "Error setting initializing mutex");
 			return NULL;
 		}
 		if ((rb_http_handler->multi_handle = curl_multi_init()) == NULL ) {
@@ -101,7 +101,7 @@ struct rb_http_handler_s * rb_http_handler (
 		if (CURLM_OK != (curl_multi_setopt (rb_http_handler->multi_handle,
 		                                    CURLMOPT_MAX_TOTAL_CONNECTIONS,
 		                                    curlmopt_maxconnects))) {
-			err = strdup ("Error setting CURLMOPT_MAX_TOTAL_CONNECTIONS");
+			snprintf (err, errsize, "Error setting MAX_TOTAL_CONNECTIONS");
 			return NULL;
 		}
 
@@ -111,7 +111,7 @@ struct rb_http_handler_s * rb_http_handler (
 		                       rb_http_send_message,
 		                       rb_http_handler)
 		    ) < 0) {
-			err = strdup ("Error creating thread for send messages");
+			snprintf (err, errsize, "Error creating thread for reading");
 			return NULL;
 		}
 
@@ -120,7 +120,7 @@ struct rb_http_handler_s * rb_http_handler (
 		                       rb_http_recv_message,
 		                       rb_http_handler)
 		    ) < 0) {
-			err = strdup ("Error creating thread for receive messages");
+			snprintf (err, errsize, "Error creating thread for writting");
 			return NULL;
 		}
 
