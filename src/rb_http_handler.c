@@ -50,7 +50,7 @@ struct rb_http_message_s {
 	int free_message;
 	int copy;
 	struct curl_slist * headers;
-	void *client_opaque;
+	void * client_opaque;
 };
 
 ////////////////////
@@ -88,20 +88,41 @@ struct rb_http_handler_s * rb_http_handler (
 		rb_http_handler->urls = str_split (urls_str, ',');
 		rb_http_handler->still_running = 0;
 		rb_http_handler->msgs_left = 0;
-		pthread_mutex_init (&rb_http_handler->multi_handle_mutex, NULL);
-		rb_http_handler->multi_handle = curl_multi_init();
+
+		if (pthread_mutex_init (&rb_http_handler->multi_handle_mutex, NULL) != 0) {
+			snprintf (err, errsize, "Error setting initializing mutex");
+			return NULL;
+		}
+		if ((rb_http_handler->multi_handle = curl_multi_init()) == NULL ) {
+			return NULL;
+		}
 		rb_http_handler->thread_running = 1;
 		rb_http_handler->max_messages = max_messages;
-		curl_multi_setopt (rb_http_handler->multi_handle,
-		                   CURLMOPT_MAX_TOTAL_CONNECTIONS, curlmopt_maxconnects);
+		if (CURLM_OK != (curl_multi_setopt (rb_http_handler->multi_handle,
+		                                    CURLMOPT_MAX_TOTAL_CONNECTIONS,
+		                                    curlmopt_maxconnects))) {
+			snprintf (err, errsize, "Error setting MAX_TOTAL_CONNECTIONS");
+			return NULL;
+		}
 
-		rd_thread_create (&rb_http_handler->rd_thread_send, "curl_send_message", NULL,
-		                  rb_http_send_message,
-		                  rb_http_handler);
+		if ((rd_thread_create (&rb_http_handler->rd_thread_send,
+		                       "curl_send_message",
+		                       NULL,
+		                       rb_http_send_message,
+		                       rb_http_handler)
+		    ) < 0) {
+			snprintf (err, errsize, "Error creating thread for reading");
+			return NULL;
+		}
 
-		rd_thread_create (&rb_http_handler->rd_thread_recv, "curl_recv_message", NULL,
-		                  rb_http_recv_message,
-		                  rb_http_handler);
+		if ((rd_thread_create (&rb_http_handler->rd_thread_recv, "curl_recv_message",
+		                       NULL,
+		                       rb_http_recv_message,
+		                       rb_http_handler)
+		    ) < 0) {
+			snprintf (err, errsize, "Error creating thread for writting");
+			return NULL;
+		}
 
 		return rb_http_handler;
 	} else {
@@ -113,14 +134,21 @@ struct rb_http_handler_s * rb_http_handler (
  * @brief Free memory from a handler
  * @param rb_http_handler Handler that will freed
  */
-void rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler) {
+int rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler,
+                             char * err,
+                             size_t errsize) {
 	rb_http_handler->thread_running = 0;
 
-	// rd_thread_kill_join (rb_http_handler->rd_thread_send, NULL);
-	// rd_thread_kill_join (rb_http_handler->rd_thread_recv, NULL);
+	if (CURLM_OK != curl_multi_cleanup (rb_http_handler->multi_handle)) {
+		snprintf (err, errsize, "Error cleaning up curl multi");
+		return 1;
+	}
 
-	curl_multi_cleanup (rb_http_handler->multi_handle);
-	pthread_mutex_destroy (&rb_http_handler->multi_handle_mutex);
+	if (pthread_mutex_destroy (&rb_http_handler->multi_handle_mutex) > 0) {
+		snprintf (err, errsize, "Error destroying mutex");
+		return 1;
+	}
+
 	rd_fifoq_destroy (&rb_http_handler->rfq);
 
 	if (rb_http_handler->urls) {
@@ -132,6 +160,8 @@ void rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler) {
 	}
 
 	free (rb_http_handler);
+
+	return 0;
 }
 
 /**
@@ -144,13 +174,19 @@ int rb_http_produce (struct rb_http_handler_s * handler,
                      char * buff,
                      size_t len,
                      int flags,
-                     void *opaque) {
+                     char * err,
+                     size_t errsize,
+                     void * opaque) {
 
 	int error = 0;
 
-	pthread_mutex_lock (&handler->multi_handle_mutex);
+	if (pthread_mutex_lock (&handler->multi_handle_mutex)) {
+		snprintf (err, errsize, "Error locking mutex");
+	}
 	if (handler->left < handler->max_messages) {
-		pthread_mutex_unlock (&handler->multi_handle_mutex);
+		if (pthread_mutex_unlock (&handler->multi_handle_mutex)) {
+			snprintf (err, errsize, "Error unlocking mutex");
+		}
 		handler->left++;
 		struct rb_http_message_s * message = calloc (1,
 		                                     sizeof (struct rb_http_message_s)
@@ -177,7 +213,9 @@ int rb_http_produce (struct rb_http_handler_s * handler,
 		}
 	} else {
 		error++;
-		pthread_mutex_unlock (&handler->multi_handle_mutex);
+		if (pthread_mutex_unlock (&handler->multi_handle_mutex)) {
+			snprintf (err, errsize, "Error unlocking mutex");
+		}
 	}
 
 	return error;
@@ -205,27 +243,58 @@ void * rb_http_send_message (void * arg) {
 				rd_fifoq_elm_release (&rb_http_handler->rfq, rfqe);
 
 				handler  =  curl_easy_init();
-				curl_easy_setopt (handler, CURLOPT_URL,
-				                  rb_http_handler->urls[0]);
-				// curl_easy_setopt (handler, CURLOPT_FAILONERROR, 1L);
-				// curl_easy_setopt (handler, CURLOPT_VERBOSE, 1L);
+
+				if (handler == NULL) {
+					return NULL;
+				}
+
+				if (curl_easy_setopt (handler,
+				                      CURLOPT_URL,
+				                      rb_http_handler->urls[0])
+				        != CURLE_OK) {
+					return NULL;
+				} else {
+					rd_fifoq_add (&rb_http_handler->rfq, message);
+				}
 
 				message->headers = NULL;
+
 				message->headers = curl_slist_append (message->headers,
 				                                      "Accept: application/json");
+				if (message->headers == NULL) return NULL;
+
 				message->headers = curl_slist_append (message->headers,
 				                                      "Content-Type: application/json");
-				message->headers = curl_slist_append (message->headers, "charsets: utf-8");
+				if (message->headers == NULL) return NULL;
 
-				curl_easy_setopt (handler, CURLOPT_PRIVATE, message);
-				curl_easy_setopt (handler, CURLOPT_HTTPHEADER, message->headers);
-				curl_easy_setopt (handler, CURLOPT_POSTFIELDS,
-				                  message->payload);
+				message->headers = curl_slist_append (message->headers, "charsets: utf-8");
+				if (message->headers == NULL) return NULL;
+
+				if (curl_easy_setopt (handler, CURLOPT_PRIVATE, message) != CURLE_OK) {
+					return NULL;
+				}
+
+				if (curl_easy_setopt (handler, CURLOPT_HTTPHEADER,
+				                      message->headers) != CURLE_OK) {
+					return NULL;
+				}
+
+				if (curl_easy_setopt (handler, CURLOPT_POSTFIELDS,
+				                      message->payload) != CURLE_OK) {
+					return NULL;
+				}
 
 				pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
-				curl_multi_add_handle (rb_http_handler->multi_handle, handler);
-				curl_multi_perform (rb_http_handler->multi_handle,
-				                    &rb_http_handler->still_running);
+				if (curl_multi_add_handle (rb_http_handler->multi_handle,
+				                           handler) != CURLM_OK) {
+					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+					return NULL;
+				}
+				if (curl_multi_perform (rb_http_handler->multi_handle,
+				                        &rb_http_handler->still_running) != CURLM_OK) {
+					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+					return NULL;
+				}
 				pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
 			}
 		}
@@ -269,7 +338,12 @@ void * rb_http_recv_message (void * arg) {
 			timeout.tv_usec = 0;
 
 			pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
-			curl_multi_timeout (rb_http_handler->multi_handle, &curl_timeo);
+
+			if (curl_multi_timeout (rb_http_handler->multi_handle,
+			                        &curl_timeo) != CURLM_OK) {
+				return NULL;
+			}
+
 			if (curl_timeo >= 0) {
 				timeout.tv_sec = curl_timeo / 1000;
 				if (timeout.tv_sec > 1)
@@ -311,8 +385,11 @@ void * rb_http_recv_message (void * arg) {
 			case 0: /* timeout */
 			default: /* action */
 				pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
-				curl_multi_perform (rb_http_handler->multi_handle,
-				                    &rb_http_handler->still_running);
+				if (curl_multi_perform (rb_http_handler->multi_handle,
+				                        &rb_http_handler->still_running) != CURLM_OK) {
+					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+					return NULL;
+				}
 				pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
 				break;
 			}
@@ -325,10 +402,21 @@ void * rb_http_recv_message (void * arg) {
 			if (msg->msg == CURLMSG_DONE) {
 				if (msg->data.result == 0) {
 					rb_http_handler->left--;
-					curl_multi_remove_handle (rb_http_handler->multi_handle, msg->easy_handle);
-					curl_easy_getinfo (msg->easy_handle,
-					                   CURLINFO_PRIVATE, &message);
+					if (curl_multi_remove_handle (rb_http_handler->multi_handle,
+					                              msg->easy_handle) != CURLM_OK ) {
+						pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+						return NULL;
+					}
+					if (curl_easy_getinfo (msg->easy_handle,
+					                       CURLINFO_PRIVATE, &message) != CURLE_OK) {
+						pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+						return NULL;
+					}
 					CURLMsg * report = calloc (1, sizeof (CURLMsg));
+					if (report == NULL) {
+						pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+						return NULL;
+					}
 					memcpy (report, msg, sizeof (CURLMsg));
 					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 				}
@@ -377,15 +465,15 @@ void rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
  * @param  a_delim Delimiter
  * @return         Array of strings separated
  */
-char** str_split (const char * in_str, const char a_delim) {
-	char** result    = 0;
+char ** str_split (const char * in_str, const char a_delim) {
+	char ** result    = 0;
 	size_t count     = 0;
-	char* last_comma = 0;
+	char * last_comma = 0;
 	char delim[2];
 	delim[0] = a_delim;
 	delim[1] = 0;
 	char * a_str = strdup (in_str);
-	char* tmp        = a_str;
+	char * tmp        = a_str;
 
 	/* Count how many elements will be extracted. */
 	while (*tmp) {
@@ -403,11 +491,11 @@ char** str_split (const char * in_str, const char a_delim) {
 	   knows where the list of returned strings ends. */
 	count++;
 
-	result = malloc (sizeof (char*) * count);
+	result = malloc (sizeof (char *) * count);
 
 	if (result) {
 		size_t idx  = 0;
-		char* token = strtok (a_str, delim);
+		char * token = strtok (a_str, delim);
 
 		while (token) {
 			assert (idx < count);
