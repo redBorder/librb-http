@@ -285,7 +285,7 @@ void * rb_http_recv_message (void * arg) {
 	struct rb_http_message_s * message = NULL;
 	CURLMsg * msg = NULL;
 
-	while (rb_http_handler->thread_running) {
+	while (rb_http_handler->thread_running || rb_http_handler->still_running) {
 		struct timeval timeout;
 		int rc; /* select() return code */
 		CURLMcode mc; /* curl_multi_fdset() return code */
