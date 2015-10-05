@@ -50,7 +50,7 @@ struct rb_http_message_s {
 	int free_message;
 	int copy;
 	struct curl_slist * headers;
-	void *client_opaque;
+	void * client_opaque;
 };
 
 ////////////////////
@@ -176,7 +176,7 @@ int rb_http_produce (struct rb_http_handler_s * handler,
                      int flags,
                      char * err,
                      size_t errsize,
-                     void *opaque) {
+                     void * opaque) {
 
 	int error = 0;
 
@@ -464,15 +464,15 @@ void rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
  * @param  a_delim Delimiter
  * @return         Array of strings separated
  */
-char** str_split (const char * in_str, const char a_delim) {
-	char** result    = 0;
+char ** str_split (const char * in_str, const char a_delim) {
+	char ** result    = 0;
 	size_t count     = 0;
-	char* last_comma = 0;
+	char * last_comma = 0;
 	char delim[2];
 	delim[0] = a_delim;
 	delim[1] = 0;
 	char * a_str = strdup (in_str);
-	char* tmp        = a_str;
+	char * tmp        = a_str;
 
 	/* Count how many elements will be extracted. */
 	while (*tmp) {
@@ -490,11 +490,11 @@ char** str_split (const char * in_str, const char a_delim) {
 	   knows where the list of returned strings ends. */
 	count++;
 
-	result = malloc (sizeof (char*) * count);
+	result = malloc (sizeof (char *) * count);
 
 	if (result) {
 		size_t idx  = 0;
-		char* token = strtok (a_str, delim);
+		char * token = strtok (a_str, delim);
 
 		while (token) {
 			assert (idx < count);
