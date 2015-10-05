@@ -243,58 +243,27 @@ void * rb_http_send_message (void * arg) {
 				rd_fifoq_elm_release (&rb_http_handler->rfq, rfqe);
 
 				handler  =  curl_easy_init();
-
-				if (handler == NULL) {
-					return NULL;
-				}
-
-				if (curl_easy_setopt (handler,
-				                      CURLOPT_URL,
-				                      rb_http_handler->urls[0])
-				        != CURLE_OK) {
-					return NULL;
-				} else {
-					rd_fifoq_add (&rb_http_handler->rfq, message);
-				}
+				curl_easy_setopt (handler, CURLOPT_URL,
+				                  rb_http_handler->urls[0]);
+				// curl_easy_setopt (handler, CURLOPT_FAILONERROR, 1L);
+				// curl_easy_setopt (handler, CURLOPT_VERBOSE, 1L);
 
 				message->headers = NULL;
-
 				message->headers = curl_slist_append (message->headers,
 				                                      "Accept: application/json");
-				if (message->headers == NULL) return NULL;
-
 				message->headers = curl_slist_append (message->headers,
 				                                      "Content-Type: application/json");
-				if (message->headers == NULL) return NULL;
-
 				message->headers = curl_slist_append (message->headers, "charsets: utf-8");
-				if (message->headers == NULL) return NULL;
 
-				if (curl_easy_setopt (handler, CURLOPT_PRIVATE, message) != CURLE_OK) {
-					return NULL;
-				}
-
-				if (curl_easy_setopt (handler, CURLOPT_HTTPHEADER,
-				                      message->headers) != CURLE_OK) {
-					return NULL;
-				}
-
-				if (curl_easy_setopt (handler, CURLOPT_POSTFIELDS,
-				                      message->payload) != CURLE_OK) {
-					return NULL;
-				}
+				curl_easy_setopt (handler, CURLOPT_PRIVATE, message);
+				curl_easy_setopt (handler, CURLOPT_HTTPHEADER, message->headers);
+				curl_easy_setopt (handler, CURLOPT_POSTFIELDS,
+				                  message->payload);
 
 				pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
-				if (curl_multi_add_handle (rb_http_handler->multi_handle,
-				                           handler) != CURLM_OK) {
-					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-					return NULL;
-				}
-				if (curl_multi_perform (rb_http_handler->multi_handle,
-				                        &rb_http_handler->still_running) != CURLM_OK) {
-					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-					return NULL;
-				}
+				curl_multi_add_handle (rb_http_handler->multi_handle, handler);
+				curl_multi_perform (rb_http_handler->multi_handle,
+				                    &rb_http_handler->still_running);
 				pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
 			}
 		}
