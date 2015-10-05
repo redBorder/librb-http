@@ -386,7 +386,7 @@ void * rb_http_recv_message (void * arg) {
 			default: /* action */
 				pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
 				if (curl_multi_perform (rb_http_handler->multi_handle,
-				                        &rb_http_handler->still_running) != CURLE_OK) {
+				                        &rb_http_handler->still_running) != CURLM_OK) {
 					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
 					return NULL;
 				}
