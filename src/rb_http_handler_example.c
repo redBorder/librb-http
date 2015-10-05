@@ -53,7 +53,7 @@ int main() {
 	printf ("Press enter to start sending messages:\n");
 	int i = 0;
 
-	getchar();
+	// getchar();
 
 	for (i = 0 ; i < 1024 && running; i++) {
 		sprintf (string, "{\"message\": \"%d\"}", i);
@@ -63,9 +63,9 @@ int main() {
 			sleep (1);
 		}
 	}
-	rb_http_get_reports (handler, my_callback, 0);
 
-	while (running);
+	while (rb_http_get_reports (handler, my_callback, 100));
+
 	rb_http_handler_destroy (handler, NULL, 0);
 
 	return 0;
