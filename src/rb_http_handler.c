@@ -317,83 +317,82 @@ void * rb_http_recv_message (void * arg) {
 	CURLMsg * msg = NULL;
 
 	while (rb_http_handler->thread_running) {
-		while (rb_http_handler->still_running) {
-			struct timeval timeout;
-			int rc; /* select() return code */
-			CURLMcode mc; /* curl_multi_fdset() return code */
+		struct timeval timeout;
+		int rc; /* select() return code */
+		CURLMcode mc; /* curl_multi_fdset() return code */
 
-			fd_set fdread;
-			fd_set fdwrite;
-			fd_set fdexcep;
-			int maxfd = -1;
+		fd_set fdread;
+		fd_set fdwrite;
+		fd_set fdexcep;
+		int maxfd = -1;
 
-			long curl_timeo = -1;
+		long curl_timeo = -1;
 
-			FD_ZERO (&fdread);
-			FD_ZERO (&fdwrite);
-			FD_ZERO (&fdexcep);
+		FD_ZERO (&fdread);
+		FD_ZERO (&fdwrite);
+		FD_ZERO (&fdexcep);
 
-			/* set a suitable timeout to play around with */
-			timeout.tv_sec = 1;
-			timeout.tv_usec = 0;
+		/* set a suitable timeout to play around with */
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
 
+		pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
+
+		if (curl_multi_timeout (rb_http_handler->multi_handle,
+		                        &curl_timeo) != CURLM_OK) {
+			return NULL;
+		}
+
+		if (curl_timeo >= 0) {
+			timeout.tv_sec = curl_timeo / 1000;
+			if (timeout.tv_sec > 1)
+				timeout.tv_sec = 1;
+			else
+				timeout.tv_usec = (curl_timeo % 1000) * 1000;
+		}
+
+		/* get file descriptors from the transfers */
+		mc = curl_multi_fdset (rb_http_handler->multi_handle, &fdread, &fdwrite,
+		                       &fdexcep, &maxfd);
+		pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+
+		if (mc != CURLM_OK) {
+			fprintf (stderr, "curl_multi_fdset() failed, code %d.\n", mc);
+			break;
+		}
+
+		/* On success the value of maxfd is guaranteed to be >= -1. We call
+		   select(maxfd + 1, ...); specially in case of (maxfd == -1) there are
+		   no fds ready yet so we call select(0, ...) --or Sleep() on Windows--
+		   to sleep 100ms, which is the minimum suggested value in the
+		   curl_multi_fdset() doc. */
+
+		if (maxfd == -1) {
+			/* Portable sleep for platforms other than Windows. */
+			struct timeval wait = { 0, 100 * 1000 }; /* 100ms */
+			rc = select (0, NULL, NULL, NULL, &wait);
+		} else {
+			/* Note that on some platforms 'timeout' may be modified by select().
+			   If you need access to the original value save a copy beforehand. */
+			rc = select (maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
+		}
+
+		switch (rc) {
+		case -1:
+			/* select error */
+			break;
+		case 0: /* timeout */
+		default: /* action */
 			pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
-
-			if (curl_multi_timeout (rb_http_handler->multi_handle,
-			                        &curl_timeo) != CURLM_OK) {
+			if (curl_multi_perform (rb_http_handler->multi_handle,
+			                        &rb_http_handler->still_running) != CURLM_OK) {
+				pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
 				return NULL;
 			}
-
-			if (curl_timeo >= 0) {
-				timeout.tv_sec = curl_timeo / 1000;
-				if (timeout.tv_sec > 1)
-					timeout.tv_sec = 1;
-				else
-					timeout.tv_usec = (curl_timeo % 1000) * 1000;
-			}
-
-			/* get file descriptors from the transfers */
-			mc = curl_multi_fdset (rb_http_handler->multi_handle, &fdread, &fdwrite,
-			                       &fdexcep, &maxfd);
 			pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-
-			if (mc != CURLM_OK) {
-				fprintf (stderr, "curl_multi_fdset() failed, code %d.\n", mc);
-				break;
-			}
-
-			/* On success the value of maxfd is guaranteed to be >= -1. We call
-			   select(maxfd + 1, ...); specially in case of (maxfd == -1) there are
-			   no fds ready yet so we call select(0, ...) --or Sleep() on Windows--
-			   to sleep 100ms, which is the minimum suggested value in the
-			   curl_multi_fdset() doc. */
-
-			if (maxfd == -1) {
-				/* Portable sleep for platforms other than Windows. */
-				struct timeval wait = { 0, 100 * 1000 }; /* 100ms */
-				rc = select (0, NULL, NULL, NULL, &wait);
-			} else {
-				/* Note that on some platforms 'timeout' may be modified by select().
-				   If you need access to the original value save a copy beforehand. */
-				rc = select (maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
-			}
-
-			switch (rc) {
-			case -1:
-				/* select error */
-				break;
-			case 0: /* timeout */
-			default: /* action */
-				pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
-				if (curl_multi_perform (rb_http_handler->multi_handle,
-				                        &rb_http_handler->still_running) != CURLM_OK) {
-					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-					return NULL;
-				}
-				pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-				break;
-			}
+			break;
 		}
+
 		/* See how the transfers went */
 		pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
 		while ((msg = curl_multi_info_read (
