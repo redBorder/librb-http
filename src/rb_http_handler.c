@@ -338,7 +338,12 @@ void * rb_http_recv_message (void * arg) {
 			timeout.tv_usec = 0;
 
 			pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
-			curl_multi_timeout (rb_http_handler->multi_handle, &curl_timeo);
+
+			if (curl_multi_timeout (rb_http_handler->multi_handle,
+			                        &curl_timeo) != CURLM_OK) {
+				return NULL;
+			}
+
 			if (curl_timeo >= 0) {
 				timeout.tv_sec = curl_timeo / 1000;
 				if (timeout.tv_sec > 1)
@@ -380,8 +385,11 @@ void * rb_http_recv_message (void * arg) {
 			case 0: /* timeout */
 			default: /* action */
 				pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
-				curl_multi_perform (rb_http_handler->multi_handle,
-				                    &rb_http_handler->still_running);
+				if (curl_multi_perform (rb_http_handler->multi_handle,
+				                        &rb_http_handler->still_running) != CURLE_OK) {
+					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+					return NULL;
+				}
 				pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
 				break;
 			}
@@ -394,10 +402,21 @@ void * rb_http_recv_message (void * arg) {
 			if (msg->msg == CURLMSG_DONE) {
 				if (msg->data.result == 0) {
 					rb_http_handler->left--;
-					curl_multi_remove_handle (rb_http_handler->multi_handle, msg->easy_handle);
-					curl_easy_getinfo (msg->easy_handle,
-					                   CURLINFO_PRIVATE, &message);
+					if (curl_multi_remove_handle (rb_http_handler->multi_handle,
+					                              msg->easy_handle) != CURLM_OK ) {
+						pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+						return NULL;
+					}
+					if (curl_easy_getinfo (msg->easy_handle,
+					                       CURLINFO_PRIVATE, &message) != CURLE_OK) {
+						pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+						return NULL;
+					}
 					CURLMsg * report = calloc (1, sizeof (CURLMsg));
+					if (report == NULL) {
+						pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+						return NULL;
+					}
 					memcpy (report, msg, sizeof (CURLMsg));
 					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 				}
