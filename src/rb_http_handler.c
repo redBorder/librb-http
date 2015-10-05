@@ -405,10 +405,16 @@ int rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
 	rd_fifoq_elm_t * rfqe;
 	CURLMsg * report = NULL;
 	struct rb_http_message_s * message = NULL;
+	int nowait = 0;
 
-	while (rb_http_handler->thread_running) {
-		rfqe = rd_fifoq_pop_timedwait (&rb_http_handler->rfq_reports,timeout_ms);
-		if (rfqe != NULL && rfqe->rfqe_ptr != NULL) {
+	if (timeout_ms == 0) {
+		nowait = 1;
+	}
+
+	while ((rfqe = rd_fifoq_pop0 (&rb_http_handler->rfq_reports,
+	                              nowait,
+	                              timeout_ms)) != NULL) {
+		if (rfqe->rfqe_ptr != NULL) {
 			report = rfqe->rfqe_ptr;
 			curl_easy_getinfo (report->easy_handle,
 			                   CURLINFO_PRIVATE, &message);
