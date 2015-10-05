@@ -400,8 +400,8 @@ void * rb_http_recv_message (void * arg) {
 /**
  *
  */
-void rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
-                          cb_report report_fn, int timeout_ms) {
+int rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
+                         cb_report report_fn, int timeout_ms) {
 	rd_fifoq_elm_t * rfqe;
 	CURLMsg * report = NULL;
 	struct rb_http_message_s * message = NULL;
@@ -425,6 +425,8 @@ void rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
 			rd_fifoq_elm_release (&rb_http_handler->rfq_reports, rfqe);
 		}
 	}
+
+	return rb_http_handler->still_running;
 }
 
 /**
