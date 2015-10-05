@@ -11,7 +11,7 @@ struct rb_http_message_s;
 typedef void (*cb_report) (struct rb_http_handler_s * rb_http_handler,
                            int status_code,
                            const char * status_code_str,
-                           char * buff,size_t bufsiz,
+                           char * buff, size_t bufsiz,
                            void * opaque);
 
 ////////////////////
@@ -21,7 +21,7 @@ struct rb_http_handler_s * rb_http_handler (
     const char * urls_str,
     long curlmopt_maxconnects,
     int max_messages,
-    char *err,
+    char * err,
     size_t errbuf);
 int rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler,
                              char * err,
