@@ -104,22 +104,22 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:a04bb44224e2874cbf2df16042f2a4c53"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="librb-http_8h.html#a04bb44224e2874cbf2df16042f2a4c53">cb_report</a> )(struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="el" href="rb__http__handler_8c.html#a68c2a5bd671ddb123e3f38057b5c45f6">rb_http_handler</a>, int status_code, const char *status_code_str, char *buff, void *opaque)</td></tr>
-<tr class="separator:a04bb44224e2874cbf2df16042f2a4c53"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e24066b41ef7137e890bebbb89b5b50"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="librb-http_8h.html#a3e24066b41ef7137e890bebbb89b5b50">cb_report</a> )(struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="el" href="rb__http__handler_8c.html#a68c2a5bd671ddb123e3f38057b5c45f6">rb_http_handler</a>, int status_code, const char *status_code_str, char *buff, size_t bufsiz, void *opaque)</td></tr>
+<tr class="separator:a3e24066b41ef7137e890bebbb89b5b50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a190d674d1d8cac12e0dd2445c5c8cba4"><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="librb-http_8h.html#a190d674d1d8cac12e0dd2445c5c8cba4">rb_http_handler</a> (const char *urls_str, long curlmopt_maxconnects, int max_messages, char *err, size_t errbuf)</td></tr>
 <tr class="memdesc:a190d674d1d8cac12e0dd2445c5c8cba4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Functions.  <a href="#a190d674d1d8cac12e0dd2445c5c8cba4">More...</a><br/></td></tr>
 <tr class="separator:a190d674d1d8cac12e0dd2445c5c8cba4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a57eb6a7b4fba5c589b2a4afbb61f314c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="librb-http_8h.html#a57eb6a7b4fba5c589b2a4afbb61f314c">rb_http_handler_destroy</a> (struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="el" href="rb__http__handler_8c.html#a68c2a5bd671ddb123e3f38057b5c45f6">rb_http_handler</a>)</td></tr>
-<tr class="memdesc:a57eb6a7b4fba5c589b2a4afbb61f314c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free memory from a handler.  <a href="#a57eb6a7b4fba5c589b2a4afbb61f314c">More...</a><br/></td></tr>
-<tr class="separator:a57eb6a7b4fba5c589b2a4afbb61f314c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f4b97a63ef87f1f51176db8947ab907"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="librb-http_8h.html#a6f4b97a63ef87f1f51176db8947ab907">rb_http_produce</a> (struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="el" href="rb__http__handler__example_8c.html#a0165697b451a136ac74647662a5a39e1">handler</a>, char *buff, size_t len, int flags, void *opaque)</td></tr>
-<tr class="memdesc:a6f4b97a63ef87f1f51176db8947ab907"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueues a message (non-blocking)  <a href="#a6f4b97a63ef87f1f51176db8947ab907">More...</a><br/></td></tr>
-<tr class="separator:a6f4b97a63ef87f1f51176db8947ab907"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9121154f5242572bfbc47fca33c1310"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="librb-http_8h.html#aa9121154f5242572bfbc47fca33c1310">rb_http_get_reports</a> (struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="el" href="rb__http__handler_8c.html#a68c2a5bd671ddb123e3f38057b5c45f6">rb_http_handler</a>, <a class="el" href="librb-http_8h.html#a04bb44224e2874cbf2df16042f2a4c53">cb_report</a> report_fn)</td></tr>
-<tr class="separator:aa9121154f5242572bfbc47fca33c1310"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aea4aa423ff2034b027817632c746fd39"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="librb-http_8h.html#aea4aa423ff2034b027817632c746fd39">rb_http_handler_destroy</a> (struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="el" href="rb__http__handler_8c.html#a68c2a5bd671ddb123e3f38057b5c45f6">rb_http_handler</a>, char *err, size_t errsize)</td></tr>
+<tr class="memdesc:aea4aa423ff2034b027817632c746fd39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free memory from a handler.  <a href="#aea4aa423ff2034b027817632c746fd39">More...</a><br/></td></tr>
+<tr class="separator:aea4aa423ff2034b027817632c746fd39"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d0d31d9c2dc9ed04d6722e5653b4682"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="librb-http_8h.html#a0d0d31d9c2dc9ed04d6722e5653b4682">rb_http_produce</a> (struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="el" href="rb__http__handler__example_8c.html#a0165697b451a136ac74647662a5a39e1">handler</a>, char *buff, size_t len, int flags, char *err, size_t errsize, void *opaque)</td></tr>
+<tr class="memdesc:a0d0d31d9c2dc9ed04d6722e5653b4682"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueues a message (non-blocking)  <a href="#a0d0d31d9c2dc9ed04d6722e5653b4682">More...</a><br/></td></tr>
+<tr class="separator:a0d0d31d9c2dc9ed04d6722e5653b4682"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a890e981b619b1bdd5cc37fa16bb06f06"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="librb-http_8h.html#a890e981b619b1bdd5cc37fa16bb06f06">rb_http_get_reports</a> (struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="el" href="rb__http__handler_8c.html#a68c2a5bd671ddb123e3f38057b5c45f6">rb_http_handler</a>, <a class="el" href="librb-http_8h.html#a3e24066b41ef7137e890bebbb89b5b50">cb_report</a> report_fn, int timeout_ms)</td></tr>
+<tr class="separator:a890e981b619b1bdd5cc37fa16bb06f06"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a class="anchor" id="a0ffdecd586e5dc8f1eeede6bac9bc19f"></a>
@@ -151,12 +151,12 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Typedef Documentation</h2>
-<a class="anchor" id="a04bb44224e2874cbf2df16042f2a4c53"></a>
+<a class="anchor" id="a3e24066b41ef7137e890bebbb89b5b50"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef void(* cb_report)(struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="el" href="rb__http__handler_8c.html#a68c2a5bd671ddb123e3f38057b5c45f6">rb_http_handler</a>, int status_code, const char *status_code_str, char *buff, void *opaque)</td>
+          <td class="memname">typedef void(* cb_report)(struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="el" href="rb__http__handler_8c.html#a68c2a5bd671ddb123e3f38057b5c45f6">rb_http_handler</a>, int status_code, const char *status_code_str, char *buff, size_t bufsiz, void *opaque)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -166,12 +166,12 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="aa9121154f5242572bfbc47fca33c1310"></a>
+<a class="anchor" id="a890e981b619b1bdd5cc37fa16bb06f06"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void rb_http_get_reports </td>
+          <td class="memname">int rb_http_get_reports </td>
           <td>(</td>
           <td class="paramtype">struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *&#160;</td>
           <td class="paramname"><em>rb_http_handler</em>, </td>
@@ -179,8 +179,14 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="librb-http_8h.html#a04bb44224e2874cbf2df16042f2a4c53">cb_report</a>&#160;</td>
-          <td class="paramname"><em>report_fn</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="librb-http_8h.html#a3e24066b41ef7137e890bebbb89b5b50">cb_report</a>&#160;</td>
+          <td class="paramname"><em>report_fn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>timeout_ms</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -190,7 +196,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00347">347</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
+<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00422">422</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
 
 </div>
 </div>
@@ -250,16 +256,32 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a57eb6a7b4fba5c589b2a4afbb61f314c"></a>
+<a class="anchor" id="aea4aa423ff2034b027817632c746fd39"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void rb_http_handler_destroy </td>
+          <td class="memname">int rb_http_handler_destroy </td>
           <td>(</td>
           <td class="paramtype">struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *&#160;</td>
-          <td class="paramname"><em>rb_http_handler</em></td><td>)</td>
+          <td class="paramname"><em>rb_http_handler</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>err</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>errsize</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -272,11 +294,11 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00116">116</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
+<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00137">137</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a6f4b97a63ef87f1f51176db8947ab907"></a>
+<a class="anchor" id="a0d0d31d9c2dc9ed04d6722e5653b4682"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -307,6 +329,18 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>err</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>errsize</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">void *&#160;</td>
           <td class="paramname"><em>opaque</em>&#160;</td>
         </tr>
@@ -328,14 +362,14 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00143">143</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
+<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00173">173</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
 
 </div>
 </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 30 2015 17:14:54 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Oct 7 2015 14:06:26 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>
