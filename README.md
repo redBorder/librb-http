@@ -25,6 +25,7 @@ static void my_callback (struct rb_http_handler_s * rb_http_handler,
                          int status_code,
                          const char * status_code_str,
                          char * buff,
+                         size_t bufsiz,
                          void * opaque) {
 
     printf ("STATUS CODE: %d\n", status_code);
@@ -41,6 +42,7 @@ static void my_callback (struct rb_http_handler_s * rb_http_handler,
     free (buff);
 
     (void) rb_http_handler;
+    (void) bufsiz;
 }
 
 int main() {
@@ -58,21 +60,20 @@ int main() {
     printf ("Press enter to start sending messages:\n");
     int i = 0;
 
-    getchar();
+    // getchar();
 
     for (i = 0 ; i < 1024 && running; i++) {
         sprintf (string, "{\"message\": \"%d\"}", i);
         while (rb_http_produce (handler, strdup (string), strlen (string), 0,
-                                NULL) > 0) {
+                                NULL, 0, NULL) > 0) {
             printf ("Queue is full, sleeping 1s\n");
             sleep (1);
         }
     }
 
-    while (running);
+    while (rb_http_get_reports (handler, my_callback, 100));
 
-    rb_http_get_reports (handler, my_callback);
-    rb_http_handler_destroy (handler);
+    rb_http_handler_destroy (handler, NULL, 0);
 
     return 0;
 }
