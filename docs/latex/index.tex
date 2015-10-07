@@ -24,6 +24,7 @@ Non-\/blocking high-\/level wrapper for libcurl.
                          \textcolor{keywordtype}{int} status\_code,
                          \textcolor{keyword}{const} \textcolor{keywordtype}{char} * status\_code\_str,
                          \textcolor{keywordtype}{char} * buff,
+                         \textcolor{keywordtype}{size\_t} bufsiz,
                          \textcolor{keywordtype}{void} * opaque) \{
 
     printf (\textcolor{stringliteral}{"STATUS CODE: %d\(\backslash\)n"}, status\_code);
@@ -40,6 +41,7 @@ Non-\/blocking high-\/level wrapper for libcurl.
     free (buff);
 
     (void) rb\_http\_handler;
+    (void) bufsiz;
 \}
 
 \textcolor{keywordtype}{int} \hyperlink{rb__http__handler__example_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}() \{
@@ -57,21 +59,20 @@ Non-\/blocking high-\/level wrapper for libcurl.
     printf (\textcolor{stringliteral}{"Press enter to start sending messages:\(\backslash\)n"});
     \textcolor{keywordtype}{int} i = 0;
 
-    getchar();
+    \textcolor{comment}{// getchar();}
 
     \textcolor{keywordflow}{for} (i = 0 ; i < 1024 && running; i++) \{
         sprintf (\textcolor{keywordtype}{string}, \textcolor{stringliteral}{"\{\(\backslash\)"message\(\backslash\)": \(\backslash\)"%d\(\backslash\)"\}"}, i);
-        \textcolor{keywordflow}{while} (\hyperlink{librb-http_8h_a6f4b97a63ef87f1f51176db8947ab907}{rb\_http\_produce} (handler, strdup (\textcolor{keywordtype}{string}), strlen (\textcolor{keywordtype}{string}), 0,
-                                NULL) > 0) \{
+        \textcolor{keywordflow}{while} (\hyperlink{librb-http_8h_a0d0d31d9c2dc9ed04d6722e5653b4682}{rb\_http\_produce} (handler, strdup (\textcolor{keywordtype}{string}), strlen (\textcolor{keywordtype}{string}), 0,
+                                NULL, 0, NULL) > 0) \{
             printf (\textcolor{stringliteral}{"Queue is full, sleeping 1s\(\backslash\)n"});
             sleep (1);
         \}
     \}
 
-    \textcolor{keywordflow}{while} (running);
+    \textcolor{keywordflow}{while} (\hyperlink{librb-http_8h_a890e981b619b1bdd5cc37fa16bb06f06}{rb\_http\_get\_reports} (handler, my\_callback, 100));
 
-    \hyperlink{librb-http_8h_aa9121154f5242572bfbc47fca33c1310}{rb\_http\_get\_reports} (handler, my\_callback);
-    \hyperlink{librb-http_8h_a57eb6a7b4fba5c589b2a4afbb61f314c}{rb\_http\_handler\_destroy} (handler);
+    \hyperlink{librb-http_8h_aea4aa423ff2034b027817632c746fd39}{rb\_http\_handler\_destroy} (handler, NULL, 0);
 
     \textcolor{keywordflow}{return} 0;
 \}

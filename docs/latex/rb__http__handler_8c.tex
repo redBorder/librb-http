@@ -28,11 +28,11 @@ struct \hyperlink{structrb__http__message__s}{rb\-\_\-http\-\_\-message\-\_\-s}
 \item 
 struct \hyperlink{structrb__http__handler__s}{rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$ \hyperlink{rb__http__handler_8c_a68c2a5bd671ddb123e3f38057b5c45f6}{rb\-\_\-http\-\_\-handler} (const char $\ast$urls\-\_\-str, long curlmopt\-\_\-maxconnects, int max\-\_\-messages, char $\ast$err, size\-\_\-t errsize)
 \begin{DoxyCompactList}\small\item\em Creates a handler to produce messages. \end{DoxyCompactList}\item 
-void \hyperlink{rb__http__handler_8c_a57eb6a7b4fba5c589b2a4afbb61f314c}{rb\-\_\-http\-\_\-handler\-\_\-destroy} (struct \hyperlink{structrb__http__handler__s}{rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$\hyperlink{rb__http__handler_8c_a68c2a5bd671ddb123e3f38057b5c45f6}{rb\-\_\-http\-\_\-handler})
+int \hyperlink{rb__http__handler_8c_aea4aa423ff2034b027817632c746fd39}{rb\-\_\-http\-\_\-handler\-\_\-destroy} (struct \hyperlink{structrb__http__handler__s}{rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$\hyperlink{rb__http__handler_8c_a68c2a5bd671ddb123e3f38057b5c45f6}{rb\-\_\-http\-\_\-handler}, char $\ast$err, size\-\_\-t errsize)
 \begin{DoxyCompactList}\small\item\em Free memory from a handler. \end{DoxyCompactList}\item 
-int \hyperlink{rb__http__handler_8c_a6f4b97a63ef87f1f51176db8947ab907}{rb\-\_\-http\-\_\-produce} (struct \hyperlink{structrb__http__handler__s}{rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$\hyperlink{rb__http__handler__example_8c_a0165697b451a136ac74647662a5a39e1}{handler}, char $\ast$buff, size\-\_\-t len, int flags, void $\ast$opaque)
+int \hyperlink{rb__http__handler_8c_a0d0d31d9c2dc9ed04d6722e5653b4682}{rb\-\_\-http\-\_\-produce} (struct \hyperlink{structrb__http__handler__s}{rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$\hyperlink{rb__http__handler__example_8c_a0165697b451a136ac74647662a5a39e1}{handler}, char $\ast$buff, size\-\_\-t len, int flags, char $\ast$err, size\-\_\-t errsize, void $\ast$opaque)
 \begin{DoxyCompactList}\small\item\em Enqueues a message (non-\/blocking) \end{DoxyCompactList}\item 
-void \hyperlink{rb__http__handler_8c_aa9121154f5242572bfbc47fca33c1310}{rb\-\_\-http\-\_\-get\-\_\-reports} (struct \hyperlink{structrb__http__handler__s}{rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$\hyperlink{rb__http__handler_8c_a68c2a5bd671ddb123e3f38057b5c45f6}{rb\-\_\-http\-\_\-handler}, \hyperlink{librb-http_8h_a04bb44224e2874cbf2df16042f2a4c53}{cb\-\_\-report} report\-\_\-fn)
+int \hyperlink{rb__http__handler_8c_a890e981b619b1bdd5cc37fa16bb06f06}{rb\-\_\-http\-\_\-get\-\_\-reports} (struct \hyperlink{structrb__http__handler__s}{rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$\hyperlink{rb__http__handler_8c_a68c2a5bd671ddb123e3f38057b5c45f6}{rb\-\_\-http\-\_\-handler}, \hyperlink{librb-http_8h_a3e24066b41ef7137e890bebbb89b5b50}{cb\-\_\-report} report\-\_\-fn, int timeout\-\_\-ms)
 \end{DoxyCompactItemize}
 
 
@@ -47,17 +47,18 @@ Definition in file \hyperlink{rb__http__handler_8c_source}{rb\-\_\-http\-\_\-han
 
 
 \subsection{Function Documentation}
-\hypertarget{rb__http__handler_8c_aa9121154f5242572bfbc47fca33c1310}{\index{rb\-\_\-http\-\_\-handler.\-c@{rb\-\_\-http\-\_\-handler.\-c}!rb\-\_\-http\-\_\-get\-\_\-reports@{rb\-\_\-http\-\_\-get\-\_\-reports}}
+\hypertarget{rb__http__handler_8c_a890e981b619b1bdd5cc37fa16bb06f06}{\index{rb\-\_\-http\-\_\-handler.\-c@{rb\-\_\-http\-\_\-handler.\-c}!rb\-\_\-http\-\_\-get\-\_\-reports@{rb\-\_\-http\-\_\-get\-\_\-reports}}
 \index{rb\-\_\-http\-\_\-get\-\_\-reports@{rb\-\_\-http\-\_\-get\-\_\-reports}!rb_http_handler.c@{rb\-\_\-http\-\_\-handler.\-c}}
-\subsubsection[{rb\-\_\-http\-\_\-get\-\_\-reports}]{\setlength{\rightskip}{0pt plus 5cm}void rb\-\_\-http\-\_\-get\-\_\-reports (
+\subsubsection[{rb\-\_\-http\-\_\-get\-\_\-reports}]{\setlength{\rightskip}{0pt plus 5cm}int rb\-\_\-http\-\_\-get\-\_\-reports (
 \begin{DoxyParamCaption}
 \item[{struct {\bf rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$}]{rb\-\_\-http\-\_\-handler, }
-\item[{{\bf cb\-\_\-report}}]{report\-\_\-fn}
+\item[{{\bf cb\-\_\-report}}]{report\-\_\-fn, }
+\item[{int}]{timeout\-\_\-ms}
 \end{DoxyParamCaption}
-)}}\label{rb__http__handler_8c_aa9121154f5242572bfbc47fca33c1310}
+)}}\label{rb__http__handler_8c_a890e981b619b1bdd5cc37fa16bb06f06}
 
 
-Definition at line 347 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 422 of file rb\-\_\-http\-\_\-handler.\-c.
 
 \hypertarget{rb__http__handler_8c_a68c2a5bd671ddb123e3f38057b5c45f6}{\index{rb\-\_\-http\-\_\-handler.\-c@{rb\-\_\-http\-\_\-handler.\-c}!rb\-\_\-http\-\_\-handler@{rb\-\_\-http\-\_\-handler}}
 \index{rb\-\_\-http\-\_\-handler@{rb\-\_\-http\-\_\-handler}!rb_http_handler.c@{rb\-\_\-http\-\_\-handler.\-c}}
@@ -88,13 +89,15 @@ Handler for send messages to the provided U\-R\-L.
 
 Definition at line 69 of file rb\-\_\-http\-\_\-handler.\-c.
 
-\hypertarget{rb__http__handler_8c_a57eb6a7b4fba5c589b2a4afbb61f314c}{\index{rb\-\_\-http\-\_\-handler.\-c@{rb\-\_\-http\-\_\-handler.\-c}!rb\-\_\-http\-\_\-handler\-\_\-destroy@{rb\-\_\-http\-\_\-handler\-\_\-destroy}}
+\hypertarget{rb__http__handler_8c_aea4aa423ff2034b027817632c746fd39}{\index{rb\-\_\-http\-\_\-handler.\-c@{rb\-\_\-http\-\_\-handler.\-c}!rb\-\_\-http\-\_\-handler\-\_\-destroy@{rb\-\_\-http\-\_\-handler\-\_\-destroy}}
 \index{rb\-\_\-http\-\_\-handler\-\_\-destroy@{rb\-\_\-http\-\_\-handler\-\_\-destroy}!rb_http_handler.c@{rb\-\_\-http\-\_\-handler.\-c}}
-\subsubsection[{rb\-\_\-http\-\_\-handler\-\_\-destroy}]{\setlength{\rightskip}{0pt plus 5cm}void rb\-\_\-http\-\_\-handler\-\_\-destroy (
+\subsubsection[{rb\-\_\-http\-\_\-handler\-\_\-destroy}]{\setlength{\rightskip}{0pt plus 5cm}int rb\-\_\-http\-\_\-handler\-\_\-destroy (
 \begin{DoxyParamCaption}
-\item[{struct {\bf rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$}]{rb\-\_\-http\-\_\-handler}
+\item[{struct {\bf rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$}]{rb\-\_\-http\-\_\-handler, }
+\item[{char $\ast$}]{err, }
+\item[{size\-\_\-t}]{errsize}
 \end{DoxyParamCaption}
-)}}\label{rb__http__handler_8c_a57eb6a7b4fba5c589b2a4afbb61f314c}
+)}}\label{rb__http__handler_8c_aea4aa423ff2034b027817632c746fd39}
 
 
 Free memory from a handler. 
@@ -106,9 +109,9 @@ Free memory from a handler.
 \end{DoxyParams}
 
 
-Definition at line 116 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 137 of file rb\-\_\-http\-\_\-handler.\-c.
 
-\hypertarget{rb__http__handler_8c_a6f4b97a63ef87f1f51176db8947ab907}{\index{rb\-\_\-http\-\_\-handler.\-c@{rb\-\_\-http\-\_\-handler.\-c}!rb\-\_\-http\-\_\-produce@{rb\-\_\-http\-\_\-produce}}
+\hypertarget{rb__http__handler_8c_a0d0d31d9c2dc9ed04d6722e5653b4682}{\index{rb\-\_\-http\-\_\-handler.\-c@{rb\-\_\-http\-\_\-handler.\-c}!rb\-\_\-http\-\_\-produce@{rb\-\_\-http\-\_\-produce}}
 \index{rb\-\_\-http\-\_\-produce@{rb\-\_\-http\-\_\-produce}!rb_http_handler.c@{rb\-\_\-http\-\_\-handler.\-c}}
 \subsubsection[{rb\-\_\-http\-\_\-produce}]{\setlength{\rightskip}{0pt plus 5cm}int rb\-\_\-http\-\_\-produce (
 \begin{DoxyParamCaption}
@@ -116,9 +119,11 @@ Definition at line 116 of file rb\-\_\-http\-\_\-handler.\-c.
 \item[{char $\ast$}]{buff, }
 \item[{size\-\_\-t}]{len, }
 \item[{int}]{flags, }
+\item[{char $\ast$}]{err, }
+\item[{size\-\_\-t}]{errsize, }
 \item[{void $\ast$}]{opaque}
 \end{DoxyParamCaption}
-)}}\label{rb__http__handler_8c_a6f4b97a63ef87f1f51176db8947ab907}
+)}}\label{rb__http__handler_8c_a0d0d31d9c2dc9ed04d6722e5653b4682}
 
 
 Enqueues a message (non-\/blocking) 
@@ -134,5 +139,5 @@ Enqueues a message (non-\/blocking)
 \end{DoxyParams}
 
 
-Definition at line 143 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 173 of file rb\-\_\-http\-\_\-handler.\-c.
 
