@@ -250,6 +250,11 @@ void *rb_http_send_message (void *arg) {
 				handler  =  curl_easy_init();
 
 				if (handler == NULL) {
+					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+					report->err_code = -1;
+					report->http_code = 0;
+					report->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 					return NULL;
 				}
 
@@ -257,6 +262,11 @@ void *rb_http_send_message (void *arg) {
 				                      CURLOPT_URL,
 				                      rb_http_handler->urls[0])
 				        != CURLE_OK) {
+					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+					report->err_code = -1;
+					report->http_code = 0;
+					report->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 					return NULL;
 				}
 
@@ -268,30 +278,60 @@ void *rb_http_send_message (void *arg) {
 				message->headers = curl_slist_append (message->headers, "charsets: utf-8");
 
 				if (curl_easy_setopt (handler, CURLOPT_PRIVATE, message) != CURLE_OK) {
+					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+					report->err_code = -1;
+					report->http_code = 0;
+					report->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 					return NULL;
 				}
 
 				if (curl_easy_setopt (handler, CURLOPT_HTTPHEADER,
 				                      message->headers) != CURLE_OK) {
+					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+					report->err_code = -1;
+					report->http_code = 0;
+					report->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 					return NULL;
 				}
 
 				if (curl_easy_setopt (handler, CURLOPT_TIMEOUT_MS, 1000L) != CURLE_OK) {
+					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+					report->err_code = -1;
+					report->http_code = 0;
+					report->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 					return NULL;
 				}
 
 				if (curl_easy_setopt (handler, CURLOPT_POSTFIELDS,
 				                      message->payload) != CURLE_OK) {
+					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+					report->err_code = -1;
+					report->http_code = 0;
+					report->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 					return NULL;
 				}
 
 				pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
 				if (curl_multi_add_handle (rb_http_handler->multi_handle,
 				                           handler) != CURLM_OK) {
+					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+					report->err_code = -1;
+					report->http_code = 0;
+					report->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 					return NULL;
 				}
 				if (curl_multi_perform (rb_http_handler->multi_handle,
 				                        &rb_http_handler->still_running) != CURLM_OK) {
+					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+					report->err_code = -1;
+					report->http_code = 0;
+					report->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 					return NULL;
 				}
 				pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
@@ -340,6 +380,11 @@ void *rb_http_recv_message (void *arg) {
 
 		if (curl_multi_timeout (rb_http_handler->multi_handle,
 		                        &curl_timeo) != CURLM_OK) {
+			struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
+			ireport->err_code = -1;
+			ireport->http_code = 0;
+			ireport->handler = NULL;
+			rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
 			return NULL;
 		}
 
@@ -358,6 +403,11 @@ void *rb_http_recv_message (void *arg) {
 
 		if (mc != CURLM_OK) {
 			fprintf (stderr, "curl_multi_fdset() failed, code %d.\n", mc);
+			struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
+			ireport->err_code = -1;
+			ireport->http_code = 0;
+			ireport->handler = NULL;
+			rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
 			break;
 		}
 
@@ -387,6 +437,11 @@ void *rb_http_recv_message (void *arg) {
 			if (curl_multi_perform (rb_http_handler->multi_handle,
 			                        &rb_http_handler->still_running) != CURLM_OK) {
 				pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+				struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
+				ireport->err_code = -1;
+				ireport->http_code = 0;
+				ireport->handler = NULL;
+				rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
 				return NULL;
 			}
 			pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
@@ -404,16 +459,31 @@ void *rb_http_recv_message (void *arg) {
 				if (curl_multi_remove_handle (rb_http_handler->multi_handle,
 				                              msg->easy_handle) != CURLM_OK ) {
 					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+					struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
+					ireport->err_code = -1;
+					ireport->http_code = 0;
+					ireport->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
 					return NULL;
 				}
 				if (curl_easy_getinfo (msg->easy_handle,
 				                       CURLINFO_PRIVATE, &message) != CURLE_OK) {
 					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+					struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
+					ireport->err_code = -1;
+					ireport->http_code = 0;
+					ireport->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
 					return NULL;
 				}
 
 				if (report == NULL) {
 					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+					struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
+					ireport->err_code = -1;
+					ireport->http_code = 0;
+					ireport->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
 					return NULL;
 				}
 
