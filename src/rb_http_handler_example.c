@@ -56,7 +56,6 @@ int main() {
 
 	handler = rb_http_handler (url, max_connections, 512, NULL, 0);
 	printf ("This will send 1024 messages\n");
-	printf ("Press enter to start sending messages:\n");
 	int i = 0;
 
 	// getchar();
