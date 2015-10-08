@@ -21,7 +21,7 @@
 ////////////////////
 
 /**
- *  @struct rb_http_handler_t rb_http_handler.h "rb_http_handler.h"
+ *  @struct rb_http_handler_s rb_http_handler.c "rb_http_handler.c"
  *  @brief Contains the "handler" information.
  */
 struct rb_http_handler_s {
@@ -41,7 +41,7 @@ struct rb_http_handler_s {
 };
 
 /**
- *  @struct message_t rb_http_handler.h "rb_http_handler.h"
+ *  @struct rb_http_message_s rb_http_handler.c "rb_http_handler.c"
  *  @brief The message to send.
  */
 struct rb_http_message_s {
