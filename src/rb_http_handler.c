@@ -31,13 +31,13 @@ struct rb_http_handler_s {
 	int left;
 	int max_messages;
 	long curlmopt_maxconnects;
-	char ** urls;
+	char **urls;
 	pthread_mutex_t multi_handle_mutex;
-	CURLM * multi_handle;
+	CURLM *multi_handle;
 	rd_fifoq_t rfq;
 	rd_fifoq_t rfq_reports;
-	rd_thread_t * rd_thread_send;
-	rd_thread_t * rd_thread_recv;
+	rd_thread_t *rd_thread_send;
+	rd_thread_t *rd_thread_recv;
 };
 
 /**
@@ -45,20 +45,20 @@ struct rb_http_handler_s {
  *  @brief The message to send.
  */
 struct rb_http_message_s {
-	char * payload;
+	char *payload;
 	size_t len;
 	int free_message;
 	int copy;
-	struct curl_slist * headers;
-	void * client_opaque;
+	struct curl_slist *headers;
+	void *client_opaque;
 };
 
 ////////////////////
 // Private functions
 ////////////////////
-static char ** str_split (const char * a_str, const char a_delim);
-static void * rb_http_send_message (void * arg);
-static void * rb_http_recv_message (void * arg);
+static char **str_split (const char *a_str, const char a_delim);
+static void *rb_http_send_message (void *arg);
+static void *rb_http_recv_message (void *arg);
 
 /**
  * @brief Creates a handler to produce messages.
@@ -66,14 +66,14 @@ static void * rb_http_recv_message (void * arg);
  * it will try the next one.
  * @return          Handler for send messages to the provided URL.
  */
-struct rb_http_handler_s * rb_http_handler (
-    const char * urls_str,
+struct rb_http_handler_s *rb_http_handler (
+    const char *urls_str,
     long curlmopt_maxconnects,
     int max_messages,
-    char * err,
+    char *err,
     size_t errsize) {
 
-	struct rb_http_handler_s * rb_http_handler = NULL;
+	struct rb_http_handler_s *rb_http_handler = NULL;
 	(void) err;
 	(void) errsize;
 
@@ -134,8 +134,8 @@ struct rb_http_handler_s * rb_http_handler (
  * @brief Free memory from a handler
  * @param rb_http_handler Handler that will freed
  */
-int rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler,
-                             char * err,
+int rb_http_handler_destroy (struct rb_http_handler_s *rb_http_handler,
+                             char *err,
                              size_t errsize) {
 	rb_http_handler->thread_running = 0;
 
@@ -170,13 +170,13 @@ int rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler,
  * @param message Message to be enqueued.
  * @param options Options
  */
-int rb_http_produce (struct rb_http_handler_s * handler,
-                     char * buff,
+int rb_http_produce (struct rb_http_handler_s *handler,
+                     char *buff,
                      size_t len,
                      int flags,
-                     char * err,
+                     char *err,
                      size_t errsize,
-                     void * opaque) {
+                     void *opaque) {
 
 	int error = 0;
 
@@ -188,9 +188,9 @@ int rb_http_produce (struct rb_http_handler_s * handler,
 			snprintf (err, errsize, "Error unlocking mutex");
 		}
 		handler->left++;
-		struct rb_http_message_s * message = calloc (1,
-		                                     sizeof (struct rb_http_message_s)
-		                                     + ((flags & RB_HTTP_MESSAGE_F_COPY) ? len : 0));
+		struct rb_http_message_s *message = calloc (1,
+		                                    sizeof (struct rb_http_message_s)
+		                                    + ((flags & RB_HTTP_MESSAGE_F_COPY) ? len : 0));
 
 		message->len = len;
 		message->client_opaque = opaque;
@@ -226,14 +226,14 @@ int rb_http_produce (struct rb_http_handler_s * handler,
  * @param  arg Opaque that contains a struct thread_arguments_t with the URL
  * and message queue.
  */
-void * rb_http_send_message (void * arg) {
+void *rb_http_send_message (void *arg) {
 
 	rd_thread_sigmask (SIG_BLOCK, SIGINT, RD_SIG_END);
-	struct rb_http_handler_s * rb_http_handler = (struct rb_http_handler_s *) arg;
+	struct rb_http_handler_s *rb_http_handler = (struct rb_http_handler_s *) arg;
 
-	struct rb_http_message_s * message = NULL;
-	rd_fifoq_elm_t * rfqe = NULL;
-	CURL * handler;
+	struct rb_http_message_s *message = NULL;
+	rd_fifoq_elm_t *rfqe = NULL;
+	CURL *handler;
 
 	if (arg != NULL) {
 		while (rb_http_handler->thread_running) {
@@ -297,12 +297,12 @@ void * rb_http_send_message (void * arg) {
  * @param  arg [description]
  * @return     [description]
  */
-void * rb_http_recv_message (void * arg) {
+void *rb_http_recv_message (void *arg) {
 
 	rd_thread_sigmask (SIG_BLOCK, SIGINT, RD_SIG_END);
-	struct rb_http_handler_s * rb_http_handler = (struct rb_http_handler_s *) arg;
-	struct rb_http_message_s * message = NULL;
-	CURLMsg * msg = NULL;
+	struct rb_http_handler_s *rb_http_handler = (struct rb_http_handler_s *) arg;
+	struct rb_http_message_s *message = NULL;
+	CURLMsg *msg = NULL;
 
 	while (rb_http_handler->thread_running || rb_http_handler->still_running) {
 		struct timeval timeout;
@@ -399,7 +399,7 @@ void * rb_http_recv_message (void * arg) {
 						pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
 						return NULL;
 					}
-					CURLMsg * report = calloc (1, sizeof (CURLMsg));
+					CURLMsg *report = calloc (1, sizeof (CURLMsg));
 					if (report == NULL) {
 						pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
 						return NULL;
@@ -419,11 +419,11 @@ void * rb_http_recv_message (void * arg) {
 /**
  *
  */
-int rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
+int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
                          cb_report report_fn, int timeout_ms) {
-	rd_fifoq_elm_t * rfqe;
-	CURLMsg * report = NULL;
-	struct rb_http_message_s * message = NULL;
+	rd_fifoq_elm_t *rfqe;
+	CURLMsg *report = NULL;
+	struct rb_http_message_s *message = NULL;
 	int nowait = 0;
 
 	if (timeout_ms == 0) {
@@ -460,15 +460,15 @@ int rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
  * @param  a_delim Delimiter
  * @return         Array of strings separated
  */
-char ** str_split (const char * in_str, const char a_delim) {
-	char ** result    = 0;
+char **str_split (const char *in_str, const char a_delim) {
+	char **result    = 0;
 	size_t count     = 0;
-	char * last_comma = 0;
+	char *last_comma = 0;
 	char delim[2];
 	delim[0] = a_delim;
 	delim[1] = 0;
-	char * a_str = strdup (in_str);
-	char * tmp        = a_str;
+	char *a_str = strdup (in_str);
+	char *tmp        = a_str;
 
 	/* Count how many elements will be extracted. */
 	while (*tmp) {
@@ -490,7 +490,7 @@ char ** str_split (const char * in_str, const char a_delim) {
 
 	if (result) {
 		size_t idx  = 0;
-		char * token = strtok (a_str, delim);
+		char *token = strtok (a_str, delim);
 
 		while (token) {
 			assert (idx < count);
