@@ -53,6 +53,12 @@ struct rb_http_message_s {
 	void *client_opaque;
 };
 
+struct rb_http_report_s {
+	int err_code;
+	long http_code;
+	CURL *handler;
+};
+
 ////////////////////
 // Private functions
 ////////////////////
@@ -306,6 +312,7 @@ void *rb_http_recv_message (void *arg) {
 
 	rd_thread_sigmask (SIG_BLOCK, SIGINT, RD_SIG_END);
 	struct rb_http_handler_s *rb_http_handler = (struct rb_http_handler_s *) arg;
+	struct rb_http_report_s *report = NULL;
 	struct rb_http_message_s *message = NULL;
 	CURLMsg *msg = NULL;
 
@@ -392,6 +399,7 @@ void *rb_http_recv_message (void *arg) {
 		                  rb_http_handler->multi_handle,
 		                  &rb_http_handler->msgs_left))) {
 			if (msg->msg == CURLMSG_DONE) {
+				report = calloc (1, sizeof (struct rb_http_report_s));
 				rb_http_handler->left--;
 				if (curl_multi_remove_handle (rb_http_handler->multi_handle,
 				                              msg->easy_handle) != CURLM_OK ) {
@@ -403,12 +411,18 @@ void *rb_http_recv_message (void *arg) {
 					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
 					return NULL;
 				}
-				CURLMsg *report = calloc (1, sizeof (CURLMsg));
+
 				if (report == NULL) {
 					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
 					return NULL;
 				}
-				memcpy (report, msg, sizeof (CURLMsg));
+
+				report->err_code = msg->data.result;
+				report->handler = msg->easy_handle;
+				curl_easy_getinfo (msg->easy_handle,
+				                   CURLINFO_RESPONSE_CODE,
+				                   &report->http_code);
+
 				rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 			}
 		}
@@ -425,7 +439,7 @@ void *rb_http_recv_message (void *arg) {
 int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
                          cb_report report_fn, int timeout_ms) {
 	rd_fifoq_elm_t *rfqe;
-	CURLMsg *report = NULL;
+	struct rb_http_report_s *report = NULL;
 	struct rb_http_message_s *message = NULL;
 	int nowait = 0;
 	long http_code = 0;
@@ -439,21 +453,20 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 	                              timeout_ms)) != NULL) {
 		if (rfqe->rfqe_ptr != NULL) {
 			report = rfqe->rfqe_ptr;
-			curl_easy_getinfo (report->easy_handle,
+			curl_easy_getinfo (report->handler,
 			                   CURLINFO_PRIVATE,
 			                   &message);
-			curl_easy_getinfo (report->easy_handle,
-			                   CURLINFO_RESPONSE_CODE,
-			                   &http_code);
+			http_code = report->http_code;
+
 			report_fn (rb_http_handler,
-			           report->data.result,
+			           report->err_code,
 			           http_code, NULL,
 			           message->payload,
 			           message->len,
 			           message->client_opaque);
 
 			curl_slist_free_all (message->headers);
-			curl_easy_cleanup (report->easy_handle);
+			curl_easy_cleanup (report->handler);
 			if (message->free_message) {
 				free (message->payload);
 			}
