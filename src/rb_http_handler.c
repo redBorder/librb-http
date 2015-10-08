@@ -270,10 +270,13 @@ void *rb_http_send_message (void *arg) {
 					return NULL;
 				}
 
-				curl_easy_setopt (handler, CURLOPT_TIMEOUT_MS, 1000L);
+				if (curl_easy_setopt (handler, CURLOPT_TIMEOUT_MS, 1000L) != CURLE_OK) {
+					return NULL;
+				}
 
 				if (curl_easy_setopt (handler, CURLOPT_POSTFIELDS,
 				                      message->payload) != CURLE_OK) {
+					return NULL;
 				}
 
 				pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
