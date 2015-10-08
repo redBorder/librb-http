@@ -18,11 +18,13 @@ static void my_callback (struct rb_http_handler_s *rb_http_handler,
                          size_t bufsiz,
                          void *opaque) {
 
-	printf ("STATUS CODE: %d\n", status_code);
-	printf ("HTTP STATUS: %ld\n", http_status);
+	if (status_code != 0) {
+		printf ("CURL CODE: %d\n", status_code);
+	}
 
-	if (status_code_str != NULL)
-		printf ("STATUS CODE DESCRIPTION: %s\n", status_code_str);
+	if (status_code == 0) {
+		printf ("HTTP STATUS: %ld\n", http_status);
+	}
 
 	if (buff != NULL)
 		printf ("MESSAGE: %s\n", buff);
@@ -34,6 +36,7 @@ static void my_callback (struct rb_http_handler_s *rb_http_handler,
 
 	(void) rb_http_handler;
 	(void) bufsiz;
+	(void) status_code_str;
 }
 
 static void sigint_handler () {
