@@ -389,26 +389,24 @@ void *rb_http_recv_message (void *arg) {
 		                  rb_http_handler->multi_handle,
 		                  &rb_http_handler->msgs_left))) {
 			if (msg->msg == CURLMSG_DONE) {
-				if (msg->data.result == 0) {
-					rb_http_handler->left--;
-					if (curl_multi_remove_handle (rb_http_handler->multi_handle,
-					                              msg->easy_handle) != CURLM_OK ) {
-						pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-						return NULL;
-					}
-					if (curl_easy_getinfo (msg->easy_handle,
-					                       CURLINFO_PRIVATE, &message) != CURLE_OK) {
-						pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-						return NULL;
-					}
-					CURLMsg *report = calloc (1, sizeof (CURLMsg));
-					if (report == NULL) {
-						pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-						return NULL;
-					}
-					memcpy (report, msg, sizeof (CURLMsg));
-					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+				rb_http_handler->left--;
+				if (curl_multi_remove_handle (rb_http_handler->multi_handle,
+				                              msg->easy_handle) != CURLM_OK ) {
+					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+					return NULL;
 				}
+				if (curl_easy_getinfo (msg->easy_handle,
+				                       CURLINFO_PRIVATE, &message) != CURLE_OK) {
+					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+					return NULL;
+				}
+				CURLMsg *report = calloc (1, sizeof (CURLMsg));
+				if (report == NULL) {
+					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+					return NULL;
+				}
+				memcpy (report, msg, sizeof (CURLMsg));
+				rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 			}
 		}
 		pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
