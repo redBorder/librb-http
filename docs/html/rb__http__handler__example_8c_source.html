@@ -145,37 +145,36 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;</div>
 <div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;    handler = <a class="code" href="librb-http_8h.html#a190d674d1d8cac12e0dd2445c5c8cba4">rb_http_handler</a> (url, max_connections, 512, NULL, 0);</div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    printf (<span class="stringliteral">&quot;This will send 1024 messages\n&quot;</span>);</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;    printf (<span class="stringliteral">&quot;Press enter to start sending messages:\n&quot;</span>);</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    <span class="keywordtype">int</span> i = 0;</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;    <span class="comment">// getchar();</span></div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    <span class="keywordflow">for</span> (i = 0 ; i &lt; 1024 &amp;&amp; running; i++) {</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;        sprintf (<span class="keywordtype">string</span>, <span class="stringliteral">&quot;{\&quot;message\&quot;: \&quot;%d\&quot;}&quot;</span>, i);</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;        <span class="keywordflow">while</span> (<a class="code" href="librb-http_8h.html#a0d0d31d9c2dc9ed04d6722e5653b4682">rb_http_produce</a> (handler, strdup (<span class="keywordtype">string</span>), strlen (<span class="keywordtype">string</span>), 0,</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;                                NULL, 0, NULL) &gt; 0 &amp;&amp; running) {</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;            printf (<span class="stringliteral">&quot;Queue is full, sleeping 1s\n&quot;</span>);</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;            sleep (1);</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        }</div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;    }</div>
-<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;</div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;    <span class="keywordflow">while</span> (<a class="code" href="librb-http_8h.html#a890e981b619b1bdd5cc37fa16bb06f06">rb_http_get_reports</a> (handler, my_callback, 100) &amp;&amp; running);</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;    <a class="code" href="librb-http_8h.html#aea4aa423ff2034b027817632c746fd39">rb_http_handler_destroy</a> (handler, NULL, 0);</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;}</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;    <span class="keywordtype">int</span> i = 0;</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;</div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;    <span class="comment">// getchar();</span></div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;    <span class="keywordflow">for</span> (i = 0 ; i &lt; 1024 &amp;&amp; running; i++) {</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;        sprintf (<span class="keywordtype">string</span>, <span class="stringliteral">&quot;{\&quot;message\&quot;: \&quot;%d\&quot;}&quot;</span>, i);</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;        <span class="keywordflow">while</span> (<a class="code" href="librb-http_8h.html#a0d0d31d9c2dc9ed04d6722e5653b4682">rb_http_produce</a> (handler, strdup (<span class="keywordtype">string</span>), strlen (<span class="keywordtype">string</span>), 0,</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;                                NULL, 0, NULL) &gt; 0 &amp;&amp; running) {</div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;            printf (<span class="stringliteral">&quot;Queue is full, sleeping 1s\n&quot;</span>);</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;            sleep (1);</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;        }</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;    }</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;    <span class="keywordflow">while</span> (<a class="code" href="librb-http_8h.html#a890e981b619b1bdd5cc37fa16bb06f06">rb_http_get_reports</a> (handler, my_callback, 100) &amp;&amp; running);</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    <a class="code" href="librb-http_8h.html#aea4aa423ff2034b027817632c746fd39">rb_http_handler_destroy</a> (handler, NULL, 0);</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;</div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;    <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;}</div>
 <div class="ttc" id="rb__http__handler__example_8c_html_ae66f6b31b5ad750f1fe042a706a4e3d4"><div class="ttname"><a href="rb__http__handler__example_8c.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a></div><div class="ttdeci">int main()</div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler__example_8c_source.html#l00047">rb_http_handler_example.c:47</a></div></div>
-<div class="ttc" id="librb-http_8h_html_a890e981b619b1bdd5cc37fa16bb06f06"><div class="ttname"><a href="librb-http_8h.html#a890e981b619b1bdd5cc37fa16bb06f06">rb_http_get_reports</a></div><div class="ttdeci">int rb_http_get_reports(struct rb_http_handler_s *rb_http_handler, cb_report report_fn, int timeout_ms)</div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00425">rb_http_handler.c:425</a></div></div>
-<div class="ttc" id="structrb__http__handler__s_html"><div class="ttname"><a href="structrb__http__handler__s.html">rb_http_handler_s</a></div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00027">rb_http_handler.c:27</a></div></div>
-<div class="ttc" id="librb-http_8h_html_a0d0d31d9c2dc9ed04d6722e5653b4682"><div class="ttname"><a href="librb-http_8h.html#a0d0d31d9c2dc9ed04d6722e5653b4682">rb_http_produce</a></div><div class="ttdeci">int rb_http_produce(struct rb_http_handler_s *handler, char *buff, size_t len, int flags, char *err, size_t errsize, void *opaque)</div><div class="ttdoc">Enqueues a message (non-blocking) </div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00173">rb_http_handler.c:173</a></div></div>
-<div class="ttc" id="librb-http_8h_html_aea4aa423ff2034b027817632c746fd39"><div class="ttname"><a href="librb-http_8h.html#aea4aa423ff2034b027817632c746fd39">rb_http_handler_destroy</a></div><div class="ttdeci">int rb_http_handler_destroy(struct rb_http_handler_s *rb_http_handler, char *err, size_t errsize)</div><div class="ttdoc">Free memory from a handler. </div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00137">rb_http_handler.c:137</a></div></div>
-<div class="ttc" id="librb-http_8h_html_a190d674d1d8cac12e0dd2445c5c8cba4"><div class="ttname"><a href="librb-http_8h.html#a190d674d1d8cac12e0dd2445c5c8cba4">rb_http_handler</a></div><div class="ttdeci">struct rb_http_handler_s * rb_http_handler(const char *urls_str, long curlmopt_maxconnects, int max_messages, char *err, size_t errbuf)</div><div class="ttdoc">Functions. </div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00069">rb_http_handler.c:69</a></div></div>
+<div class="ttc" id="librb-http_8h_html_a890e981b619b1bdd5cc37fa16bb06f06"><div class="ttname"><a href="librb-http_8h.html#a890e981b619b1bdd5cc37fa16bb06f06">rb_http_get_reports</a></div><div class="ttdeci">int rb_http_get_reports(struct rb_http_handler_s *rb_http_handler, cb_report report_fn, int timeout_ms)</div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00509">rb_http_handler.c:509</a></div></div>
+<div class="ttc" id="structrb__http__handler__s_html"><div class="ttname"><a href="structrb__http__handler__s.html">rb_http_handler_s</a></div><div class="ttdoc">Contains the &quot;handler&quot; information. </div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00027">rb_http_handler.c:27</a></div></div>
+<div class="ttc" id="librb-http_8h_html_a0d0d31d9c2dc9ed04d6722e5653b4682"><div class="ttname"><a href="librb-http_8h.html#a0d0d31d9c2dc9ed04d6722e5653b4682">rb_http_produce</a></div><div class="ttdeci">int rb_http_produce(struct rb_http_handler_s *handler, char *buff, size_t len, int flags, char *err, size_t errsize, void *opaque)</div><div class="ttdoc">Enqueues a message (non-blocking) </div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00179">rb_http_handler.c:179</a></div></div>
+<div class="ttc" id="librb-http_8h_html_aea4aa423ff2034b027817632c746fd39"><div class="ttname"><a href="librb-http_8h.html#aea4aa423ff2034b027817632c746fd39">rb_http_handler_destroy</a></div><div class="ttdeci">int rb_http_handler_destroy(struct rb_http_handler_s *rb_http_handler, char *err, size_t errsize)</div><div class="ttdoc">Free memory from a handler. </div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00143">rb_http_handler.c:143</a></div></div>
+<div class="ttc" id="librb-http_8h_html_a190d674d1d8cac12e0dd2445c5c8cba4"><div class="ttname"><a href="librb-http_8h.html#a190d674d1d8cac12e0dd2445c5c8cba4">rb_http_handler</a></div><div class="ttdeci">struct rb_http_handler_s * rb_http_handler(const char *urls_str, long curlmopt_maxconnects, int max_messages, char *err, size_t errbuf)</div><div class="ttdoc">Functions. </div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00075">rb_http_handler.c:75</a></div></div>
 <div class="ttc" id="rb__http__handler__example_8c_html_a0165697b451a136ac74647662a5a39e1"><div class="ttname"><a href="rb__http__handler__example_8c.html#a0165697b451a136ac74647662a5a39e1">handler</a></div><div class="ttdeci">struct rb_http_handler_s * handler</div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler__example_8c_source.html#l00010">rb_http_handler_example.c:10</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Oct 8 2015 16:20:36 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Oct 8 2015 18:03:10 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

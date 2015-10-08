@@ -13,24 +13,24 @@ Non-\/blocking high-\/level wrapper for libcurl.
 \textcolor{preprocessor}{#include <librbhttp/librb-http.h>}
 
 \textcolor{keyword}{static} \textcolor{keywordtype}{int} running = 1;
-\textcolor{keyword}{struct }\hyperlink{structrb__http__handler__s}{rb\_http\_handler\_s} * handler = NULL;
+\textcolor{keyword}{struct }\hyperlink{structrb__http__handler__s}{rb\_http\_handler\_s} *handler = NULL;
 
-\textcolor{keyword}{static} \textcolor{keywordtype}{void} sigint\_handler () \{
-    printf (\textcolor{stringliteral}{"Exiting... %ld\(\backslash\)n"}, pthread\_self());
-    running = 0;
-\};
 
-\textcolor{keyword}{static} \textcolor{keywordtype}{void} my\_callback (\textcolor{keyword}{struct} \hyperlink{structrb__http__handler__s}{rb\_http\_handler\_s} * rb\_http\_handler,
+\textcolor{keyword}{static} \textcolor{keywordtype}{void} my\_callback (\textcolor{keyword}{struct} \hyperlink{structrb__http__handler__s}{rb\_http\_handler\_s} *rb\_http\_handler,
                          \textcolor{keywordtype}{int} status\_code,
-                         \textcolor{keyword}{const} \textcolor{keywordtype}{char} * status\_code\_str,
-                         \textcolor{keywordtype}{char} * buff,
+                         \textcolor{keywordtype}{long} http\_status,
+                         \textcolor{keyword}{const} \textcolor{keywordtype}{char} *status\_code\_str,
+                         \textcolor{keywordtype}{char} *buff,
                          \textcolor{keywordtype}{size\_t} bufsiz,
-                         \textcolor{keywordtype}{void} * opaque) \{
+                         \textcolor{keywordtype}{void} *opaque) \{
 
-    printf (\textcolor{stringliteral}{"STATUS CODE: %d\(\backslash\)n"}, status\_code);
+    \textcolor{keywordflow}{if} (status\_code != 0) \{
+        printf (\textcolor{stringliteral}{"CURL CODE: %d\(\backslash\)n"}, status\_code);
+    \}
 
-    \textcolor{keywordflow}{if} (status\_code\_str != NULL)
-        printf (\textcolor{stringliteral}{"STATUS CODE DESCRIPTION: %s\(\backslash\)n"}, status\_code\_str);
+    \textcolor{keywordflow}{if} (status\_code == 0) \{
+        printf (\textcolor{stringliteral}{"HTTP STATUS: %ld\(\backslash\)n"}, http\_status);
+    \}
 
     \textcolor{keywordflow}{if} (buff != NULL)
         printf (\textcolor{stringliteral}{"MESSAGE: %s\(\backslash\)n"}, buff);
@@ -42,10 +42,16 @@ Non-\/blocking high-\/level wrapper for libcurl.
 
     (void) rb\_http\_handler;
     (void) bufsiz;
+    (void) status\_code\_str;
 \}
 
+\textcolor{keyword}{static} \textcolor{keywordtype}{void} sigint\_handler () \{
+    \hyperlink{librb-http_8h_a890e981b619b1bdd5cc37fa16bb06f06}{rb\_http\_get\_reports} (handler, my\_callback, 100);
+    running = 0;
+\};
+
 \textcolor{keywordtype}{int} \hyperlink{rb__http__handler__example_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}() \{
-    \textcolor{keywordtype}{char} * url = strdup (\textcolor{stringliteral}{"http://localhost:8080/librb-http/"});
+    \textcolor{keywordtype}{char} *url = strdup (\textcolor{stringliteral}{"http://localhost:8080/librb-http/"});
     \textcolor{keywordtype}{long} max\_connections = 4L;
     \textcolor{keywordtype}{char} \textcolor{keywordtype}{string}[128];
 
@@ -56,7 +62,6 @@ Non-\/blocking high-\/level wrapper for libcurl.
 
     handler = \hyperlink{librb-http_8h_a190d674d1d8cac12e0dd2445c5c8cba4}{rb\_http\_handler} (url, max\_connections, 512, NULL, 0);
     printf (\textcolor{stringliteral}{"This will send 1024 messages\(\backslash\)n"});
-    printf (\textcolor{stringliteral}{"Press enter to start sending messages:\(\backslash\)n"});
     \textcolor{keywordtype}{int} i = 0;
 
     \textcolor{comment}{// getchar();}
@@ -64,13 +69,13 @@ Non-\/blocking high-\/level wrapper for libcurl.
     \textcolor{keywordflow}{for} (i = 0 ; i < 1024 && running; i++) \{
         sprintf (\textcolor{keywordtype}{string}, \textcolor{stringliteral}{"\{\(\backslash\)"message\(\backslash\)": \(\backslash\)"%d\(\backslash\)"\}"}, i);
         \textcolor{keywordflow}{while} (\hyperlink{librb-http_8h_a0d0d31d9c2dc9ed04d6722e5653b4682}{rb\_http\_produce} (handler, strdup (\textcolor{keywordtype}{string}), strlen (\textcolor{keywordtype}{string}), 0,
-                                NULL, 0, NULL) > 0) \{
+                                NULL, 0, NULL) > 0 && running) \{
             printf (\textcolor{stringliteral}{"Queue is full, sleeping 1s\(\backslash\)n"});
             sleep (1);
         \}
     \}
 
-    \textcolor{keywordflow}{while} (\hyperlink{librb-http_8h_a890e981b619b1bdd5cc37fa16bb06f06}{rb\_http\_get\_reports} (handler, my\_callback, 100));
+    \textcolor{keywordflow}{while} (\hyperlink{librb-http_8h_a890e981b619b1bdd5cc37fa16bb06f06}{rb\_http\_get\_reports} (handler, my\_callback, 100) && running);
 
     \hyperlink{librb-http_8h_aea4aa423ff2034b027817632c746fd39}{rb\_http\_handler\_destroy} (handler, NULL, 0);
 
