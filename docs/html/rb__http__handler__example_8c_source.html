@@ -96,24 +96,24 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="preprocessor">#include &lt;librbhttp/librb-http.h&gt;</span></div>
 <div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;</div>
 <div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="keyword">static</span> <span class="keywordtype">int</span> running = 1;</div>
-<div class="line"><a name="l00010"></a><span class="lineno"><a class="line" href="rb__http__handler__example_8c.html#a0165697b451a136ac74647662a5a39e1">   10</a></span>&#160;<span class="keyword">struct </span><a class="code" href="structrb__http__handler__s.html">rb_http_handler_s</a> * <a class="code" href="rb__http__handler__example_8c.html#a0165697b451a136ac74647662a5a39e1">handler</a> = NULL;</div>
+<div class="line"><a name="l00010"></a><span class="lineno"><a class="line" href="rb__http__handler__example_8c.html#a0165697b451a136ac74647662a5a39e1">   10</a></span>&#160;<span class="keyword">struct </span><a class="code" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="code" href="rb__http__handler__example_8c.html#a0165697b451a136ac74647662a5a39e1">handler</a> = NULL;</div>
 <div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="keyword">static</span> <span class="keywordtype">void</span> sigint_handler () {</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    printf (<span class="stringliteral">&quot;Exiting... %ld\n&quot;</span>, pthread_self());</div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    running = 0;</div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;};</div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;</div>
-<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="keyword">static</span> <span class="keywordtype">void</span> my_callback (<span class="keyword">struct</span> <a class="code" href="structrb__http__handler__s.html">rb_http_handler_s</a> * <a class="code" href="librb-http_8h.html#a190d674d1d8cac12e0dd2445c5c8cba4">rb_http_handler</a>,</div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;                         <span class="keywordtype">int</span> status_code,</div>
-<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;                         <span class="keyword">const</span> <span class="keywordtype">char</span> * status_code_str,</div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;                         <span class="keywordtype">char</span> * buff,</div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;                         <span class="keywordtype">size_t</span> bufsiz,</div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;                         <span class="keywordtype">void</span> * opaque) {</div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;</div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;    printf (<span class="stringliteral">&quot;STATUS CODE: %d\n&quot;</span>, status_code);</div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;</div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;    <span class="keywordflow">if</span> (status_code_str != NULL)</div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;        printf (<span class="stringliteral">&quot;STATUS CODE DESCRIPTION: %s\n&quot;</span>, status_code_str);</div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;</div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="keyword">static</span> <span class="keywordtype">void</span> my_callback (<span class="keyword">struct</span> <a class="code" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="code" href="librb-http_8h.html#a190d674d1d8cac12e0dd2445c5c8cba4">rb_http_handler</a>,</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;                         <span class="keywordtype">int</span> status_code,</div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;                         <span class="keywordtype">long</span> http_status,</div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;                         <span class="keyword">const</span> <span class="keywordtype">char</span> *status_code_str,</div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;                         <span class="keywordtype">char</span> *buff,</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;                         <span class="keywordtype">size_t</span> bufsiz,</div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;                         <span class="keywordtype">void</span> *opaque) {</div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;</div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;    <span class="keywordflow">if</span> (status_code != 0) {</div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;        printf (<span class="stringliteral">&quot;CURL CODE: %d\n&quot;</span>, status_code);</div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;    }</div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;</div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;    <span class="keywordflow">if</span> (status_code == 0) {</div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;        printf (<span class="stringliteral">&quot;HTTP STATUS: %ld\n&quot;</span>, http_status);</div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;    }</div>
 <div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;</div>
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    <span class="keywordflow">if</span> (buff != NULL)</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;        printf (<span class="stringliteral">&quot;MESSAGE: %s\n&quot;</span>, buff);</div>
@@ -125,42 +125,48 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;</div>
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    (void) rb_http_handler;</div>
 <div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;    (void) bufsiz;</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;}</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;</div>
-<div class="line"><a name="l00041"></a><span class="lineno"><a class="line" href="rb__http__handler__example_8c.html#ae66f6b31b5ad750f1fe042a706a4e3d4">   41</a></span>&#160;<span class="keywordtype">int</span> <a class="code" href="rb__http__handler__example_8c.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a>() {</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;    <span class="keywordtype">char</span> * url = strdup (<span class="stringliteral">&quot;http://localhost:8080/librb-http/&quot;</span>);</div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;    <span class="keywordtype">long</span> max_connections = 4L;</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    <span class="keywordtype">char</span> <span class="keywordtype">string</span>[128];</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;    <span class="keyword">struct </span>sigaction action;</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    memset (&amp;action, 0, <span class="keyword">sizeof</span> (action));</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;    action.sa_handler = &amp;sigint_handler;</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;    sigaction (SIGINT, &amp;action, NULL);</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;</div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;    handler = <a class="code" href="librb-http_8h.html#a190d674d1d8cac12e0dd2445c5c8cba4">rb_http_handler</a> (url, max_connections, 512, NULL, 0);</div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    printf (<span class="stringliteral">&quot;This will send 1024 messages\n&quot;</span>);</div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;    printf (<span class="stringliteral">&quot;Press enter to start sending messages:\n&quot;</span>);</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    <span class="keywordtype">int</span> i = 0;</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;</div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;    <span class="comment">// getchar();</span></div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;</div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    <span class="keywordflow">for</span> (i = 0 ; i &lt; 1024 &amp;&amp; running; i++) {</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;        sprintf (<span class="keywordtype">string</span>, <span class="stringliteral">&quot;{\&quot;message\&quot;: \&quot;%d\&quot;}&quot;</span>, i);</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;        <span class="keywordflow">while</span> (<a class="code" href="librb-http_8h.html#a0d0d31d9c2dc9ed04d6722e5653b4682">rb_http_produce</a> (handler, strdup (<span class="keywordtype">string</span>), strlen (<span class="keywordtype">string</span>), 0,</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;                                NULL, 0, NULL) &gt; 0) {</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;            printf (<span class="stringliteral">&quot;Queue is full, sleeping 1s\n&quot;</span>);</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;            sleep (1);</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;        }</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    }</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    <span class="keywordflow">while</span> (<a class="code" href="librb-http_8h.html#a890e981b619b1bdd5cc37fa16bb06f06">rb_http_get_reports</a> (handler, my_callback, 100));</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;    <a class="code" href="librb-http_8h.html#aea4aa423ff2034b027817632c746fd39">rb_http_handler_destroy</a> (handler, NULL, 0);</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;</div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;    <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;}</div>
-<div class="ttc" id="rb__http__handler__example_8c_html_ae66f6b31b5ad750f1fe042a706a4e3d4"><div class="ttname"><a href="rb__http__handler__example_8c.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a></div><div class="ttdeci">int main()</div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler__example_8c_source.html#l00041">rb_http_handler_example.c:41</a></div></div>
-<div class="ttc" id="librb-http_8h_html_a890e981b619b1bdd5cc37fa16bb06f06"><div class="ttname"><a href="librb-http_8h.html#a890e981b619b1bdd5cc37fa16bb06f06">rb_http_get_reports</a></div><div class="ttdeci">int rb_http_get_reports(struct rb_http_handler_s *rb_http_handler, cb_report report_fn, int timeout_ms)</div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00422">rb_http_handler.c:422</a></div></div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;    (void) status_code_str;</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;}</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;<span class="keyword">static</span> <span class="keywordtype">void</span> sigint_handler () {</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;    <a class="code" href="librb-http_8h.html#a890e981b619b1bdd5cc37fa16bb06f06">rb_http_get_reports</a> (handler, my_callback, 100);</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    running = 0;</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;};</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;</div>
+<div class="line"><a name="l00047"></a><span class="lineno"><a class="line" href="rb__http__handler__example_8c.html#ae66f6b31b5ad750f1fe042a706a4e3d4">   47</a></span>&#160;<span class="keywordtype">int</span> <a class="code" href="rb__http__handler__example_8c.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a>() {</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;    <span class="keywordtype">char</span> *url = strdup (<span class="stringliteral">&quot;http://localhost:8080/librb-http/&quot;</span>);</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;    <span class="keywordtype">long</span> max_connections = 4L;</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;    <span class="keywordtype">char</span> <span class="keywordtype">string</span>[128];</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;</div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    <span class="keyword">struct </span>sigaction action;</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;    memset (&amp;action, 0, <span class="keyword">sizeof</span> (action));</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    action.sa_handler = &amp;sigint_handler;</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;    sigaction (SIGINT, &amp;action, NULL);</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;    handler = <a class="code" href="librb-http_8h.html#a190d674d1d8cac12e0dd2445c5c8cba4">rb_http_handler</a> (url, max_connections, 512, NULL, 0);</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    printf (<span class="stringliteral">&quot;This will send 1024 messages\n&quot;</span>);</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;    printf (<span class="stringliteral">&quot;Press enter to start sending messages:\n&quot;</span>);</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    <span class="keywordtype">int</span> i = 0;</div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;</div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;    <span class="comment">// getchar();</span></div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    <span class="keywordflow">for</span> (i = 0 ; i &lt; 1024 &amp;&amp; running; i++) {</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;        sprintf (<span class="keywordtype">string</span>, <span class="stringliteral">&quot;{\&quot;message\&quot;: \&quot;%d\&quot;}&quot;</span>, i);</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;        <span class="keywordflow">while</span> (<a class="code" href="librb-http_8h.html#a0d0d31d9c2dc9ed04d6722e5653b4682">rb_http_produce</a> (handler, strdup (<span class="keywordtype">string</span>), strlen (<span class="keywordtype">string</span>), 0,</div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;                                NULL, 0, NULL) &gt; 0 &amp;&amp; running) {</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;            printf (<span class="stringliteral">&quot;Queue is full, sleeping 1s\n&quot;</span>);</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;            sleep (1);</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        }</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;    }</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;    <span class="keywordflow">while</span> (<a class="code" href="librb-http_8h.html#a890e981b619b1bdd5cc37fa16bb06f06">rb_http_get_reports</a> (handler, my_callback, 100) &amp;&amp; running);</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;    <a class="code" href="librb-http_8h.html#aea4aa423ff2034b027817632c746fd39">rb_http_handler_destroy</a> (handler, NULL, 0);</div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;}</div>
+<div class="ttc" id="rb__http__handler__example_8c_html_ae66f6b31b5ad750f1fe042a706a4e3d4"><div class="ttname"><a href="rb__http__handler__example_8c.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a></div><div class="ttdeci">int main()</div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler__example_8c_source.html#l00047">rb_http_handler_example.c:47</a></div></div>
+<div class="ttc" id="librb-http_8h_html_a890e981b619b1bdd5cc37fa16bb06f06"><div class="ttname"><a href="librb-http_8h.html#a890e981b619b1bdd5cc37fa16bb06f06">rb_http_get_reports</a></div><div class="ttdeci">int rb_http_get_reports(struct rb_http_handler_s *rb_http_handler, cb_report report_fn, int timeout_ms)</div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00425">rb_http_handler.c:425</a></div></div>
 <div class="ttc" id="structrb__http__handler__s_html"><div class="ttname"><a href="structrb__http__handler__s.html">rb_http_handler_s</a></div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00027">rb_http_handler.c:27</a></div></div>
 <div class="ttc" id="librb-http_8h_html_a0d0d31d9c2dc9ed04d6722e5653b4682"><div class="ttname"><a href="librb-http_8h.html#a0d0d31d9c2dc9ed04d6722e5653b4682">rb_http_produce</a></div><div class="ttdeci">int rb_http_produce(struct rb_http_handler_s *handler, char *buff, size_t len, int flags, char *err, size_t errsize, void *opaque)</div><div class="ttdoc">Enqueues a message (non-blocking) </div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00173">rb_http_handler.c:173</a></div></div>
 <div class="ttc" id="librb-http_8h_html_aea4aa423ff2034b027817632c746fd39"><div class="ttname"><a href="librb-http_8h.html#aea4aa423ff2034b027817632c746fd39">rb_http_handler_destroy</a></div><div class="ttdeci">int rb_http_handler_destroy(struct rb_http_handler_s *rb_http_handler, char *err, size_t errsize)</div><div class="ttdoc">Free memory from a handler. </div><div class="ttdef"><b>Definition:</b> <a href="rb__http__handler_8c_source.html#l00137">rb_http_handler.c:137</a></div></div>
@@ -169,7 +175,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 7 2015 14:06:26 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Oct 8 2015 16:20:36 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>
