@@ -425,6 +425,7 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 	CURLMsg *report = NULL;
 	struct rb_http_message_s *message = NULL;
 	int nowait = 0;
+	long http_code = 0;
 
 	if (timeout_ms == 0) {
 		nowait = 1;
@@ -436,9 +437,17 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 		if (rfqe->rfqe_ptr != NULL) {
 			report = rfqe->rfqe_ptr;
 			curl_easy_getinfo (report->easy_handle,
-			                   CURLINFO_PRIVATE, &message);
-			report_fn (rb_http_handler, report->data.result, NULL, message->payload,
-			           message->len, message->client_opaque);
+			                   CURLINFO_PRIVATE,
+			                   &message);
+			curl_easy_getinfo (report->easy_handle,
+			                   CURLINFO_RESPONSE_CODE,
+			                   &http_code);
+			report_fn (rb_http_handler,
+			           report->data.result,
+			           http_code, NULL,
+			           message->payload,
+			           message->len,
+			           message->client_opaque);
 
 			curl_slist_free_all (message->headers);
 			curl_easy_cleanup (report->easy_handle);
