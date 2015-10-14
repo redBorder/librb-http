@@ -9,7 +9,6 @@
 static int running = 1;
 struct rb_http_handler_s *handler = NULL;
 
-
 static void my_callback (struct rb_http_handler_s *rb_http_handler,
                          int status_code,
                          long http_status,
@@ -32,40 +31,34 @@ static void my_callback (struct rb_http_handler_s *rb_http_handler,
 	if (opaque != NULL)
 		printf ("OPAQUE: %p\n", opaque);
 
-	free (buff);
-
 	(void) rb_http_handler;
 	(void) bufsiz;
 	(void) status_code_str;
 }
 
-static void sigint_handler () {
-	rb_http_get_reports (handler, my_callback, 100);
-	running = 0;
-};
-
 int main() {
-	char *url = strdup ("http://localhost:8080/librb-http/");
+	char url[] = "http://localhost:8080/librb-http/";
 	long max_connections = 4L;
 	char string[128];
 
-	struct sigaction action;
-	memset (&action, 0, sizeof (action));
-	action.sa_handler = &sigint_handler;
-	sigaction (SIGINT, &action, NULL);
-
 	handler = rb_http_create_handler (url, max_connections, 512, NULL, 0);
-	printf ("This will send 1024 messages\n");
+	printf ("Sending 1024 messages\n");
 	int i = 0;
 
 	// getchar();
+	char *message = NULL;
 
 	for (i = 0 ; i < 1024 && running; i++) {
 		sprintf (string, "{\"message\": \"%d\"}", i);
-		while (rb_http_produce (handler, strdup (string), strlen (string), 0,
-		                        NULL, 0, NULL) > 0 && running) {
-			printf ("Queue is full, sleeping 1s\n");
-			sleep (1);
+		while (rb_http_produce (handler,
+		                        message = strdup (string),
+		                        strlen (string),
+		                        RB_HTTP_MESSAGE_F_FREE,
+		                        NULL,
+		                        0,
+		                        NULL) > 0 && running) {
+			rb_http_get_reports (handler, my_callback, 1000);
+			free(message);
 		}
 	}
 
