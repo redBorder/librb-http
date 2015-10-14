@@ -30,7 +30,6 @@ struct rb_http_handler_s {
 	int msgs_left;
 	int left;
 	int max_messages;
-	long curlmopt_maxconnects;
 	long timeout;
 	char *url;
 	pthread_mutex_t multi_handle_mutex;
