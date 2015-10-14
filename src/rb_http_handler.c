@@ -36,8 +36,8 @@ struct rb_http_handler_s {
 	CURLM *multi_handle;
 	rd_fifoq_t rfq;
 	rd_fifoq_t rfq_reports;
-	pthread_t rd_thread_send;
-	pthread_t rd_thread_recv;
+	pthread_t p_thread_send;
+	pthread_t p_thread_recv;
 };
 
 /**
@@ -110,9 +110,9 @@ struct rb_http_handler_s *rb_http_create_handler (
 			return NULL;
 		}
 
-		pthread_create (&rb_http_handler->rd_thread_send, NULL, &rb_http_send_message,
+		pthread_create (&rb_http_handler->p_thread_send, NULL, &rb_http_send_message,
 		                rb_http_handler);
-		pthread_create (&rb_http_handler->rd_thread_recv, NULL, &rb_http_recv_message,
+		pthread_create (&rb_http_handler->p_thread_recv, NULL, &rb_http_recv_message,
 		                rb_http_handler);
 
 		return rb_http_handler;
@@ -129,6 +129,8 @@ int rb_http_handler_destroy (struct rb_http_handler_s *rb_http_handler,
                              char *err,
                              size_t errsize) {
 	rb_http_handler->thread_running = 0;
+	pthread_join(rb_http_handler->p_thread_send, NULL);
+	pthread_join(rb_http_handler->p_thread_recv, NULL);
 
 	if (CURLM_OK != curl_multi_cleanup (rb_http_handler->multi_handle)) {
 		snprintf (err, errsize, "Error cleaning up curl multi");
@@ -319,7 +321,6 @@ void *rb_http_send_message (void *arg) {
 		}
 	}
 
-	rd_thread_exit ();
 	return NULL;
 }
 
@@ -330,7 +331,6 @@ void *rb_http_send_message (void *arg) {
  */
 void *rb_http_recv_message (void *arg) {
 
-	rd_thread_sigmask (SIG_BLOCK, SIGINT, RD_SIG_END);
 	struct rb_http_handler_s *rb_http_handler = (struct rb_http_handler_s *) arg;
 	struct rb_http_report_s *report = NULL;
 	struct rb_http_message_s *message = NULL;
@@ -479,7 +479,6 @@ void *rb_http_recv_message (void *arg) {
 		pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
 	}
 
-	rd_thread_exit ();
 	return NULL;
 }
 
