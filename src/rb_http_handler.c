@@ -31,6 +31,8 @@ struct rb_http_handler_s {
 	int left;
 	int max_messages;
 	long timeout;
+	long connttimeout;
+	long verbose;
 	char *url;
 	pthread_mutex_t multi_handle_mutex;
 	CURLM *multi_handle;
@@ -88,6 +90,8 @@ struct rb_http_handler_s *rb_http_handler_create (
 
 		rb_http_handler->max_messages = DEFAULT_MAX_MESSAGES;
 		rb_http_handler->timeout = DEFAULT_TIMEOUT;
+		rb_http_handler->timeout = DEFAULT_CONTTIMEOUT;
+		rb_http_handler->timeout = 0;
 
 		rb_http_handler->url = strdup(urls_str);
 		rb_http_handler->still_running = 0;
@@ -129,15 +133,21 @@ int rb_http_handler_set_opt (struct rb_http_handler_s *rb_http_handler,
 		return -1;
 	}
 
-	if (strcmp(key, "HTTP_MAX_TOTAL_CONNECTIONS")) {
-		long conns = atol(val);
-		rb_http_handler->curlmopt_maxconnects = conns;
-	} else if (strcmp(key, "HTTP_TIMEOUT_MS")) {
-		long timeout = atol(val);
-		rb_http_handler->timeout = timeout;
-	} else if (strcmp(key, "RB_HTTP_MAX_MESSAGES")) {
-		int max_messages = atoi(val);
-		rb_http_handler->max_messages = max_messages;
+	if (!strcmp(key, "HTTP_MAX_TOTAL_CONNECTIONS")) {
+		if (CURLM_OK != (curl_multi_setopt (rb_http_handler->multi_handle,
+		                                    CURLMOPT_MAX_TOTAL_CONNECTIONS,
+		                                    atol(val)))) {
+			snprintf (err, errsize, "Error setting MAX_TOTAL_CONNECTIONS");
+			return -1;
+		}
+	} else if (!strcmp(key, "HTTP_VERBOSE")) {
+		rb_http_handler->verbose =  atol(val);
+	} else if (!strcmp(key, "HTTP_TIMEOUT")) {
+		rb_http_handler->timeout =  atol(val);
+	} else if (!strcmp(key, "HTTP_CONNTTIMEOUT")) {
+		rb_http_handler->connttimeout = atol(val);
+	} else if (!strcmp(key, "RB_HTTP_MAX_MESSAGES")) {
+		rb_http_handler->max_messages = atoi(val);
 	} else {
 		snprintf (err, errsize, "Error decoding option: \"%s: %s\"", key, val);
 		return -1;
@@ -303,8 +313,28 @@ void *rb_http_send_message (void *arg) {
 					return NULL;
 				}
 
+				if (curl_easy_setopt(handler, CURLOPT_VERBOSE,
+				                     rb_http_handler->verbose) != CURLE_OK) {
+					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+					report->err_code = -1;
+					report->http_code = 0;
+					report->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+					return NULL;
+				}
+
 				if (curl_easy_setopt (handler, CURLOPT_TIMEOUT_MS,
 				                      rb_http_handler->timeout) != CURLE_OK) {
+					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+					report->err_code = -1;
+					report->http_code = 0;
+					report->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+					return NULL;
+				}
+
+				if (curl_easy_setopt (handler, CURLOPT_CONNECTTIMEOUT_MS,
+				                      rb_http_handler->connttimeout) != CURLE_OK) {
 					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
 					report->err_code = -1;
 					report->http_code = 0;
