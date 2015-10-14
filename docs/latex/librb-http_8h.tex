@@ -8,6 +8,14 @@
 \#define \hyperlink{librb-http_8h_aef79f44f520e54cbedce1068fe324720}{R\-B\-\_\-\-H\-T\-T\-P\-\_\-\-M\-E\-S\-S\-A\-G\-E\-\_\-\-F\-\_\-\-F\-R\-E\-E}~1
 \item 
 \#define \hyperlink{librb-http_8h_a0ffdecd586e5dc8f1eeede6bac9bc19f}{R\-B\-\_\-\-H\-T\-T\-P\-\_\-\-M\-E\-S\-S\-A\-G\-E\-\_\-\-F\-\_\-\-C\-O\-P\-Y}~2
+\item 
+\#define \hyperlink{librb-http_8h_a21474916371fa38cf4ac2bcd1701ccce}{D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-T\-O\-T\-A\-L\-\_\-\-C\-O\-N\-N\-E\-C\-T\-I\-O\-N\-S}~4
+\item 
+\#define \hyperlink{librb-http_8h_acbcaf1a46da1c8312a9216fecae74458}{D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-M\-E\-S\-S\-A\-G\-E\-S}~512
+\item 
+\#define \hyperlink{librb-http_8h_aad2dd72565852b91c809cd4685833b17}{D\-E\-F\-A\-U\-L\-T\-\_\-\-T\-I\-M\-E\-O\-U\-T}~10000\-L
+\item 
+\#define \hyperlink{librb-http_8h_a74cf0c869a3e674e0b8a522ee4b05490}{D\-E\-F\-A\-U\-L\-T\-\_\-\-C\-O\-N\-T\-T\-I\-M\-E\-O\-U\-T}~3000\-L
 \end{DoxyCompactItemize}
 \subsection*{Typedefs}
 \begin{DoxyCompactItemize}
@@ -17,17 +25,47 @@ typedef void($\ast$ \hyperlink{librb-http_8h_abcf27caf85ec3ac2b11d1b89aed63966}{
 \subsection*{Functions}
 \begin{DoxyCompactItemize}
 \item 
-struct \hyperlink{structrb__http__handler__s}{rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$ \hyperlink{librb-http_8h_a2a79eb842642f83d2276cd42bea95eb3}{rb\-\_\-http\-\_\-create\-\_\-handler} (const char $\ast$urls\-\_\-str, long curlmopt\-\_\-maxconnects, int max\-\_\-messages, char $\ast$err, size\-\_\-t errbuf)
+struct \hyperlink{structrb__http__handler__s}{rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$ \hyperlink{librb-http_8h_aa84a3dadccb44fa421655ad1b09c3157}{rb\-\_\-http\-\_\-handler\-\_\-create} (const char $\ast$urls\-\_\-str, char $\ast$err, size\-\_\-t errbuf)
 \begin{DoxyCompactList}\small\item\em Functions. \end{DoxyCompactList}\item 
 int \hyperlink{librb-http_8h_aea4aa423ff2034b027817632c746fd39}{rb\-\_\-http\-\_\-handler\-\_\-destroy} (struct \hyperlink{structrb__http__handler__s}{rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$rb\-\_\-http\-\_\-handler, char $\ast$err, size\-\_\-t errsize)
 \begin{DoxyCompactList}\small\item\em Free memory from a handler. \end{DoxyCompactList}\item 
 int \hyperlink{librb-http_8h_a0d0d31d9c2dc9ed04d6722e5653b4682}{rb\-\_\-http\-\_\-produce} (struct \hyperlink{structrb__http__handler__s}{rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$\hyperlink{rb__http__handler__example_8c_a0165697b451a136ac74647662a5a39e1}{handler}, char $\ast$buff, size\-\_\-t len, int flags, char $\ast$err, size\-\_\-t errsize, void $\ast$opaque)
 \begin{DoxyCompactList}\small\item\em Enqueues a message (non-\/blocking) \end{DoxyCompactList}\item 
 int \hyperlink{librb-http_8h_a890e981b619b1bdd5cc37fa16bb06f06}{rb\-\_\-http\-\_\-get\-\_\-reports} (struct \hyperlink{structrb__http__handler__s}{rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$rb\-\_\-http\-\_\-handler, \hyperlink{librb-http_8h_abcf27caf85ec3ac2b11d1b89aed63966}{cb\-\_\-report} report\-\_\-fn, int timeout\-\_\-ms)
+\item 
+int \hyperlink{librb-http_8h_ab306abb2b4a66b092205de2677d342aa}{rb\-\_\-http\-\_\-handler\-\_\-set\-\_\-opt} (struct \hyperlink{structrb__http__handler__s}{rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$rb\-\_\-http\-\_\-handler, const char $\ast$key, const char $\ast$val, char $\ast$err, size\-\_\-t errsize)
 \end{DoxyCompactItemize}
 
 
 \subsection{Macro Definition Documentation}
+\hypertarget{librb-http_8h_a74cf0c869a3e674e0b8a522ee4b05490}{\index{librb-\/http.\-h@{librb-\/http.\-h}!D\-E\-F\-A\-U\-L\-T\-\_\-\-C\-O\-N\-T\-T\-I\-M\-E\-O\-U\-T@{D\-E\-F\-A\-U\-L\-T\-\_\-\-C\-O\-N\-T\-T\-I\-M\-E\-O\-U\-T}}
+\index{D\-E\-F\-A\-U\-L\-T\-\_\-\-C\-O\-N\-T\-T\-I\-M\-E\-O\-U\-T@{D\-E\-F\-A\-U\-L\-T\-\_\-\-C\-O\-N\-T\-T\-I\-M\-E\-O\-U\-T}!librb-http.h@{librb-\/http.\-h}}
+\subsubsection[{D\-E\-F\-A\-U\-L\-T\-\_\-\-C\-O\-N\-T\-T\-I\-M\-E\-O\-U\-T}]{\setlength{\rightskip}{0pt plus 5cm}\#define D\-E\-F\-A\-U\-L\-T\-\_\-\-C\-O\-N\-T\-T\-I\-M\-E\-O\-U\-T~3000\-L}}\label{librb-http_8h_a74cf0c869a3e674e0b8a522ee4b05490}
+
+
+Definition at line 8 of file librb-\/http.\-h.
+
+\hypertarget{librb-http_8h_acbcaf1a46da1c8312a9216fecae74458}{\index{librb-\/http.\-h@{librb-\/http.\-h}!D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-M\-E\-S\-S\-A\-G\-E\-S@{D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-M\-E\-S\-S\-A\-G\-E\-S}}
+\index{D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-M\-E\-S\-S\-A\-G\-E\-S@{D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-M\-E\-S\-S\-A\-G\-E\-S}!librb-http.h@{librb-\/http.\-h}}
+\subsubsection[{D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-M\-E\-S\-S\-A\-G\-E\-S}]{\setlength{\rightskip}{0pt plus 5cm}\#define D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-M\-E\-S\-S\-A\-G\-E\-S~512}}\label{librb-http_8h_acbcaf1a46da1c8312a9216fecae74458}
+
+
+Definition at line 6 of file librb-\/http.\-h.
+
+\hypertarget{librb-http_8h_a21474916371fa38cf4ac2bcd1701ccce}{\index{librb-\/http.\-h@{librb-\/http.\-h}!D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-T\-O\-T\-A\-L\-\_\-\-C\-O\-N\-N\-E\-C\-T\-I\-O\-N\-S@{D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-T\-O\-T\-A\-L\-\_\-\-C\-O\-N\-N\-E\-C\-T\-I\-O\-N\-S}}
+\index{D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-T\-O\-T\-A\-L\-\_\-\-C\-O\-N\-N\-E\-C\-T\-I\-O\-N\-S@{D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-T\-O\-T\-A\-L\-\_\-\-C\-O\-N\-N\-E\-C\-T\-I\-O\-N\-S}!librb-http.h@{librb-\/http.\-h}}
+\subsubsection[{D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-T\-O\-T\-A\-L\-\_\-\-C\-O\-N\-N\-E\-C\-T\-I\-O\-N\-S}]{\setlength{\rightskip}{0pt plus 5cm}\#define D\-E\-F\-A\-U\-L\-T\-\_\-\-M\-A\-X\-\_\-\-T\-O\-T\-A\-L\-\_\-\-C\-O\-N\-N\-E\-C\-T\-I\-O\-N\-S~4}}\label{librb-http_8h_a21474916371fa38cf4ac2bcd1701ccce}
+
+
+Definition at line 5 of file librb-\/http.\-h.
+
+\hypertarget{librb-http_8h_aad2dd72565852b91c809cd4685833b17}{\index{librb-\/http.\-h@{librb-\/http.\-h}!D\-E\-F\-A\-U\-L\-T\-\_\-\-T\-I\-M\-E\-O\-U\-T@{D\-E\-F\-A\-U\-L\-T\-\_\-\-T\-I\-M\-E\-O\-U\-T}}
+\index{D\-E\-F\-A\-U\-L\-T\-\_\-\-T\-I\-M\-E\-O\-U\-T@{D\-E\-F\-A\-U\-L\-T\-\_\-\-T\-I\-M\-E\-O\-U\-T}!librb-http.h@{librb-\/http.\-h}}
+\subsubsection[{D\-E\-F\-A\-U\-L\-T\-\_\-\-T\-I\-M\-E\-O\-U\-T}]{\setlength{\rightskip}{0pt plus 5cm}\#define D\-E\-F\-A\-U\-L\-T\-\_\-\-T\-I\-M\-E\-O\-U\-T~10000\-L}}\label{librb-http_8h_aad2dd72565852b91c809cd4685833b17}
+
+
+Definition at line 7 of file librb-\/http.\-h.
+
 \hypertarget{librb-http_8h_a0ffdecd586e5dc8f1eeede6bac9bc19f}{\index{librb-\/http.\-h@{librb-\/http.\-h}!R\-B\-\_\-\-H\-T\-T\-P\-\_\-\-M\-E\-S\-S\-A\-G\-E\-\_\-\-F\-\_\-\-C\-O\-P\-Y@{R\-B\-\_\-\-H\-T\-T\-P\-\_\-\-M\-E\-S\-S\-A\-G\-E\-\_\-\-F\-\_\-\-C\-O\-P\-Y}}
 \index{R\-B\-\_\-\-H\-T\-T\-P\-\_\-\-M\-E\-S\-S\-A\-G\-E\-\_\-\-F\-\_\-\-C\-O\-P\-Y@{R\-B\-\_\-\-H\-T\-T\-P\-\_\-\-M\-E\-S\-S\-A\-G\-E\-\_\-\-F\-\_\-\-C\-O\-P\-Y}!librb-http.h@{librb-\/http.\-h}}
 \subsubsection[{R\-B\-\_\-\-H\-T\-T\-P\-\_\-\-M\-E\-S\-S\-A\-G\-E\-\_\-\-F\-\_\-\-C\-O\-P\-Y}]{\setlength{\rightskip}{0pt plus 5cm}\#define R\-B\-\_\-\-H\-T\-T\-P\-\_\-\-M\-E\-S\-S\-A\-G\-E\-\_\-\-F\-\_\-\-C\-O\-P\-Y~2}}\label{librb-http_8h_a0ffdecd586e5dc8f1eeede6bac9bc19f}
@@ -50,22 +88,33 @@ Definition at line 3 of file librb-\/http.\-h.
 \subsubsection[{cb\-\_\-report}]{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ cb\-\_\-report)(struct {\bf rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$rb\-\_\-http\-\_\-handler, int status\-\_\-code, long http\-\_\-code, const char $\ast$status\-\_\-code\-\_\-str, char $\ast$buff, size\-\_\-t bufsiz, void $\ast$opaque)}}\label{librb-http_8h_abcf27caf85ec3ac2b11d1b89aed63966}
 
 
-Definition at line 11 of file librb-\/http.\-h.
+Definition at line 15 of file librb-\/http.\-h.
 
 
 
 \subsection{Function Documentation}
-\hypertarget{librb-http_8h_a2a79eb842642f83d2276cd42bea95eb3}{\index{librb-\/http.\-h@{librb-\/http.\-h}!rb\-\_\-http\-\_\-create\-\_\-handler@{rb\-\_\-http\-\_\-create\-\_\-handler}}
-\index{rb\-\_\-http\-\_\-create\-\_\-handler@{rb\-\_\-http\-\_\-create\-\_\-handler}!librb-http.h@{librb-\/http.\-h}}
-\subsubsection[{rb\-\_\-http\-\_\-create\-\_\-handler}]{\setlength{\rightskip}{0pt plus 5cm}struct {\bf rb\-\_\-http\-\_\-handler\-\_\-s}$\ast$ rb\-\_\-http\-\_\-create\-\_\-handler (
+\hypertarget{librb-http_8h_a890e981b619b1bdd5cc37fa16bb06f06}{\index{librb-\/http.\-h@{librb-\/http.\-h}!rb\-\_\-http\-\_\-get\-\_\-reports@{rb\-\_\-http\-\_\-get\-\_\-reports}}
+\index{rb\-\_\-http\-\_\-get\-\_\-reports@{rb\-\_\-http\-\_\-get\-\_\-reports}!librb-http.h@{librb-\/http.\-h}}
+\subsubsection[{rb\-\_\-http\-\_\-get\-\_\-reports}]{\setlength{\rightskip}{0pt plus 5cm}int rb\-\_\-http\-\_\-get\-\_\-reports (
+\begin{DoxyParamCaption}
+\item[{struct {\bf rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$}]{rb\-\_\-http\-\_\-handler, }
+\item[{{\bf cb\-\_\-report}}]{report\-\_\-fn, }
+\item[{int}]{timeout\-\_\-ms}
+\end{DoxyParamCaption}
+)}}\label{librb-http_8h_a890e981b619b1bdd5cc37fa16bb06f06}
+
+
+Definition at line 544 of file rb\-\_\-http\-\_\-handler.\-c.
+
+\hypertarget{librb-http_8h_aa84a3dadccb44fa421655ad1b09c3157}{\index{librb-\/http.\-h@{librb-\/http.\-h}!rb\-\_\-http\-\_\-handler\-\_\-create@{rb\-\_\-http\-\_\-handler\-\_\-create}}
+\index{rb\-\_\-http\-\_\-handler\-\_\-create@{rb\-\_\-http\-\_\-handler\-\_\-create}!librb-http.h@{librb-\/http.\-h}}
+\subsubsection[{rb\-\_\-http\-\_\-handler\-\_\-create}]{\setlength{\rightskip}{0pt plus 5cm}struct {\bf rb\-\_\-http\-\_\-handler\-\_\-s}$\ast$ rb\-\_\-http\-\_\-handler\-\_\-create (
 \begin{DoxyParamCaption}
 \item[{const char $\ast$}]{urls\-\_\-str, }
-\item[{long}]{curlmopt\-\_\-maxconnects, }
-\item[{int}]{max\-\_\-messages, }
 \item[{char $\ast$}]{err, }
 \item[{size\-\_\-t}]{errsize}
 \end{DoxyParamCaption}
-)}}\label{librb-http_8h_a2a79eb842642f83d2276cd42bea95eb3}
+)}}\label{librb-http_8h_aa84a3dadccb44fa421655ad1b09c3157}
 
 
 Functions. 
@@ -82,20 +131,7 @@ Handler for send messages to the provided U\-R\-L.
 \end{DoxyReturn}
 
 
-Definition at line 74 of file rb\-\_\-http\-\_\-handler.\-c.
-
-\hypertarget{librb-http_8h_a890e981b619b1bdd5cc37fa16bb06f06}{\index{librb-\/http.\-h@{librb-\/http.\-h}!rb\-\_\-http\-\_\-get\-\_\-reports@{rb\-\_\-http\-\_\-get\-\_\-reports}}
-\index{rb\-\_\-http\-\_\-get\-\_\-reports@{rb\-\_\-http\-\_\-get\-\_\-reports}!librb-http.h@{librb-\/http.\-h}}
-\subsubsection[{rb\-\_\-http\-\_\-get\-\_\-reports}]{\setlength{\rightskip}{0pt plus 5cm}int rb\-\_\-http\-\_\-get\-\_\-reports (
-\begin{DoxyParamCaption}
-\item[{struct {\bf rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$}]{rb\-\_\-http\-\_\-handler, }
-\item[{{\bf cb\-\_\-report}}]{report\-\_\-fn, }
-\item[{int}]{timeout\-\_\-ms}
-\end{DoxyParamCaption}
-)}}\label{librb-http_8h_a890e981b619b1bdd5cc37fa16bb06f06}
-
-
-Definition at line 488 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 76 of file rb\-\_\-http\-\_\-handler.\-c.
 
 \hypertarget{librb-http_8h_aea4aa423ff2034b027817632c746fd39}{\index{librb-\/http.\-h@{librb-\/http.\-h}!rb\-\_\-http\-\_\-handler\-\_\-destroy@{rb\-\_\-http\-\_\-handler\-\_\-destroy}}
 \index{rb\-\_\-http\-\_\-handler\-\_\-destroy@{rb\-\_\-http\-\_\-handler\-\_\-destroy}!librb-http.h@{librb-\/http.\-h}}
@@ -117,7 +153,22 @@ Free memory from a handler.
 \end{DoxyParams}
 
 
-Definition at line 128 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 163 of file rb\-\_\-http\-\_\-handler.\-c.
+
+\hypertarget{librb-http_8h_ab306abb2b4a66b092205de2677d342aa}{\index{librb-\/http.\-h@{librb-\/http.\-h}!rb\-\_\-http\-\_\-handler\-\_\-set\-\_\-opt@{rb\-\_\-http\-\_\-handler\-\_\-set\-\_\-opt}}
+\index{rb\-\_\-http\-\_\-handler\-\_\-set\-\_\-opt@{rb\-\_\-http\-\_\-handler\-\_\-set\-\_\-opt}!librb-http.h@{librb-\/http.\-h}}
+\subsubsection[{rb\-\_\-http\-\_\-handler\-\_\-set\-\_\-opt}]{\setlength{\rightskip}{0pt plus 5cm}int rb\-\_\-http\-\_\-handler\-\_\-set\-\_\-opt (
+\begin{DoxyParamCaption}
+\item[{struct {\bf rb\-\_\-http\-\_\-handler\-\_\-s} $\ast$}]{rb\-\_\-http\-\_\-handler, }
+\item[{const char $\ast$}]{key, }
+\item[{const char $\ast$}]{val, }
+\item[{char $\ast$}]{err, }
+\item[{size\-\_\-t}]{errsize}
+\end{DoxyParamCaption}
+)}}\label{librb-http_8h_ab306abb2b4a66b092205de2677d342aa}
+
+
+Definition at line 126 of file rb\-\_\-http\-\_\-handler.\-c.
 
 \hypertarget{librb-http_8h_a0d0d31d9c2dc9ed04d6722e5653b4682}{\index{librb-\/http.\-h@{librb-\/http.\-h}!rb\-\_\-http\-\_\-produce@{rb\-\_\-http\-\_\-produce}}
 \index{rb\-\_\-http\-\_\-produce@{rb\-\_\-http\-\_\-produce}!librb-http.h@{librb-\/http.\-h}}
@@ -147,5 +198,5 @@ Enqueues a message (non-\/blocking)
 \end{DoxyParams}
 
 
-Definition at line 162 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 197 of file rb\-\_\-http\-\_\-handler.\-c.
 

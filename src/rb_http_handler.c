@@ -30,7 +30,9 @@ struct rb_http_handler_s {
 	int msgs_left;
 	int left;
 	int max_messages;
-	long curlmopt_maxconnects;
+	long timeout;
+	long connttimeout;
+	long verbose;
 	char *url;
 	pthread_mutex_t multi_handle_mutex;
 	CURLM *multi_handle;
@@ -71,10 +73,8 @@ static void *rb_http_recv_message (void *arg);
  * it will try the next one.
  * @return          Handler for send messages to the provided URL.
  */
-struct rb_http_handler_s *rb_http_create_handler (
+struct rb_http_handler_s *rb_http_handler_create (
     const char *urls_str,
-    long curlmopt_maxconnects,
-    int max_messages,
     char *err,
     size_t errsize) {
 
@@ -88,7 +88,10 @@ struct rb_http_handler_s *rb_http_create_handler (
 		rd_fifoq_init (&rb_http_handler->rfq);
 		rd_fifoq_init (&rb_http_handler->rfq_reports);
 
-		rb_http_handler->curlmopt_maxconnects = curlmopt_maxconnects;
+		rb_http_handler->max_messages = DEFAULT_MAX_MESSAGES;
+		rb_http_handler->timeout = DEFAULT_TIMEOUT;
+		rb_http_handler->timeout = DEFAULT_CONTTIMEOUT;
+		rb_http_handler->timeout = 0;
 
 		rb_http_handler->url = strdup(urls_str);
 		rb_http_handler->still_running = 0;
@@ -102,10 +105,9 @@ struct rb_http_handler_s *rb_http_create_handler (
 			return NULL;
 		}
 		rb_http_handler->thread_running = 1;
-		rb_http_handler->max_messages = max_messages;
 		if (CURLM_OK != (curl_multi_setopt (rb_http_handler->multi_handle,
 		                                    CURLMOPT_MAX_TOTAL_CONNECTIONS,
-		                                    curlmopt_maxconnects))) {
+		                                    DEFAULT_MAX_TOTAL_CONNECTIONS))) {
 			snprintf (err, errsize, "Error setting MAX_TOTAL_CONNECTIONS");
 			return NULL;
 		}
@@ -119,6 +121,39 @@ struct rb_http_handler_s *rb_http_create_handler (
 	} else {
 		return NULL;
 	}
+}
+
+int rb_http_handler_set_opt (struct rb_http_handler_s *rb_http_handler,
+                             const char *key,
+                             const char *val, char *err,
+                             size_t errsize) {
+
+	if (key == NULL || val == NULL) {
+		snprintf (err, errsize, "Invalid option");
+		return -1;
+	}
+
+	if (!strcmp(key, "HTTP_MAX_TOTAL_CONNECTIONS")) {
+		if (CURLM_OK != (curl_multi_setopt (rb_http_handler->multi_handle,
+		                                    CURLMOPT_MAX_TOTAL_CONNECTIONS,
+		                                    atol(val)))) {
+			snprintf (err, errsize, "Error setting MAX_TOTAL_CONNECTIONS");
+			return -1;
+		}
+	} else if (!strcmp(key, "HTTP_VERBOSE")) {
+		rb_http_handler->verbose =  atol(val);
+	} else if (!strcmp(key, "HTTP_TIMEOUT")) {
+		rb_http_handler->timeout =  atol(val);
+	} else if (!strcmp(key, "HTTP_CONNTTIMEOUT")) {
+		rb_http_handler->connttimeout = atol(val);
+	} else if (!strcmp(key, "RB_HTTP_MAX_MESSAGES")) {
+		rb_http_handler->max_messages = atoi(val);
+	} else {
+		snprintf (err, errsize, "Error decoding option: \"%s: %s\"", key, val);
+		return -1;
+	}
+
+	return 0;
 }
 
 /**
@@ -278,7 +313,28 @@ void *rb_http_send_message (void *arg) {
 					return NULL;
 				}
 
-				if (curl_easy_setopt (handler, CURLOPT_TIMEOUT_MS, 1000L) != CURLE_OK) {
+				if (curl_easy_setopt(handler, CURLOPT_VERBOSE,
+				                     rb_http_handler->verbose) != CURLE_OK) {
+					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+					report->err_code = -1;
+					report->http_code = 0;
+					report->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+					return NULL;
+				}
+
+				if (curl_easy_setopt (handler, CURLOPT_TIMEOUT_MS,
+				                      rb_http_handler->timeout) != CURLE_OK) {
+					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+					report->err_code = -1;
+					report->http_code = 0;
+					report->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+					return NULL;
+				}
+
+				if (curl_easy_setopt (handler, CURLOPT_CONNECTTIMEOUT_MS,
+				                      rb_http_handler->connttimeout) != CURLE_OK) {
 					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
 					report->err_code = -1;
 					report->http_code = 0;
