@@ -23,7 +23,11 @@ int \hyperlink{structrb__http__handler__s_a6239490836609d286669af640028ae71}{lef
 \item 
 int \hyperlink{structrb__http__handler__s_ac8ff888740fc0f4c4365fa08fc7d044f}{max\-\_\-messages}
 \item 
-long \hyperlink{structrb__http__handler__s_a85973abbda4aeb9332a1b59d6aec69a7}{curlmopt\-\_\-maxconnects}
+long \hyperlink{structrb__http__handler__s_a619a5777839d378f50240c703558b4a8}{timeout}
+\item 
+long \hyperlink{structrb__http__handler__s_ae4538da6abfe51878cf87aa990105c59}{connttimeout}
+\item 
+long \hyperlink{structrb__http__handler__s_a0bca537c3590135753bdd217559bb422}{verbose}
 \item 
 char $\ast$ \hyperlink{structrb__http__handler__s_a1f0df317f6eca7893bb08a54f13870ef}{url}
 \item 
@@ -49,12 +53,12 @@ Definition at line 27 of file rb\-\_\-http\-\_\-handler.\-c.
 
 
 \subsection{Member Data Documentation}
-\hypertarget{structrb__http__handler__s_a85973abbda4aeb9332a1b59d6aec69a7}{\index{rb\-\_\-http\-\_\-handler\-\_\-s@{rb\-\_\-http\-\_\-handler\-\_\-s}!curlmopt\-\_\-maxconnects@{curlmopt\-\_\-maxconnects}}
-\index{curlmopt\-\_\-maxconnects@{curlmopt\-\_\-maxconnects}!rb_http_handler_s@{rb\-\_\-http\-\_\-handler\-\_\-s}}
-\subsubsection[{curlmopt\-\_\-maxconnects}]{\setlength{\rightskip}{0pt plus 5cm}long rb\-\_\-http\-\_\-handler\-\_\-s\-::curlmopt\-\_\-maxconnects}}\label{structrb__http__handler__s_a85973abbda4aeb9332a1b59d6aec69a7}
+\hypertarget{structrb__http__handler__s_ae4538da6abfe51878cf87aa990105c59}{\index{rb\-\_\-http\-\_\-handler\-\_\-s@{rb\-\_\-http\-\_\-handler\-\_\-s}!connttimeout@{connttimeout}}
+\index{connttimeout@{connttimeout}!rb_http_handler_s@{rb\-\_\-http\-\_\-handler\-\_\-s}}
+\subsubsection[{connttimeout}]{\setlength{\rightskip}{0pt plus 5cm}long rb\-\_\-http\-\_\-handler\-\_\-s\-::connttimeout}}\label{structrb__http__handler__s_ae4538da6abfe51878cf87aa990105c59}
 
 
-Definition at line 33 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 34 of file rb\-\_\-http\-\_\-handler.\-c.
 
 \hypertarget{structrb__http__handler__s_a6239490836609d286669af640028ae71}{\index{rb\-\_\-http\-\_\-handler\-\_\-s@{rb\-\_\-http\-\_\-handler\-\_\-s}!left@{left}}
 \index{left@{left}!rb_http_handler_s@{rb\-\_\-http\-\_\-handler\-\_\-s}}
@@ -82,42 +86,42 @@ Definition at line 30 of file rb\-\_\-http\-\_\-handler.\-c.
 \subsubsection[{multi\-\_\-handle}]{\setlength{\rightskip}{0pt plus 5cm}C\-U\-R\-L\-M$\ast$ rb\-\_\-http\-\_\-handler\-\_\-s\-::multi\-\_\-handle}}\label{structrb__http__handler__s_a45c0ce1f2e4d154d0194bb60569c0faf}
 
 
-Definition at line 36 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 38 of file rb\-\_\-http\-\_\-handler.\-c.
 
 \hypertarget{structrb__http__handler__s_add4e2b7495e2f20396c2e70ab1a27bf4}{\index{rb\-\_\-http\-\_\-handler\-\_\-s@{rb\-\_\-http\-\_\-handler\-\_\-s}!multi\-\_\-handle\-\_\-mutex@{multi\-\_\-handle\-\_\-mutex}}
 \index{multi\-\_\-handle\-\_\-mutex@{multi\-\_\-handle\-\_\-mutex}!rb_http_handler_s@{rb\-\_\-http\-\_\-handler\-\_\-s}}
 \subsubsection[{multi\-\_\-handle\-\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-mutex\-\_\-t rb\-\_\-http\-\_\-handler\-\_\-s\-::multi\-\_\-handle\-\_\-mutex}}\label{structrb__http__handler__s_add4e2b7495e2f20396c2e70ab1a27bf4}
 
 
-Definition at line 35 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 37 of file rb\-\_\-http\-\_\-handler.\-c.
 
 \hypertarget{structrb__http__handler__s_a4d36d51983f56eac71371a39ee421242}{\index{rb\-\_\-http\-\_\-handler\-\_\-s@{rb\-\_\-http\-\_\-handler\-\_\-s}!p\-\_\-thread\-\_\-recv@{p\-\_\-thread\-\_\-recv}}
 \index{p\-\_\-thread\-\_\-recv@{p\-\_\-thread\-\_\-recv}!rb_http_handler_s@{rb\-\_\-http\-\_\-handler\-\_\-s}}
 \subsubsection[{p\-\_\-thread\-\_\-recv}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-t rb\-\_\-http\-\_\-handler\-\_\-s\-::p\-\_\-thread\-\_\-recv}}\label{structrb__http__handler__s_a4d36d51983f56eac71371a39ee421242}
 
 
-Definition at line 40 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 42 of file rb\-\_\-http\-\_\-handler.\-c.
 
 \hypertarget{structrb__http__handler__s_ae969c34a0421fe32951cb31802735f13}{\index{rb\-\_\-http\-\_\-handler\-\_\-s@{rb\-\_\-http\-\_\-handler\-\_\-s}!p\-\_\-thread\-\_\-send@{p\-\_\-thread\-\_\-send}}
 \index{p\-\_\-thread\-\_\-send@{p\-\_\-thread\-\_\-send}!rb_http_handler_s@{rb\-\_\-http\-\_\-handler\-\_\-s}}
 \subsubsection[{p\-\_\-thread\-\_\-send}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-t rb\-\_\-http\-\_\-handler\-\_\-s\-::p\-\_\-thread\-\_\-send}}\label{structrb__http__handler__s_ae969c34a0421fe32951cb31802735f13}
 
 
-Definition at line 39 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 41 of file rb\-\_\-http\-\_\-handler.\-c.
 
 \hypertarget{structrb__http__handler__s_a39160211aefb64ec052138229da98632}{\index{rb\-\_\-http\-\_\-handler\-\_\-s@{rb\-\_\-http\-\_\-handler\-\_\-s}!rfq@{rfq}}
 \index{rfq@{rfq}!rb_http_handler_s@{rb\-\_\-http\-\_\-handler\-\_\-s}}
 \subsubsection[{rfq}]{\setlength{\rightskip}{0pt plus 5cm}rd\-\_\-fifoq\-\_\-t rb\-\_\-http\-\_\-handler\-\_\-s\-::rfq}}\label{structrb__http__handler__s_a39160211aefb64ec052138229da98632}
 
 
-Definition at line 37 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 39 of file rb\-\_\-http\-\_\-handler.\-c.
 
 \hypertarget{structrb__http__handler__s_a383f2047cfcdd9fe49d0deacf770a73c}{\index{rb\-\_\-http\-\_\-handler\-\_\-s@{rb\-\_\-http\-\_\-handler\-\_\-s}!rfq\-\_\-reports@{rfq\-\_\-reports}}
 \index{rfq\-\_\-reports@{rfq\-\_\-reports}!rb_http_handler_s@{rb\-\_\-http\-\_\-handler\-\_\-s}}
 \subsubsection[{rfq\-\_\-reports}]{\setlength{\rightskip}{0pt plus 5cm}rd\-\_\-fifoq\-\_\-t rb\-\_\-http\-\_\-handler\-\_\-s\-::rfq\-\_\-reports}}\label{structrb__http__handler__s_a383f2047cfcdd9fe49d0deacf770a73c}
 
 
-Definition at line 38 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 40 of file rb\-\_\-http\-\_\-handler.\-c.
 
 \hypertarget{structrb__http__handler__s_aa49e97bedda03106912088dad0b75e64}{\index{rb\-\_\-http\-\_\-handler\-\_\-s@{rb\-\_\-http\-\_\-handler\-\_\-s}!still\-\_\-running@{still\-\_\-running}}
 \index{still\-\_\-running@{still\-\_\-running}!rb_http_handler_s@{rb\-\_\-http\-\_\-handler\-\_\-s}}
@@ -133,12 +137,26 @@ Definition at line 28 of file rb\-\_\-http\-\_\-handler.\-c.
 
 Definition at line 29 of file rb\-\_\-http\-\_\-handler.\-c.
 
+\hypertarget{structrb__http__handler__s_a619a5777839d378f50240c703558b4a8}{\index{rb\-\_\-http\-\_\-handler\-\_\-s@{rb\-\_\-http\-\_\-handler\-\_\-s}!timeout@{timeout}}
+\index{timeout@{timeout}!rb_http_handler_s@{rb\-\_\-http\-\_\-handler\-\_\-s}}
+\subsubsection[{timeout}]{\setlength{\rightskip}{0pt plus 5cm}long rb\-\_\-http\-\_\-handler\-\_\-s\-::timeout}}\label{structrb__http__handler__s_a619a5777839d378f50240c703558b4a8}
+
+
+Definition at line 33 of file rb\-\_\-http\-\_\-handler.\-c.
+
 \hypertarget{structrb__http__handler__s_a1f0df317f6eca7893bb08a54f13870ef}{\index{rb\-\_\-http\-\_\-handler\-\_\-s@{rb\-\_\-http\-\_\-handler\-\_\-s}!url@{url}}
 \index{url@{url}!rb_http_handler_s@{rb\-\_\-http\-\_\-handler\-\_\-s}}
 \subsubsection[{url}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ rb\-\_\-http\-\_\-handler\-\_\-s\-::url}}\label{structrb__http__handler__s_a1f0df317f6eca7893bb08a54f13870ef}
 
 
-Definition at line 34 of file rb\-\_\-http\-\_\-handler.\-c.
+Definition at line 36 of file rb\-\_\-http\-\_\-handler.\-c.
+
+\hypertarget{structrb__http__handler__s_a0bca537c3590135753bdd217559bb422}{\index{rb\-\_\-http\-\_\-handler\-\_\-s@{rb\-\_\-http\-\_\-handler\-\_\-s}!verbose@{verbose}}
+\index{verbose@{verbose}!rb_http_handler_s@{rb\-\_\-http\-\_\-handler\-\_\-s}}
+\subsubsection[{verbose}]{\setlength{\rightskip}{0pt plus 5cm}long rb\-\_\-http\-\_\-handler\-\_\-s\-::verbose}}\label{structrb__http__handler__s_a0bca537c3590135753bdd217559bb422}
+
+
+Definition at line 35 of file rb\-\_\-http\-\_\-handler.\-c.
 
 
 
