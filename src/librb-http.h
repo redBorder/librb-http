@@ -2,6 +2,10 @@
 
 #define RB_HTTP_MESSAGE_F_FREE 1
 #define RB_HTTP_MESSAGE_F_COPY 2
+#define DEFAULT_MAX_TOTAL_CONNECTIONS 4
+#define DEFAULT_MAX_MESSAGES 512
+#define DEFAULT_TIMEOUT 10000L
+#define DEFAULT_CONTTIMEOUT 3000L
 
 ////////////////////
 /// Types
@@ -18,10 +22,8 @@ typedef void (*cb_report) (struct rb_http_handler_s *rb_http_handler,
 ////////////////////
 /// Functions
 ////////////////////
-struct rb_http_handler_s *rb_http_create_handler (
+struct rb_http_handler_s *rb_http_handler_create (
     const char *urls_str,
-    long curlmopt_maxconnects,
-    int max_messages,
     char *err,
     size_t errbuf);
 
@@ -38,4 +40,11 @@ int rb_http_produce (struct rb_http_handler_s *handler,
                      void *opaque);
 
 int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
-                         cb_report report_fn, int timeout_ms);
+                         cb_report report_fn,
+                         int timeout_ms);
+
+int rb_http_handler_set_opt (struct rb_http_handler_s *rb_http_handler,
+                             const char *key,
+                             const char *val,
+                             char *err,
+                             size_t errsize);
