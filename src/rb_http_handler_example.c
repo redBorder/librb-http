@@ -41,6 +41,12 @@ int main() {
 	char string[128];
 
 	handler = rb_http_handler_create (url, NULL, 0);
+	rb_http_handler_set_opt(handler, "HTTP_MAX_TOTAL_CONNECTIONS", "4", NULL, 0);
+	rb_http_handler_set_opt(handler, "HTTP_TIMEOUT", "10000", NULL, 0);
+	rb_http_handler_set_opt(handler, "HTTP_CONNTTIMEOUT", "3000", NULL, 0);
+	rb_http_handler_set_opt(handler, "HTTP_VERBOSE", "0", NULL, 0);
+	rb_http_handler_set_opt(handler, "RB_HTTP_MAX_MESSAGES", "512", NULL, 0);
+
 	printf ("Sending 1024 messages\n");
 	int i = 0;
 
