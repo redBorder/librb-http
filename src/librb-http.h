@@ -5,6 +5,7 @@
 #define DEFAULT_MAX_TOTAL_CONNECTIONS 4
 #define DEFAULT_MAX_MESSAGES 512
 #define DEFAULT_TIMEOUT 10000L
+#define DEFAULT_CONTTIMEOUT 3000L
 
 ////////////////////
 /// Types
