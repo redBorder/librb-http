@@ -45,5 +45,6 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 
 int rb_http_handler_set_opt (struct rb_http_handler_s *rb_http_handler,
                              const char *key,
-                             const char *val, char *err,
+                             const char *val,
+                             char *err,
                              size_t errsize);
