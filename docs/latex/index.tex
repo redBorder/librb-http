@@ -15,7 +15,6 @@ Non-\/blocking high-\/level wrapper for libcurl.
 \textcolor{keyword}{static} \textcolor{keywordtype}{int} running = 1;
 \textcolor{keyword}{struct }\hyperlink{structrb__http__handler__s}{rb\_http\_handler\_s} *handler = NULL;
 
-
 \textcolor{keyword}{static} \textcolor{keywordtype}{void} my\_callback (\textcolor{keyword}{struct} \hyperlink{structrb__http__handler__s}{rb\_http\_handler\_s} *rb\_http\_handler,
                          \textcolor{keywordtype}{int} status\_code,
                          \textcolor{keywordtype}{long} http\_status,
@@ -38,40 +37,34 @@ Non-\/blocking high-\/level wrapper for libcurl.
     \textcolor{keywordflow}{if} (opaque != NULL)
         printf (\textcolor{stringliteral}{"OPAQUE: %p\(\backslash\)n"}, opaque);
 
-    free (buff);
-
     (void) rb\_http\_handler;
     (void) bufsiz;
     (void) status\_code\_str;
 \}
 
-\textcolor{keyword}{static} \textcolor{keywordtype}{void} sigint\_handler () \{
-    \hyperlink{librb-http_8h_a890e981b619b1bdd5cc37fa16bb06f06}{rb\_http\_get\_reports} (handler, my\_callback, 100);
-    running = 0;
-\};
-
 \textcolor{keywordtype}{int} \hyperlink{rb__http__handler__example_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}() \{
-    \textcolor{keywordtype}{char} *url = strdup (\textcolor{stringliteral}{"http://localhost:8080/librb-http/"});
+    \textcolor{keywordtype}{char} url[] = \textcolor{stringliteral}{"http://localhost:8080/librb-http/"};
     \textcolor{keywordtype}{long} max\_connections = 4L;
     \textcolor{keywordtype}{char} \textcolor{keywordtype}{string}[128];
 
-    \textcolor{keyword}{struct }sigaction action;
-    memset (&action, 0, \textcolor{keyword}{sizeof} (action));
-    action.sa\_handler = &sigint\_handler;
-    sigaction (SIGINT, &action, NULL);
-
-    handler = rb\_http\_handler (url, max\_connections, 512, NULL, 0);
-    printf (\textcolor{stringliteral}{"This will send 1024 messages\(\backslash\)n"});
+    handler = rb\_http\_create\_handler (url, max\_connections, 512, NULL, 0);
+    printf (\textcolor{stringliteral}{"Sending 1024 messages\(\backslash\)n"});
     \textcolor{keywordtype}{int} i = 0;
 
     \textcolor{comment}{// getchar();}
+    \textcolor{keywordtype}{char} *message = NULL;
 
     \textcolor{keywordflow}{for} (i = 0 ; i < 1024 && running; i++) \{
         sprintf (\textcolor{keywordtype}{string}, \textcolor{stringliteral}{"\{\(\backslash\)"message\(\backslash\)": \(\backslash\)"%d\(\backslash\)"\}"}, i);
-        \textcolor{keywordflow}{while} (\hyperlink{librb-http_8h_a0d0d31d9c2dc9ed04d6722e5653b4682}{rb\_http\_produce} (handler, strdup (\textcolor{keywordtype}{string}), strlen (\textcolor{keywordtype}{string}), 0,
-                                NULL, 0, NULL) > 0 && running) \{
-            printf (\textcolor{stringliteral}{"Queue is full, sleeping 1s\(\backslash\)n"});
-            sleep (1);
+        \textcolor{keywordflow}{while} (\hyperlink{librb-http_8h_a0d0d31d9c2dc9ed04d6722e5653b4682}{rb\_http\_produce} (handler,
+                                message = strdup (\textcolor{keywordtype}{string}),
+                                strlen (\textcolor{keywordtype}{string}),
+                                \hyperlink{librb-http_8h_aef79f44f520e54cbedce1068fe324720}{RB\_HTTP\_MESSAGE\_F\_FREE},
+                                NULL,
+                                0,
+                                NULL) > 0 && running) \{
+            \hyperlink{librb-http_8h_a890e981b619b1bdd5cc37fa16bb06f06}{rb\_http\_get\_reports} (handler, my\_callback, 1000);
+            free(message);
         \}
     \}
 
