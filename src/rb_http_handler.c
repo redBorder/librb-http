@@ -120,6 +120,33 @@ struct rb_http_handler_s *rb_http_handler_create (
 	}
 }
 
+int rb_http_handler_set_opt (struct rb_http_handler_s *rb_http_handler,
+                             const char *key,
+                             const char *val, char *err,
+                             size_t errsize) {
+
+	if (key == NULL || val == NULL) {
+		snprintf (err, errsize, "Invalid option");
+		return -1;
+	}
+
+	if (strcmp(key, "HTTP_MAX_TOTAL_CONNECTIONS")) {
+		long conns = atol(val);
+		rb_http_handler->curlmopt_maxconnects = conns;
+	} else if (strcmp(key, "HTTP_TIMEOUT_MS")) {
+		long timeout = atol(val);
+		rb_http_handler->timeout = timeout;
+	} else if (strcmp(key, "RB_HTTP_MAX_MESSAGES")) {
+		int max_messages = atoi(val);
+		rb_http_handler->max_messages = max_messages;
+	} else {
+		snprintf (err, errsize, "Error decoding option: \"%s: %s\"", key, val);
+		return -1;
+	}
+
+	return 0;
+}
+
 /**
  * @brief Free memory from a handler
  * @param rb_http_handler Handler that will freed
