@@ -119,16 +119,16 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a68c2a5bd671ddb123e3f38057b5c45f6"><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rb__http__handler_8c.html#a68c2a5bd671ddb123e3f38057b5c45f6">rb_http_handler</a> (const char *urls_str, long curlmopt_maxconnects, int max_messages, char *err, size_t errsize)</td></tr>
-<tr class="memdesc:a68c2a5bd671ddb123e3f38057b5c45f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a handler to produce messages.  <a href="#a68c2a5bd671ddb123e3f38057b5c45f6">More...</a><br/></td></tr>
-<tr class="separator:a68c2a5bd671ddb123e3f38057b5c45f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aea4aa423ff2034b027817632c746fd39"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rb__http__handler_8c.html#aea4aa423ff2034b027817632c746fd39">rb_http_handler_destroy</a> (struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="el" href="rb__http__handler_8c.html#a68c2a5bd671ddb123e3f38057b5c45f6">rb_http_handler</a>, char *err, size_t errsize)</td></tr>
+<tr class="memitem:af67cfb301ebb1e02bfa17bfecb735bab"><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rb__http__handler_8c.html#af67cfb301ebb1e02bfa17bfecb735bab">rb_http_create_handler</a> (const char *urls_str, long curlmopt_maxconnects, int max_messages, char *err, size_t errsize)</td></tr>
+<tr class="memdesc:af67cfb301ebb1e02bfa17bfecb735bab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a handler to produce messages.  <a href="#af67cfb301ebb1e02bfa17bfecb735bab">More...</a><br/></td></tr>
+<tr class="separator:af67cfb301ebb1e02bfa17bfecb735bab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aea4aa423ff2034b027817632c746fd39"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rb__http__handler_8c.html#aea4aa423ff2034b027817632c746fd39">rb_http_handler_destroy</a> (struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *rb_http_handler, char *err, size_t errsize)</td></tr>
 <tr class="memdesc:aea4aa423ff2034b027817632c746fd39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free memory from a handler.  <a href="#aea4aa423ff2034b027817632c746fd39">More...</a><br/></td></tr>
 <tr class="separator:aea4aa423ff2034b027817632c746fd39"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0d0d31d9c2dc9ed04d6722e5653b4682"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rb__http__handler_8c.html#a0d0d31d9c2dc9ed04d6722e5653b4682">rb_http_produce</a> (struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="el" href="rb__http__handler__example_8c.html#a0165697b451a136ac74647662a5a39e1">handler</a>, char *buff, size_t len, int flags, char *err, size_t errsize, void *opaque)</td></tr>
 <tr class="memdesc:a0d0d31d9c2dc9ed04d6722e5653b4682"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueues a message (non-blocking)  <a href="#a0d0d31d9c2dc9ed04d6722e5653b4682">More...</a><br/></td></tr>
 <tr class="separator:a0d0d31d9c2dc9ed04d6722e5653b4682"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a890e981b619b1bdd5cc37fa16bb06f06"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rb__http__handler_8c.html#a890e981b619b1bdd5cc37fa16bb06f06">rb_http_get_reports</a> (struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="el" href="rb__http__handler_8c.html#a68c2a5bd671ddb123e3f38057b5c45f6">rb_http_handler</a>, <a class="el" href="librb-http_8h.html#abcf27caf85ec3ac2b11d1b89aed63966">cb_report</a> report_fn, int timeout_ms)</td></tr>
+<tr class="memitem:a890e981b619b1bdd5cc37fa16bb06f06"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rb__http__handler_8c.html#a890e981b619b1bdd5cc37fa16bb06f06">rb_http_get_reports</a> (struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *rb_http_handler, <a class="el" href="librb-http_8h.html#abcf27caf85ec3ac2b11d1b89aed63966">cb_report</a> report_fn, int timeout_ms)</td></tr>
 <tr class="separator:a890e981b619b1bdd5cc37fa16bb06f06"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -137,46 +137,12 @@ Functions</h2></td></tr>
 
 <p>Definition in file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="a890e981b619b1bdd5cc37fa16bb06f06"></a>
+<a class="anchor" id="af67cfb301ebb1e02bfa17bfecb735bab"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int rb_http_get_reports </td>
-          <td>(</td>
-          <td class="paramtype">struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *&#160;</td>
-          <td class="paramname"><em>rb_http_handler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="librb-http_8h.html#abcf27caf85ec3ac2b11d1b89aed63966">cb_report</a>&#160;</td>
-          <td class="paramname"><em>report_fn</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>timeout_ms</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00509">509</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a68c2a5bd671ddb123e3f38057b5c45f6"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a>* rb_http_handler </td>
+          <td class="memname">struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a>* rb_http_create_handler </td>
           <td>(</td>
           <td class="paramtype">const char *&#160;</td>
           <td class="paramname"><em>urls_str</em>, </td>
@@ -223,7 +189,41 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Handler for send messages to the provided URL. </dd></dl>
 
-<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00075">75</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
+<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00074">74</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a890e981b619b1bdd5cc37fa16bb06f06"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int rb_http_get_reports </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structrb__http__handler__s.html">rb_http_handler_s</a> *&#160;</td>
+          <td class="paramname"><em>rb_http_handler</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="librb-http_8h.html#abcf27caf85ec3ac2b11d1b89aed63966">cb_report</a>&#160;</td>
+          <td class="paramname"><em>report_fn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>timeout_ms</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00488">488</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
 
 </div>
 </div>
@@ -265,7 +265,7 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00143">143</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
+<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00128">128</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
 
 </div>
 </div>
@@ -333,14 +333,14 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00179">179</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
+<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00162">162</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
 
 </div>
 </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Oct 8 2015 18:03:10 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Oct 14 2015 13:09:22 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>
