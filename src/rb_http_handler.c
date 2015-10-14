@@ -516,11 +516,11 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 
 			curl_slist_free_all (message->headers);
 			curl_easy_cleanup (report->handler);
-			if (message->free_message) {
-				free (message->payload);
+			if (message->free_message && message->payload != NULL) {
+				free (message->payload); message->payload = NULL;
 			}
-			free (message);
-			free (report);
+			free (message); message = NULL;
+			free (report); report = NULL;
 			rd_fifoq_elm_release (&rb_http_handler->rfq_reports, rfqe);
 		}
 	}
