@@ -44,10 +44,15 @@ Non-\/blocking high-\/level wrapper for libcurl.
 
 \textcolor{keywordtype}{int} \hyperlink{rb__http__handler__example_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}() \{
     \textcolor{keywordtype}{char} url[] = \textcolor{stringliteral}{"http://localhost:8080/librb-http/"};
-    \textcolor{keywordtype}{long} max\_connections = 4L;
     \textcolor{keywordtype}{char} \textcolor{keywordtype}{string}[128];
 
-    handler = rb\_http\_create\_handler (url, max\_connections, 512, NULL, 0);
+    handler = \hyperlink{librb-http_8h_aa84a3dadccb44fa421655ad1b09c3157}{rb\_http\_handler\_create} (url, NULL, 0);
+    \hyperlink{librb-http_8h_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"HTTP\_MAX\_TOTAL\_CONNECTIONS"}, \textcolor{stringliteral}{"4"}, NULL, 0);
+    \hyperlink{librb-http_8h_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"HTTP\_TIMEOUT"}, \textcolor{stringliteral}{"10000"}, NULL, 0);
+    \hyperlink{librb-http_8h_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"HTTP\_CONNTTIMEOUT"}, \textcolor{stringliteral}{"3000"}, NULL, 0);
+    \hyperlink{librb-http_8h_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"HTTP\_VERBOSE"}, \textcolor{stringliteral}{"0"}, NULL, 0);
+    \hyperlink{librb-http_8h_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"RB\_HTTP\_MAX\_MESSAGES"}, \textcolor{stringliteral}{"512"}, NULL, 0);
+
     printf (\textcolor{stringliteral}{"Sending 1024 messages\(\backslash\)n"});
     \textcolor{keywordtype}{int} i = 0;
 
@@ -73,6 +78,7 @@ Non-\/blocking high-\/level wrapper for libcurl.
     \hyperlink{librb-http_8h_aea4aa423ff2034b027817632c746fd39}{rb\_http\_handler\_destroy} (handler, NULL, 0);
 
     \textcolor{keywordflow}{return} 0;
+\}
 \}
 \end{DoxyCode}
  
