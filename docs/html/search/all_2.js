@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['free_5fmessage',['free_message',['../structrb__http__message__s.html#acbfdd79b7ec041a7b7e0edac1da72d30',1,'rb_http_message_s']]]
+  ['err_5fcode',['err_code',['../structrb__http__report__s.html#a26726b20726473d985a703e0c7266d3f',1,'rb_http_report_s']]]
 ];
