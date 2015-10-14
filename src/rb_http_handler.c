@@ -36,8 +36,8 @@ struct rb_http_handler_s {
 	CURLM *multi_handle;
 	rd_fifoq_t rfq;
 	rd_fifoq_t rfq_reports;
-	pthread_t *rd_thread_send;
-	pthread_t *rd_thread_recv;
+	pthread_t rd_thread_send;
+	pthread_t rd_thread_recv;
 };
 
 /**
@@ -111,9 +111,9 @@ struct rb_http_handler_s *rb_http_create_handler (
 			return NULL;
 		}
 
-		pthread_create (rb_http_handler->rd_thread_send, NULL, &rb_http_send_message,
+		pthread_create (&rb_http_handler->rd_thread_send, NULL, &rb_http_send_message,
 		                rb_http_handler);
-		pthread_create (rb_http_handler->rd_thread_recv, NULL, &rb_http_recv_message,
+		pthread_create (&rb_http_handler->rd_thread_recv, NULL, &rb_http_recv_message,
 		                rb_http_handler);
 
 		return rb_http_handler;
