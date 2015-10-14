@@ -31,7 +31,7 @@ struct rb_http_handler_s {
 	int left;
 	int max_messages;
 	long curlmopt_maxconnects;
-	char **urls;
+	char *url;
 	pthread_mutex_t multi_handle_mutex;
 	CURLM *multi_handle;
 	rd_fifoq_t rfq;
@@ -62,7 +62,6 @@ struct rb_http_report_s {
 ////////////////////
 // Private functions
 ////////////////////
-static char **str_split (const char *a_str, const char a_delim);
 static void *rb_http_send_message (void *arg);
 static void *rb_http_recv_message (void *arg);
 
@@ -91,7 +90,7 @@ struct rb_http_handler_s *rb_http_create_handler (
 
 		rb_http_handler->curlmopt_maxconnects = curlmopt_maxconnects;
 
-		rb_http_handler->urls = str_split (urls_str, ',');
+		rb_http_handler->url = strdup(urls_str);
 		rb_http_handler->still_running = 0;
 		rb_http_handler->msgs_left = 0;
 
@@ -143,12 +142,8 @@ int rb_http_handler_destroy (struct rb_http_handler_s *rb_http_handler,
 
 	rd_fifoq_destroy (&rb_http_handler->rfq);
 
-	if (rb_http_handler->urls) {
-		int i;
-		for (i = 0; * (rb_http_handler->urls + i); i++) {
-			free (* (rb_http_handler->urls + i));
-		}
-		free (rb_http_handler->urls);
+	if (rb_http_handler->url != NULL) {
+		free (rb_http_handler->url);
 	}
 
 	free (rb_http_handler);
@@ -245,7 +240,7 @@ void *rb_http_send_message (void *arg) {
 
 				if (curl_easy_setopt (handler,
 				                      CURLOPT_URL,
-				                      rb_http_handler->urls[0])
+				                      rb_http_handler->url)
 				        != CURLE_OK) {
 					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
 					report->err_code = -1;
@@ -532,55 +527,4 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 	}
 
 	return rb_http_handler->still_running;
-}
-
-/**
- * Split a string (and specify the delimiter to use)
- * @param  a_str   Single sting separated by delimiter
- * @param  a_delim Delimiter
- * @return         Array of strings separated
- */
-char **str_split (const char *in_str, const char a_delim) {
-	char **result    = 0;
-	size_t count     = 0;
-	char *last_comma = 0;
-	char delim[2];
-	delim[0] = a_delim;
-	delim[1] = 0;
-	char *a_str = strdup (in_str);
-	char *tmp        = a_str;
-
-	/* Count how many elements will be extracted. */
-	while (*tmp) {
-		if (a_delim == *tmp) {
-			count++;
-			last_comma = tmp;
-		}
-		tmp++;
-	}
-
-	/* Add space for trailing token. */
-	count += last_comma < (a_str + strlen (a_str) - 1);
-
-	/* Add space for terminating null string so caller
-	   knows where the list of returned strings ends. */
-	count++;
-
-	result = malloc (sizeof (char *) * count);
-
-	if (result) {
-		size_t idx  = 0;
-		char *token = strtok (a_str, delim);
-
-		while (token) {
-			assert (idx < count);
-			* (result + idx++) = strdup (token);
-			token = strtok (0, delim);
-		}
-		assert (idx == count - 1);
-		* (result + idx) = 0;
-	}
-
-	free (a_str);
-	return result;
 }
