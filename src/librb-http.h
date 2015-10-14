@@ -18,7 +18,7 @@ typedef void (*cb_report) (struct rb_http_handler_s *rb_http_handler,
 ////////////////////
 /// Functions
 ////////////////////
-struct rb_http_handler_s *rb_http_handler (
+struct rb_http_handler_s *rb_http_create_handler (
     const char *urls_str,
     long curlmopt_maxconnects,
     int max_messages,

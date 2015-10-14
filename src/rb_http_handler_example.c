@@ -54,7 +54,7 @@ int main() {
 	action.sa_handler = &sigint_handler;
 	sigaction (SIGINT, &action, NULL);
 
-	handler = rb_http_handler (url, max_connections, 512, NULL, 0);
+	handler = rb_http_create_handler (url, max_connections, 512, NULL, 0);
 	printf ("This will send 1024 messages\n");
 	int i = 0;
 
