@@ -91,7 +91,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><span class="keyword">struct </span><a class="code" href="structrb__http__handler__s.html">rb_http_handler_s</a> *handler = NULL;</div>
 <div class="line"></div>
 <div class="line"></div>
-<div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span> my_callback (<span class="keyword">struct</span> <a class="code" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="code" href="librb-http_8h.html#a190d674d1d8cac12e0dd2445c5c8cba4">rb_http_handler</a>,</div>
+<div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span> my_callback (<span class="keyword">struct</span> <a class="code" href="structrb__http__handler__s.html">rb_http_handler_s</a> *rb_http_handler,</div>
 <div class="line">                         <span class="keywordtype">int</span> status_code,</div>
 <div class="line">                         <span class="keywordtype">long</span> http_status,</div>
 <div class="line">                         <span class="keyword">const</span> <span class="keywordtype">char</span> *status_code_str,</div>
@@ -126,7 +126,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line">};</div>
 <div class="line"></div>
 <div class="line"><span class="keywordtype">int</span> <a class="code" href="rb__http__handler__example_8c.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a>() {</div>
-<div class="line">    <span class="keywordtype">char</span> *url = strdup (<span class="stringliteral">&quot;http://localhost:8080/librb-http/&quot;</span>);</div>
+<div class="line">    <span class="keywordtype">char</span> *<a class="code" href="structrb__http__handler__s.html#a1f0df317f6eca7893bb08a54f13870ef">url</a> = strdup (<span class="stringliteral">&quot;http://localhost:8080/librb-http/&quot;</span>);</div>
 <div class="line">    <span class="keywordtype">long</span> max_connections = 4L;</div>
 <div class="line">    <span class="keywordtype">char</span> <span class="keywordtype">string</span>[128];</div>
 <div class="line"></div>
@@ -135,7 +135,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line">    action.sa_handler = &amp;sigint_handler;</div>
 <div class="line">    sigaction (SIGINT, &amp;action, NULL);</div>
 <div class="line"></div>
-<div class="line">    handler = <a class="code" href="librb-http_8h.html#a190d674d1d8cac12e0dd2445c5c8cba4">rb_http_handler</a> (url, max_connections, 512, NULL, 0);</div>
+<div class="line">    handler = rb_http_handler (url, max_connections, 512, NULL, 0);</div>
 <div class="line">    printf (<span class="stringliteral">&quot;This will send 1024 messages\n&quot;</span>);</div>
 <div class="line">    <span class="keywordtype">int</span> i = 0;</div>
 <div class="line"></div>
@@ -159,7 +159,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --> </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Oct 8 2015 18:03:10 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Oct 14 2015 13:09:22 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

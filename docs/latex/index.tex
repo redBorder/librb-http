@@ -60,7 +60,7 @@ Non-\/blocking high-\/level wrapper for libcurl.
     action.sa\_handler = &sigint\_handler;
     sigaction (SIGINT, &action, NULL);
 
-    handler = \hyperlink{librb-http_8h_a190d674d1d8cac12e0dd2445c5c8cba4}{rb\_http\_handler} (url, max\_connections, 512, NULL, 0);
+    handler = rb\_http\_handler (url, max\_connections, 512, NULL, 0);
     printf (\textcolor{stringliteral}{"This will send 1024 messages\(\backslash\)n"});
     \textcolor{keywordtype}{int} i = 0;
 

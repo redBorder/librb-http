@@ -107,8 +107,8 @@ Public Attributes</h2></td></tr>
 <tr class="separator:ac8ff888740fc0f4c4365fa08fc7d044f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a85973abbda4aeb9332a1b59d6aec69a7"><td class="memItemLeft" align="right" valign="top">long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#a85973abbda4aeb9332a1b59d6aec69a7">curlmopt_maxconnects</a></td></tr>
 <tr class="separator:a85973abbda4aeb9332a1b59d6aec69a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a651ea67df6280142010181fb0f418a19"><td class="memItemLeft" align="right" valign="top">char **&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#a651ea67df6280142010181fb0f418a19">urls</a></td></tr>
-<tr class="separator:a651ea67df6280142010181fb0f418a19"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f0df317f6eca7893bb08a54f13870ef"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#a1f0df317f6eca7893bb08a54f13870ef">url</a></td></tr>
+<tr class="separator:a1f0df317f6eca7893bb08a54f13870ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add4e2b7495e2f20396c2e70ab1a27bf4"><td class="memItemLeft" align="right" valign="top">pthread_mutex_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#add4e2b7495e2f20396c2e70ab1a27bf4">multi_handle_mutex</a></td></tr>
 <tr class="separator:add4e2b7495e2f20396c2e70ab1a27bf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45c0ce1f2e4d154d0194bb60569c0faf"><td class="memItemLeft" align="right" valign="top">CURLM *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#a45c0ce1f2e4d154d0194bb60569c0faf">multi_handle</a></td></tr>
@@ -117,10 +117,10 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a39160211aefb64ec052138229da98632"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a383f2047cfcdd9fe49d0deacf770a73c"><td class="memItemLeft" align="right" valign="top">rd_fifoq_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#a383f2047cfcdd9fe49d0deacf770a73c">rfq_reports</a></td></tr>
 <tr class="separator:a383f2047cfcdd9fe49d0deacf770a73c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab7856bbe03f6e21d3c4663b19d043454"><td class="memItemLeft" align="right" valign="top">rd_thread_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#ab7856bbe03f6e21d3c4663b19d043454">rd_thread_send</a></td></tr>
-<tr class="separator:ab7856bbe03f6e21d3c4663b19d043454"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac22f049e3d329afb6b7b3eea9310fae8"><td class="memItemLeft" align="right" valign="top">rd_thread_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#ac22f049e3d329afb6b7b3eea9310fae8">rd_thread_recv</a></td></tr>
-<tr class="separator:ac22f049e3d329afb6b7b3eea9310fae8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae969c34a0421fe32951cb31802735f13"><td class="memItemLeft" align="right" valign="top">pthread_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#ae969c34a0421fe32951cb31802735f13">p_thread_send</a></td></tr>
+<tr class="separator:ae969c34a0421fe32951cb31802735f13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d36d51983f56eac71371a39ee421242"><td class="memItemLeft" align="right" valign="top">pthread_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#a4d36d51983f56eac71371a39ee421242">p_thread_recv</a></td></tr>
+<tr class="separator:a4d36d51983f56eac71371a39ee421242"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Contains the "handler" information. </p>
@@ -211,12 +211,12 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ac22f049e3d329afb6b7b3eea9310fae8"></a>
+<a class="anchor" id="a4d36d51983f56eac71371a39ee421242"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">rd_thread_t* rb_http_handler_s::rd_thread_recv</td>
+          <td class="memname">pthread_t rb_http_handler_s::p_thread_recv</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -225,12 +225,12 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ab7856bbe03f6e21d3c4663b19d043454"></a>
+<a class="anchor" id="ae969c34a0421fe32951cb31802735f13"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">rd_thread_t* rb_http_handler_s::rd_thread_send</td>
+          <td class="memname">pthread_t rb_http_handler_s::p_thread_send</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -295,12 +295,12 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a651ea67df6280142010181fb0f418a19"></a>
+<a class="anchor" id="a1f0df317f6eca7893bb08a54f13870ef"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">char** rb_http_handler_s::urls</td>
+          <td class="memname">char* rb_http_handler_s::url</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -315,7 +315,7 @@ Public Attributes</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Oct 8 2015 18:03:10 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Oct 14 2015 13:09:22 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>
