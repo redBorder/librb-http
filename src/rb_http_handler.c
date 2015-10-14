@@ -36,8 +36,8 @@ struct rb_http_handler_s {
 	CURLM *multi_handle;
 	rd_fifoq_t rfq;
 	rd_fifoq_t rfq_reports;
-	rd_thread_t *rd_thread_send;
-	rd_thread_t *rd_thread_recv;
+	pthread_t *rd_thread_send;
+	pthread_t *rd_thread_recv;
 };
 
 /**
@@ -111,24 +111,10 @@ struct rb_http_handler_s *rb_http_handler (
 			return NULL;
 		}
 
-		if ((rd_thread_create (&rb_http_handler->rd_thread_send,
-		                       "curl_send_message",
-		                       NULL,
-		                       rb_http_send_message,
-		                       rb_http_handler)
-		    ) < 0) {
-			snprintf (err, errsize, "Error creating thread for reading");
-			return NULL;
-		}
-
-		if ((rd_thread_create (&rb_http_handler->rd_thread_recv, "curl_recv_message",
-		                       NULL,
-		                       rb_http_recv_message,
-		                       rb_http_handler)
-		    ) < 0) {
-			snprintf (err, errsize, "Error creating thread for writting");
-			return NULL;
-		}
+		pthread_create (rb_http_handler->rd_thread_send, NULL, &rb_http_send_message,
+		                rb_http_handler);
+		pthread_create (rb_http_handler->rd_thread_recv, NULL, &rb_http_recv_message,
+		                rb_http_handler);
 
 		return rb_http_handler;
 	} else {
@@ -234,7 +220,6 @@ int rb_http_produce (struct rb_http_handler_s *handler,
  */
 void *rb_http_send_message (void *arg) {
 
-	rd_thread_sigmask (SIG_BLOCK, SIGINT, RD_SIG_END);
 	struct rb_http_handler_s *rb_http_handler = (struct rb_http_handler_s *) arg;
 
 	struct rb_http_message_s *message = NULL;
