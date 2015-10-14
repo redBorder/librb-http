@@ -13,9 +13,9 @@ HDRS=   src/librb-http.h
 
 .PHONY: version.c
 
-include mklove/Makefile.base
-
 all: lib
+
+include mklove/Makefile.base
 
 librbhttp.lds: librbhttp.lds.pre
 	cp $< $@
