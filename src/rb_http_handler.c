@@ -105,10 +105,13 @@ struct rb_http_handler_s *rb_http_handler_create (
 			return NULL;
 		}
 		rb_http_handler->thread_running = 1;
-		if (CURLM_OK != (curl_multi_setopt (rb_http_handler->multi_handle,
+		const int set_max_connection_rc = curl_multi_setopt (
+		                                    rb_http_handler->multi_handle,
 		                                    CURLMOPT_MAX_TOTAL_CONNECTIONS,
-		                                    DEFAULT_MAX_TOTAL_CONNECTIONS))) {
-			snprintf (err, errsize, "Error setting MAX_TOTAL_CONNECTIONS");
+		                                    DEFAULT_MAX_TOTAL_CONNECTIONS);
+		if (CURLM_OK != set_max_connection_rc) {
+			snprintf (err, errsize, "Error setting MAX_TOTAL_CONNECTIONS: %s",
+				curl_multi_strerror(set_max_connection_rc));
 			return NULL;
 		}
 
