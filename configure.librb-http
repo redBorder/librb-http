@@ -27,6 +27,13 @@ function checks {
     mkl_lib_check --static=-lcurl "libcurl" "" fail CC "-lcurl -lpthread -lz" \
        "#include <curl/curl.h>"
 
+    # Check libcurl is new enough
+    mkl_meta_set "curlversion" "name" "libcurl MAX_TOTAL_CONNECTIONS"
+    mkl_meta_set "curlversion" "desc" "libcurl 7.30.0 or later is required for the Max connections option"
+    mkl_compile_check "curlversion" "" fail CC "" \
+        "#include <curl/curl.h>
+        static int foo __attribute__((unused)) = CURLMOPT_MAX_TOTAL_CONNECTIONS;"
+
     # Check that librd is available, and allow to link it statically.
     mkl_meta_set "librd" "desc" "Magnus Edenhill's librd is available at http://github.com/edenhill/librd"
     mkl_lib_check --static=-lrdkafka "librd" "" fail CC "-lrd -lpthread -lz -lrt" \
