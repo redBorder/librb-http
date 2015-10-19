@@ -503,7 +503,7 @@ void *rb_http_recv_message (void *arg) {
 					return NULL;
 				}
 				if (curl_easy_getinfo (msg->easy_handle,
-				                       CURLINFO_PRIVATE, &message) != CURLE_OK) {
+				                       CURLINFO_PRIVATE, (char **)&message) != CURLE_OK) {
 					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
 					struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
 					ireport->err_code = -1;
@@ -560,7 +560,7 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 			report = rfqe->rfqe_ptr;
 			curl_easy_getinfo (report->handler,
 			                   CURLINFO_PRIVATE,
-			                   &message);
+			                   (char **)&message);
 			http_code = report->http_code;
 
 			report_fn (rb_http_handler,
