@@ -66,6 +66,10 @@ struct rb_http_report_s {
 ////////////////////
 static void *rb_http_send_message (void *arg);
 static void *rb_http_recv_message (void *arg);
+static size_t write_null_callback (void * buffer,
+                       size_t size,
+                       size_t nmemb,
+                       void * opaque);
 
 /**
  * @brief Creates a handler to produce messages.
@@ -305,6 +309,7 @@ void *rb_http_send_message (void *arg) {
 					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 					return NULL;
 				}
+				curl_easy_setopt(handler, CURLOPT_WRITEFUNCTION, write_null_callback);
 
 				if (curl_easy_setopt (handler, CURLOPT_HTTPHEADER,
 				                      message->headers) != CURLE_OK) {
@@ -585,4 +590,13 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 	}
 
 	return rb_http_handler->still_running;
+}
+
+size_t write_null_callback (void * buffer,
+                       size_t size,
+                       size_t nmemb,
+                       void * opaque) {
+	(void) buffer;
+	(void) opaque;
+	return nmemb*size;
 }
