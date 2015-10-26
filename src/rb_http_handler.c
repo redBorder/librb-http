@@ -351,6 +351,16 @@ void *rb_http_send_message (void *arg) {
 					return NULL;
 				}
 
+				if (curl_easy_setopt (handler, CURLOPT_POSTFIELDSIZE,
+				                      message->len) != CURLE_OK) {
+					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+					report->err_code = -1;
+					report->http_code = 0;
+					report->handler = NULL;
+					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+					return NULL;
+				}
+
 				if (curl_easy_setopt (handler, CURLOPT_POSTFIELDS,
 				                      message->payload) != CURLE_OK) {
 					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
