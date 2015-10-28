@@ -62,8 +62,10 @@ struct rb_http_report_s {
 ////////////////////
 // Private functions
 ////////////////////
-static void *rb_http_send_message (void *arg);
-static void *rb_http_recv_message (void *arg);
+static void *rb_http_process_message (void *arg);
+static void rb_http_send_message(struct rb_http_handler_s *rb_http_handler,
+                                 struct rb_http_message_s *message);
+static void rb_http_recv_message(struct rb_http_handler_s *rb_http_handler);
 static size_t write_null_callback (void *buffer,
                                    size_t size,
                                    size_t nmemb,
@@ -99,10 +101,8 @@ struct rb_http_handler_s *rb_http_handler_create (
 		rb_http_handler->still_running = 0;
 		rb_http_handler->msgs_left = 0;
 
-		if (pthread_mutex_init (&rb_http_handler->multi_handle_mutex, NULL) != 0) {
-			snprintf (err, errsize, "Error setting initializing mutex");
-			return NULL;
-		}
+		curl_global_init(CURL_GLOBAL_ALL);
+
 		if ((rb_http_handler->multi_handle = curl_multi_init()) == NULL ) {
 			return NULL;
 		}
@@ -117,7 +117,7 @@ struct rb_http_handler_s *rb_http_handler_create (
 			return NULL;
 		}
 
-		pthread_create (&rb_http_handler->p_thread_send, NULL, &rb_http_send_message,
+		pthread_create (&rb_http_handler->p_thread_send, NULL, &rb_http_process_message,
 		                rb_http_handler);
 
 		return rb_http_handler;
@@ -228,10 +228,10 @@ int rb_http_produce (struct rb_http_handler_s *handler,
 		}
 	} else {
 		error++;
-		if (pthread_mutex_unlock (&handler->multi_handle_mutex)) {
-			snprintf (err, errsize, "Error unlocking mutex");
-		}
 	}
+
+	(void) err;
+	(void) errsize;
 
 	return error;
 }
@@ -241,138 +241,18 @@ int rb_http_produce (struct rb_http_handler_s *handler,
  * @param  arg Opaque that contains a struct thread_arguments_t with the URL
  * and message queue.
  */
-void *rb_http_send_message (void *arg) {
+void *rb_http_process_message (void *arg) {
 
 	struct rb_http_handler_s *rb_http_handler = (struct rb_http_handler_s *) arg;
 
-	struct rb_http_message_s *message = NULL;
 	rd_fifoq_elm_t *rfqe = NULL;
-	CURL *handler;
 
 	if (arg != NULL) {
 		while (rb_http_handler->thread_running) {
 			rfqe = rd_fifoq_pop (&rb_http_handler->rfq);
 			if (rfqe != NULL && rfqe->rfqe_ptr != NULL) {
-				message = rfqe->rfqe_ptr;
+				rb_http_send_message(rb_http_handler, rfqe->rfqe_ptr);
 				rd_fifoq_elm_release (&rb_http_handler->rfq, rfqe);
-				handler  =  curl_easy_init();
-
-				if (handler == NULL) {
-					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-					report->err_code = -1;
-					report->http_code = 0;
-					report->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-					return NULL;
-				}
-
-				if (curl_easy_setopt (handler,
-				                      CURLOPT_URL,
-				                      rb_http_handler->url)
-				        != CURLE_OK) {
-					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-					report->err_code = -1;
-					report->http_code = 0;
-					report->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-					return NULL;
-				}
-
-				message->headers = NULL;
-				message->headers = curl_slist_append (message->headers,
-				                                      "Accept: application/json");
-				message->headers = curl_slist_append (message->headers,
-				                                      "Content-Type: application/json");
-				message->headers = curl_slist_append (message->headers, "charsets: utf-8");
-
-				if (curl_easy_setopt (handler, CURLOPT_PRIVATE, message) != CURLE_OK) {
-					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-					report->err_code = -1;
-					report->http_code = 0;
-					report->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-					return NULL;
-				}
-				curl_easy_setopt(handler, CURLOPT_WRITEFUNCTION, write_null_callback);
-
-				if (curl_easy_setopt (handler, CURLOPT_HTTPHEADER,
-				                      message->headers) != CURLE_OK) {
-					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-					report->err_code = -1;
-					report->http_code = 0;
-					report->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-					return NULL;
-				}
-
-				if (curl_easy_setopt(handler, CURLOPT_VERBOSE,
-				                     rb_http_handler->verbose) != CURLE_OK) {
-					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-					report->err_code = -1;
-					report->http_code = 0;
-					report->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-					return NULL;
-				}
-
-				if (curl_easy_setopt (handler, CURLOPT_TIMEOUT_MS,
-				                      rb_http_handler->timeout) != CURLE_OK) {
-					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-					report->err_code = -1;
-					report->http_code = 0;
-					report->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-					return NULL;
-				}
-
-				if (curl_easy_setopt (handler, CURLOPT_CONNECTTIMEOUT_MS,
-				                      rb_http_handler->connttimeout) != CURLE_OK) {
-					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-					report->err_code = -1;
-					report->http_code = 0;
-					report->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-					return NULL;
-				}
-
-				if (curl_easy_setopt (handler, CURLOPT_POSTFIELDSIZE,
-				                      message->len) != CURLE_OK) {
-					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-					report->err_code = -1;
-					report->http_code = 0;
-					report->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-					return NULL;
-				}
-
-				if (curl_easy_setopt (handler, CURLOPT_POSTFIELDS,
-				                      message->payload) != CURLE_OK) {
-					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-					report->err_code = -1;
-					report->http_code = 0;
-					report->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-					return NULL;
-				}
-
-				if (curl_multi_add_handle (rb_http_handler->multi_handle,
-				                           handler) != CURLM_OK) {
-					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-					report->err_code = -1;
-					report->http_code = 0;
-					report->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-					return NULL;
-				}
-				if (curl_multi_perform (rb_http_handler->multi_handle,
-				                        &rb_http_handler->still_running) != CURLM_OK) {
-					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-					report->err_code = -1;
-					report->http_code = 0;
-					report->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-					return NULL;
-				}
 			} else {
 				rb_http_recv_message(rb_http_handler);
 			}
@@ -382,14 +262,125 @@ void *rb_http_send_message (void *arg) {
 	return NULL;
 }
 
+void rb_http_send_message(struct rb_http_handler_s *rb_http_handler,
+                          struct rb_http_message_s *message) {
+	CURL *handler;
+	handler  =  curl_easy_init();
+
+	if (handler == NULL) {
+		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+		report->err_code = -1;
+		report->http_code = 0;
+		report->handler = NULL;
+		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+	}
+
+	if (curl_easy_setopt (handler,
+	                      CURLOPT_URL,
+	                      rb_http_handler->url)
+	        != CURLE_OK) {
+		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+		report->err_code = -1;
+		report->http_code = 0;
+		report->handler = NULL;
+		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+	}
+
+	message->headers = NULL;
+	message->headers = curl_slist_append (message->headers,
+	                                      "Accept: application/json");
+	message->headers = curl_slist_append (message->headers,
+	                                      "Content-Type: application/json");
+	message->headers = curl_slist_append (message->headers, "charsets: utf-8");
+
+	if (curl_easy_setopt (handler, CURLOPT_PRIVATE, message) != CURLE_OK) {
+		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+		report->err_code = -1;
+		report->http_code = 0;
+		report->handler = NULL;
+		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+	}
+	curl_easy_setopt(handler, CURLOPT_WRITEFUNCTION, write_null_callback);
+
+	if (curl_easy_setopt (handler, CURLOPT_HTTPHEADER,
+	                      message->headers) != CURLE_OK) {
+		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+		report->err_code = -1;
+		report->http_code = 0;
+		report->handler = NULL;
+		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+	}
+
+	if (curl_easy_setopt(handler, CURLOPT_VERBOSE,
+	                     rb_http_handler->verbose) != CURLE_OK) {
+		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+		report->err_code = -1;
+		report->http_code = 0;
+		report->handler = NULL;
+		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+	}
+
+	if (curl_easy_setopt (handler, CURLOPT_TIMEOUT_MS,
+	                      rb_http_handler->timeout) != CURLE_OK) {
+		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+		report->err_code = -1;
+		report->http_code = 0;
+		report->handler = NULL;
+		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+	}
+
+	if (curl_easy_setopt (handler, CURLOPT_CONNECTTIMEOUT_MS,
+	                      rb_http_handler->connttimeout) != CURLE_OK) {
+		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+		report->err_code = -1;
+		report->http_code = 0;
+		report->handler = NULL;
+		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+	}
+
+	if (curl_easy_setopt (handler, CURLOPT_POSTFIELDSIZE,
+	                      message->len) != CURLE_OK) {
+		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+		report->err_code = -1;
+		report->http_code = 0;
+		report->handler = NULL;
+		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+	}
+
+	if (curl_easy_setopt (handler, CURLOPT_POSTFIELDS,
+	                      message->payload) != CURLE_OK) {
+		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+		report->err_code = -1;
+		report->http_code = 0;
+		report->handler = NULL;
+		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+	}
+
+	if (curl_multi_add_handle (rb_http_handler->multi_handle,
+	                           handler) != CURLM_OK) {
+		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+		report->err_code = -1;
+		report->http_code = 0;
+		report->handler = NULL;
+		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+	}
+	if (curl_multi_perform (rb_http_handler->multi_handle,
+	                        &rb_http_handler->still_running) != CURLM_OK) {
+		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+		report->err_code = -1;
+		report->http_code = 0;
+		report->handler = NULL;
+		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+	}
+}
+
 /**
  * [curl_recv_message  description]
  * @param  arg [description]
  * @return     [description]
  */
-void *rb_http_recv_message (void *arg) {
+void rb_http_recv_message (struct rb_http_handler_s *rb_http_handler) {
 
-	struct rb_http_handler_s *rb_http_handler = (struct rb_http_handler_s *) arg;
 	struct rb_http_report_s *report = NULL;
 	struct rb_http_message_s *message = NULL;
 	CURLMsg *msg = NULL;
@@ -420,7 +411,6 @@ void *rb_http_recv_message (void *arg) {
 		ireport->http_code = 0;
 		ireport->handler = NULL;
 		rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-		return NULL;
 	}
 
 	if (curl_timeo >= 0) {
@@ -442,7 +432,6 @@ void *rb_http_recv_message (void *arg) {
 		ireport->http_code = 0;
 		ireport->handler = NULL;
 		rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-		// break;
 	}
 
 	/* On success the value of maxfd is guaranteed to be >= -1. We call
@@ -463,7 +452,6 @@ void *rb_http_recv_message (void *arg) {
 
 	switch (rc) {
 	case -1:
-		printf("Select error\n");
 		/* select error */
 		break;
 	case 0: /* timeout */
@@ -475,7 +463,6 @@ void *rb_http_recv_message (void *arg) {
 			ireport->http_code = 0;
 			ireport->handler = NULL;
 			rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-			return NULL;
 		}
 		break;
 	}
@@ -495,7 +482,6 @@ void *rb_http_recv_message (void *arg) {
 				ireport->http_code = 0;
 				ireport->handler = NULL;
 				rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-				return NULL;
 			}
 
 			if (curl_easy_getinfo (msg->easy_handle,
@@ -505,7 +491,6 @@ void *rb_http_recv_message (void *arg) {
 				ireport->http_code = 0;
 				ireport->handler = NULL;
 				rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-				return NULL;
 			}
 
 			if (report == NULL) {
@@ -514,7 +499,6 @@ void *rb_http_recv_message (void *arg) {
 				ireport->http_code = 0;
 				ireport->handler = NULL;
 				rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-				return NULL;
 			}
 
 			report->err_code = msg->data.result;
@@ -526,8 +510,6 @@ void *rb_http_recv_message (void *arg) {
 			rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 		}
 	}
-
-	return NULL;
 }
 
 /**
