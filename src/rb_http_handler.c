@@ -34,12 +34,10 @@ struct rb_http_handler_s {
 	long connttimeout;
 	long verbose;
 	char *url;
-	pthread_mutex_t multi_handle_mutex;
 	CURLM *multi_handle;
 	rd_fifoq_t rfq;
 	rd_fifoq_t rfq_reports;
 	pthread_t p_thread_send;
-	pthread_t p_thread_recv;
 };
 
 /**
@@ -121,8 +119,6 @@ struct rb_http_handler_s *rb_http_handler_create (
 
 		pthread_create (&rb_http_handler->p_thread_send, NULL, &rb_http_send_message,
 		                rb_http_handler);
-		pthread_create (&rb_http_handler->p_thread_recv, NULL, &rb_http_recv_message,
-		                rb_http_handler);
 
 		return rb_http_handler;
 	} else {
@@ -172,15 +168,9 @@ int rb_http_handler_destroy (struct rb_http_handler_s *rb_http_handler,
                              size_t errsize) {
 	rb_http_handler->thread_running = 0;
 	pthread_join(rb_http_handler->p_thread_send, NULL);
-	pthread_join(rb_http_handler->p_thread_recv, NULL);
 
 	if (CURLM_OK != curl_multi_cleanup (rb_http_handler->multi_handle)) {
 		snprintf (err, errsize, "Error cleaning up curl multi");
-		return 1;
-	}
-
-	if (pthread_mutex_destroy (&rb_http_handler->multi_handle_mutex) > 0) {
-		snprintf (err, errsize, "Error destroying mutex");
 		return 1;
 	}
 
@@ -211,13 +201,7 @@ int rb_http_produce (struct rb_http_handler_s *handler,
 
 	int error = 0;
 
-	if (pthread_mutex_lock (&handler->multi_handle_mutex)) {
-		snprintf (err, errsize, "Error locking mutex");
-	}
 	if (handler->left < handler->max_messages) {
-		if (pthread_mutex_unlock (&handler->multi_handle_mutex)) {
-			snprintf (err, errsize, "Error unlocking mutex");
-		}
 		handler->left++;
 		struct rb_http_message_s *message = calloc (1,
 		                                    sizeof (struct rb_http_message_s)
@@ -371,7 +355,6 @@ void *rb_http_send_message (void *arg) {
 					return NULL;
 				}
 
-				pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
 				if (curl_multi_add_handle (rb_http_handler->multi_handle,
 				                           handler) != CURLM_OK) {
 					struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
@@ -390,7 +373,8 @@ void *rb_http_send_message (void *arg) {
 					rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 					return NULL;
 				}
-				pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+			} else {
+				rb_http_recv_message(rb_http_handler);
 			}
 		}
 	}
@@ -410,30 +394,82 @@ void *rb_http_recv_message (void *arg) {
 	struct rb_http_message_s *message = NULL;
 	CURLMsg *msg = NULL;
 
-	while (rb_http_handler->thread_running || rb_http_handler->still_running) {
-		struct timeval timeout;
-		int rc; /* select() return code */
-		CURLMcode mc; /* curl_multi_fdset() return code */
+	struct timeval timeout;
+	int rc; /* select() return code */
+	CURLMcode mc; /* curl_multi_fdset() return code */
 
-		fd_set fdread;
-		fd_set fdwrite;
-		fd_set fdexcep;
-		int maxfd = -1;
+	fd_set fdread;
+	fd_set fdwrite;
+	fd_set fdexcep;
+	int maxfd = -1;
 
-		long curl_timeo = -1;
+	long curl_timeo = -1;
 
-		FD_ZERO (&fdread);
-		FD_ZERO (&fdwrite);
-		FD_ZERO (&fdexcep);
+	FD_ZERO (&fdread);
+	FD_ZERO (&fdwrite);
+	FD_ZERO (&fdexcep);
 
-		/* set a suitable timeout to play around with */
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
+	/* set a suitable timeout to play around with */
+	timeout.tv_sec = 1;
+	timeout.tv_usec = 0;
 
-		pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
+	if (curl_multi_timeout (rb_http_handler->multi_handle,
+	                        &curl_timeo) != CURLM_OK) {
+		struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
+		ireport->err_code = -1;
+		ireport->http_code = 0;
+		ireport->handler = NULL;
+		rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
+		return NULL;
+	}
 
-		if (curl_multi_timeout (rb_http_handler->multi_handle,
-		                        &curl_timeo) != CURLM_OK) {
+	if (curl_timeo >= 0) {
+		timeout.tv_sec = curl_timeo / 1000;
+		if (timeout.tv_sec > 1)
+			timeout.tv_sec = 1;
+		else
+			timeout.tv_usec = (curl_timeo % 1000) * 1000;
+	}
+
+	/* get file descriptors from the transfers */
+	mc = curl_multi_fdset (rb_http_handler->multi_handle, &fdread, &fdwrite,
+	                       &fdexcep, &maxfd);
+
+	if (mc != CURLM_OK) {
+		fprintf (stderr, "curl_multi_fdset() failed, code %d.\n", mc);
+		struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
+		ireport->err_code = -1;
+		ireport->http_code = 0;
+		ireport->handler = NULL;
+		rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
+		// break;
+	}
+
+	/* On success the value of maxfd is guaranteed to be >= -1. We call
+	   select(maxfd + 1, ...); specially in case of (maxfd == -1) there are
+	   no fds ready yet so we call select(0, ...) --or Sleep() on Windows--
+	   to sleep 100ms, which is the minimum suggested value in the
+	   curl_multi_fdset() doc. */
+
+	if (maxfd == -1) {
+		/* Portable sleep for platforms other than Windows. */
+		struct timeval wait = { 0, 100 * 1000 }; /* 100ms */
+		rc = select (0, NULL, NULL, NULL, &wait);
+	} else {
+		/* Note that on some platforms 'timeout' may be modified by select().
+		   If you need access to the original value save a copy beforehand. */
+		rc = select (maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
+	}
+
+	switch (rc) {
+	case -1:
+		printf("Select error\n");
+		/* select error */
+		break;
+	case 0: /* timeout */
+	default: /* action */
+		if (curl_multi_perform (rb_http_handler->multi_handle,
+		                        &rb_http_handler->still_running) != CURLM_OK) {
 			struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
 			ireport->err_code = -1;
 			ireport->http_code = 0;
@@ -441,56 +477,19 @@ void *rb_http_recv_message (void *arg) {
 			rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
 			return NULL;
 		}
+		break;
+	}
 
-		if (curl_timeo >= 0) {
-			timeout.tv_sec = curl_timeo / 1000;
-			if (timeout.tv_sec > 1)
-				timeout.tv_sec = 1;
-			else
-				timeout.tv_usec = (curl_timeo % 1000) * 1000;
-		}
+	/* See how the transfers went */
+	while ((msg = curl_multi_info_read (
+	                  rb_http_handler->multi_handle,
+	                  &rb_http_handler->msgs_left))) {
+		if (msg->msg == CURLMSG_DONE) {
+			report = calloc (1, sizeof (struct rb_http_report_s));
+			rb_http_handler->left--;
 
-		/* get file descriptors from the transfers */
-		mc = curl_multi_fdset (rb_http_handler->multi_handle, &fdread, &fdwrite,
-		                       &fdexcep, &maxfd);
-		pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-
-		if (mc != CURLM_OK) {
-			fprintf (stderr, "curl_multi_fdset() failed, code %d.\n", mc);
-			struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
-			ireport->err_code = -1;
-			ireport->http_code = 0;
-			ireport->handler = NULL;
-			rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-			break;
-		}
-
-		/* On success the value of maxfd is guaranteed to be >= -1. We call
-		   select(maxfd + 1, ...); specially in case of (maxfd == -1) there are
-		   no fds ready yet so we call select(0, ...) --or Sleep() on Windows--
-		   to sleep 100ms, which is the minimum suggested value in the
-		   curl_multi_fdset() doc. */
-
-		if (maxfd == -1) {
-			/* Portable sleep for platforms other than Windows. */
-			struct timeval wait = { 0, 100 * 1000 }; /* 100ms */
-			rc = select (0, NULL, NULL, NULL, &wait);
-		} else {
-			/* Note that on some platforms 'timeout' may be modified by select().
-			   If you need access to the original value save a copy beforehand. */
-			rc = select (maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
-		}
-
-		switch (rc) {
-		case -1:
-			/* select error */
-			break;
-		case 0: /* timeout */
-		default: /* action */
-			pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
-			if (curl_multi_perform (rb_http_handler->multi_handle,
-			                        &rb_http_handler->still_running) != CURLM_OK) {
-				pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
+			if (curl_multi_remove_handle (rb_http_handler->multi_handle,
+			                              msg->easy_handle) != CURLM_OK ) {
 				struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
 				ireport->err_code = -1;
 				ireport->http_code = 0;
@@ -498,59 +497,34 @@ void *rb_http_recv_message (void *arg) {
 				rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
 				return NULL;
 			}
-			pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-			break;
-		}
 
-		/* See how the transfers went */
-		pthread_mutex_lock (&rb_http_handler->multi_handle_mutex);
-		while ((msg = curl_multi_info_read (
-		                  rb_http_handler->multi_handle,
-		                  &rb_http_handler->msgs_left))) {
-			if (msg->msg == CURLMSG_DONE) {
-				report = calloc (1, sizeof (struct rb_http_report_s));
-				rb_http_handler->left--;
-				if (curl_multi_remove_handle (rb_http_handler->multi_handle,
-				                              msg->easy_handle) != CURLM_OK ) {
-					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-					struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
-					ireport->err_code = -1;
-					ireport->http_code = 0;
-					ireport->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-					return NULL;
-				}
-				if (curl_easy_getinfo (msg->easy_handle,
-				                       CURLINFO_PRIVATE, (char **)&message) != CURLE_OK) {
-					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-					struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
-					ireport->err_code = -1;
-					ireport->http_code = 0;
-					ireport->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-					return NULL;
-				}
-
-				if (report == NULL) {
-					pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
-					struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
-					ireport->err_code = -1;
-					ireport->http_code = 0;
-					ireport->handler = NULL;
-					rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-					return NULL;
-				}
-
-				report->err_code = msg->data.result;
-				report->handler = msg->easy_handle;
-				curl_easy_getinfo (msg->easy_handle,
-				                   CURLINFO_RESPONSE_CODE,
-				                   &report->http_code);
-
-				rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+			if (curl_easy_getinfo (msg->easy_handle,
+			                       CURLINFO_PRIVATE, (char **)&message) != CURLE_OK) {
+				struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
+				ireport->err_code = -1;
+				ireport->http_code = 0;
+				ireport->handler = NULL;
+				rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
+				return NULL;
 			}
+
+			if (report == NULL) {
+				struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
+				ireport->err_code = -1;
+				ireport->http_code = 0;
+				ireport->handler = NULL;
+				rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
+				return NULL;
+			}
+
+			report->err_code = msg->data.result;
+			report->handler = msg->easy_handle;
+			curl_easy_getinfo (msg->easy_handle,
+			                   CURLINFO_RESPONSE_CODE,
+			                   &report->http_code);
+
+			rd_fifoq_add (&rb_http_handler->rfq_reports, report);
 		}
-		pthread_mutex_unlock (&rb_http_handler->multi_handle_mutex);
 	}
 
 	return NULL;
