@@ -113,8 +113,6 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a0bca537c3590135753bdd217559bb422"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1f0df317f6eca7893bb08a54f13870ef"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#a1f0df317f6eca7893bb08a54f13870ef">url</a></td></tr>
 <tr class="separator:a1f0df317f6eca7893bb08a54f13870ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:add4e2b7495e2f20396c2e70ab1a27bf4"><td class="memItemLeft" align="right" valign="top">pthread_mutex_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#add4e2b7495e2f20396c2e70ab1a27bf4">multi_handle_mutex</a></td></tr>
-<tr class="separator:add4e2b7495e2f20396c2e70ab1a27bf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45c0ce1f2e4d154d0194bb60569c0faf"><td class="memItemLeft" align="right" valign="top">CURLM *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#a45c0ce1f2e4d154d0194bb60569c0faf">multi_handle</a></td></tr>
 <tr class="separator:a45c0ce1f2e4d154d0194bb60569c0faf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39160211aefb64ec052138229da98632"><td class="memItemLeft" align="right" valign="top">rd_fifoq_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#a39160211aefb64ec052138229da98632">rfq</a></td></tr>
@@ -123,8 +121,6 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a383f2047cfcdd9fe49d0deacf770a73c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae969c34a0421fe32951cb31802735f13"><td class="memItemLeft" align="right" valign="top">pthread_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#ae969c34a0421fe32951cb31802735f13">p_thread_send</a></td></tr>
 <tr class="separator:ae969c34a0421fe32951cb31802735f13"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4d36d51983f56eac71371a39ee421242"><td class="memItemLeft" align="right" valign="top">pthread_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb__http__handler__s.html#a4d36d51983f56eac71371a39ee421242">p_thread_recv</a></td></tr>
-<tr class="separator:a4d36d51983f56eac71371a39ee421242"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Contains the "handler" information. </p>
@@ -197,35 +193,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00038">38</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="add4e2b7495e2f20396c2e70ab1a27bf4"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">pthread_mutex_t rb_http_handler_s::multi_handle_mutex</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
 <p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00037">37</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a4d36d51983f56eac71371a39ee421242"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">pthread_t rb_http_handler_s::p_thread_recv</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00042">42</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
 
 </div>
 </div>
@@ -239,7 +207,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00041">41</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
+<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00040">40</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
 
 </div>
 </div>
@@ -253,7 +221,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00039">39</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
+<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00038">38</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
 
 </div>
 </div>
@@ -267,7 +235,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00040">40</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
+<p>Definition at line <a class="el" href="rb__http__handler_8c_source.html#l00039">39</a> of file <a class="el" href="rb__http__handler_8c_source.html">rb_http_handler.c</a>.</p>
 
 </div>
 </div>
@@ -347,7 +315,7 @@ Public Attributes</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Oct 22 2015 18:47:42 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Oct 28 2015 17:18:13 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>
