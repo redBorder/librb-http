@@ -3,6 +3,8 @@
  * @author Diego Fernández Barrera
  * @brief Main library.
  */
+#include "../config.h"
+#include "librb-http.h"
 
 #include <stdio.h>
 #include <curl/curl.h>
@@ -13,8 +15,6 @@
 #include <librd/rdlog.h>
 #include <pthread.h>
 #include <librd/rdthread.h>
-
-#include "librb-http.h"
 
 ////////////////////
 // Structures
@@ -200,9 +200,7 @@ int rb_http_produce (struct rb_http_handler_s *handler,
                      void *opaque) {
 
 	int error = 0;
-
-	if (handler->left < handler->max_messages) {
-		handler->left++;
+	if (ATOMIC_OP(add, fetch, &handler->left, 1) < handler->max_messages) {
 		struct rb_http_message_s *message = calloc (1,
 		                                    sizeof (struct rb_http_message_s)
 		                                    + ((flags & RB_HTTP_MESSAGE_F_COPY) ? len : 0));
@@ -227,6 +225,7 @@ int rb_http_produce (struct rb_http_handler_s *handler,
 			rd_fifoq_add (&handler->rfq, message);
 		}
 	} else {
+		ATOMIC_OP(sub, fetch, &handler->left, 1);
 		error++;
 	}
 
@@ -473,8 +472,6 @@ void rb_http_recv_message (struct rb_http_handler_s *rb_http_handler) {
 	                  &rb_http_handler->msgs_left))) {
 		if (msg->msg == CURLMSG_DONE) {
 			report = calloc (1, sizeof (struct rb_http_report_s));
-			rb_http_handler->left--;
-
 			if (curl_multi_remove_handle (rb_http_handler->multi_handle,
 			                              msg->easy_handle) != CURLM_OK ) {
 				struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
@@ -546,6 +543,7 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 
 			curl_slist_free_all (message->headers);
 			curl_easy_cleanup (report->handler);
+			ATOMIC_OP(sub, fetch, &rb_http_handler->left, 1);
 			if (message->free_message && message->payload != NULL) {
 				free (message->payload); message->payload = NULL;
 			}
