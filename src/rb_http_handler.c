@@ -573,7 +573,7 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 		}
 	}
 
-	return rb_http_handler->still_running;
+	return rb_http_handler->left;
 }
 
 size_t write_null_callback (void *buffer,
