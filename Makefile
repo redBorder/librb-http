@@ -4,10 +4,11 @@ LIBVER=		1
 
 #BIN= bin/rb_http_handler
 #BIN_FILES= bin/*
-TESTS=tests/rb_http_handler_test.c
-SRCS=	src/rb_http_handler.c
-OBJS=	$(SRCS:.c=.o)
-HDRS=   src/librb-http.h
+TESTS= tests/rb_http_handler_test.c
+SRCS=	 src/rb_http_handler.c
+OBJS=	 $(SRCS:.c=.o)
+HDRS=  src/librb-http.h
+
 
 .PHONY:
 
@@ -20,16 +21,16 @@ include mklove/Makefile.base
 librbhttp.lds: librbhttp.lds.pre
 	cp $< $@
 
-test: bin/run_tests build-test
-
-bin/run_tests:
-	$(CC) $(TESTS) src/rb_http_handler.c $(LIBS) -lcmocka -o bin/run_tests
-
-example:
-	$(CC) src/rb_http_handler_example.c -L/usr/local/lib -lrbhttp -o bin/example
+test: build-test run-tests
 
 build-test:
-	bin/run_tests
+	$(CC) $(CFLAGS) $(TESTS) src/rb_http_handler.c librbhttp.a -lcmocka $(LDFLAGS) $(LIBS) -o bin/run_tests
+
+example:
+	$(CC) $(CFLAGS) src/rb_http_handler_example.c librbhttp.a -lcurl $(LDFLAGS) $(LIBS) -o bin/example
+
+run-tests:
+	-CMOCKA_MESSAGE_OUTPUT=XML CMOCKA_XML_FILE=./test-results.xml bin/run_tests
 	rm bin/run_tests
 
 version.c:
