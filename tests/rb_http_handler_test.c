@@ -11,24 +11,24 @@
 
 #include "../src/librb-http.h"
 
-static void test_rb_http_handler_url (void ** state) {
+static void test_rb_http_handler_url (void **state) {
 	(void) state;
 
-	struct rb_http_handler_t * handler = NULL;
-	char * url = strdup ("http://localhost:8080/librb-http");
+	struct rb_http_handler_s *handler = NULL;
+	char *url = strdup ("http://localhost:8080/librb-http");
 
-	handler = rb_http_handler (url, 4L);
+	handler = rb_http_handler_create(url, NULL, 0);
 
 	assert_non_null (handler);
 	free (url);
 }
 
-static void test_rb_http_handler_url_null (void ** state) {
+static void test_rb_http_handler_url_null (void **state) {
 	(void) state;
 
-	struct rb_http_handler_t * handler = NULL;
+	struct rb_http_handler_s *handler = NULL;
 
-	handler = rb_http_handler (NULL, 4L);
+	handler = rb_http_handler_create(NULL, NULL, 0);
 
 	assert_null (handler);
 }
