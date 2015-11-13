@@ -34,6 +34,10 @@ config.log
 config.log.old
 version.c
 
-#Binary
+# Binary
 bin/
 librbhttp.lds
+
+# Sublime files
+*.sublime-workspace
+*.sublime-project
