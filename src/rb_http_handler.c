@@ -42,6 +42,7 @@ struct rb_http_handler_s *rb_http_handler_create (
 		rb_http_handler->url = strdup(urls_str);
 		rb_http_handler->still_running = 0;
 		rb_http_handler->msgs_left = 0;
+		rb_http_handler->mode = 0;
 
 		curl_global_init(CURL_GLOBAL_ALL);
 
@@ -59,13 +60,21 @@ struct rb_http_handler_s *rb_http_handler_create (
 			return NULL;
 		}
 
-		pthread_create (&rb_http_handler->p_thread_send, NULL,
-		                &rb_http_process_message_plain,
-		                rb_http_handler);
-
 		return rb_http_handler;
 	} else {
 		return NULL;
+	}
+}
+
+void rb_http_handler_run (struct rb_http_handler_s *rb_http_handler) {
+	if (rb_http_handler->mode == 0) {
+		pthread_create (&rb_http_handler->p_thread_send, NULL,
+		                &rb_http_process_message_plain,
+		                rb_http_handler);
+	} else if (rb_http_handler->mode == 1) {
+		pthread_create (&rb_http_handler->p_thread_send, NULL,
+		                &rb_http_process_message_gzip,
+		                rb_http_handler);
 	}
 }
 
@@ -88,6 +97,8 @@ int rb_http_handler_set_opt (struct rb_http_handler_s *rb_http_handler,
 		}
 	} else if (!strcmp(key, "HTTP_VERBOSE")) {
 		rb_http_handler->verbose =  atol(val);
+	} else if (!strcmp(key, "RB_HTTP_GZIP")) {
+		rb_http_handler->mode =  atoi(val);
 	} else if (!strcmp(key, "HTTP_TIMEOUT")) {
 		rb_http_handler->timeout =  atol(val);
 	} else if (!strcmp(key, "HTTP_CONNTTIMEOUT")) {
