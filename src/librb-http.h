@@ -31,6 +31,7 @@ typedef void (*cb_report) (struct rb_http_handler_s *rb_http_handler,
  *  @brief Contains the "handler" information.
  */
 struct rb_http_handler_s {
+	int mode;
 	int still_running;
 	int thread_running;
 	int msgs_left;
@@ -73,6 +74,8 @@ struct rb_http_handler_s *rb_http_handler_create (
     char *err,
     size_t errbuf);
 
+void rb_http_handler_run (struct rb_http_handler_s *rb_http_handler);
+
 int rb_http_handler_destroy (struct rb_http_handler_s *rb_http_handler,
                              char *err,
                              size_t errsize);
@@ -96,3 +99,4 @@ int rb_http_handler_set_opt (struct rb_http_handler_s *rb_http_handler,
                              size_t errsize);
 
 void *rb_http_process_message_plain (void *arg);
+void *rb_http_process_message_gzip (void *arg);

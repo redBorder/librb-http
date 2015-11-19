@@ -47,6 +47,8 @@ int main() {
 	rb_http_handler_set_opt(handler, "HTTP_VERBOSE", "0", NULL, 0);
 	rb_http_handler_set_opt(handler, "RB_HTTP_MAX_MESSAGES", "512", NULL, 0);
 
+	rb_http_handler_run(handler);
+
 	printf ("Sending 1024 messages\n");
 	int i = 0;
 
