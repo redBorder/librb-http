@@ -26,7 +26,7 @@ static void my_callback (struct rb_http_handler_s *rb_http_handler,
 	}
 
 	if (buff != NULL)
-		printf ("MESSAGE: %s\n", buff);
+		printf ("MESSAGE: %s\n\n", buff);
 
 	if (opaque != NULL)
 		printf ("OPAQUE: %p\n", opaque);
@@ -41,11 +41,12 @@ int main() {
 	char string[128];
 
 	handler = rb_http_handler_create (url, NULL, 0);
-	rb_http_handler_set_opt(handler, "HTTP_MAX_TOTAL_CONNECTIONS", "4", NULL, 0);
-	rb_http_handler_set_opt(handler, "HTTP_TIMEOUT", "10000", NULL, 0);
-	rb_http_handler_set_opt(handler, "HTTP_CONNTTIMEOUT", "3000", NULL, 0);
-	rb_http_handler_set_opt(handler, "HTTP_VERBOSE", "0", NULL, 0);
-	rb_http_handler_set_opt(handler, "RB_HTTP_MAX_MESSAGES", "512", NULL, 0);
+	// rb_http_handler_set_opt(handler, "HTTP_TIMEOUT", "10000", NULL, 0);
+	// rb_http_handler_set_opt(handler, "HTTP_CONNTTIMEOUT", "5000", NULL, 0);
+	// rb_http_handler_set_opt(handler, "HTTP_VERBOSE", "0", NULL, 0);
+	// rb_http_handler_set_opt(handler, "RB_HTTP_MAX_MESSAGES", "512", NULL, 0);
+	rb_http_handler_set_opt(handler, "RB_HTTP_CONNECTIONS", "1", NULL, 0);
+	rb_http_handler_set_opt(handler, "RB_HTTP_MODE", "1", NULL, 0);
 
 	rb_http_handler_run(handler);
 
@@ -64,7 +65,7 @@ int main() {
 		                        NULL,
 		                        0,
 		                        NULL) > 0 && running) {
-			rb_http_get_reports (handler, my_callback, 1000);
+			rb_http_get_reports (handler, my_callback, 100);
 			free(message);
 		}
 	}
