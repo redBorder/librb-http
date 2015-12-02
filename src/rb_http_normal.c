@@ -1,41 +1,16 @@
-#include "librb-http.h"
+#include "rb_http_normal.h"
 
-static void rb_http_send_message(struct rb_http_handler_s *rb_http_handler,
-                                 struct rb_http_message_s *message);
-static void rb_http_recv_message(struct rb_http_handler_s *rb_http_handler);
-static size_t write_null_callback (void *buffer,
-                                   size_t size,
-                                   size_t nmemb,
-                                   void *opaque);
-
-/**
- * @brief Send a message from the queue
- * @param  arg Opaque that contains a struct thread_arguments_t with the URL
- * and message queue.
- */
-void *rb_http_process_message_plain (void *arg) {
-
-	struct rb_http_handler_s *rb_http_handler = (struct rb_http_handler_s *) arg;
-
-	rd_fifoq_elm_t *rfqe = NULL;
-
-	if (arg != NULL) {
-		while (rb_http_handler->thread_running) {
-			rfqe = rd_fifoq_pop (&rb_http_handler->rfq);
-			if (rfqe != NULL && rfqe->rfqe_ptr != NULL) {
-				rb_http_send_message(rb_http_handler, rfqe->rfqe_ptr);
-				rd_fifoq_elm_release (&rb_http_handler->rfq, rfqe);
-			} else {
-				rb_http_recv_message(rb_http_handler);
-			}
-		}
-	}
-
-	return NULL;
+static size_t write_null_callback(void *buffer,
+                                  size_t size,
+                                  size_t nmemb,
+                                  void *opaque) {
+	(void) buffer;
+	(void) opaque;
+	return nmemb * size;
 }
 
-void rb_http_send_message(struct rb_http_handler_s *rb_http_handler,
-                          struct rb_http_message_s *message) {
+static void rb_http_send_message(struct rb_http_handler_s *rb_http_handler,
+                                 struct rb_http_message_s *message) {
 	CURL *handler;
 	handler  =  curl_easy_init();
 
@@ -49,7 +24,7 @@ void rb_http_send_message(struct rb_http_handler_s *rb_http_handler,
 
 	if (curl_easy_setopt (handler,
 	                      CURLOPT_URL,
-	                      rb_http_handler->url)
+	                      rb_http_handler->options->url)
 	        != CURLE_OK) {
 		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
 		report->err_code = -1;
@@ -84,7 +59,7 @@ void rb_http_send_message(struct rb_http_handler_s *rb_http_handler,
 	}
 
 	if (curl_easy_setopt(handler, CURLOPT_VERBOSE,
-	                     rb_http_handler->verbose) != CURLE_OK) {
+	                     rb_http_handler->options->verbose) != CURLE_OK) {
 		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
 		report->err_code = -1;
 		report->http_code = 0;
@@ -93,7 +68,7 @@ void rb_http_send_message(struct rb_http_handler_s *rb_http_handler,
 	}
 
 	if (curl_easy_setopt (handler, CURLOPT_TIMEOUT_MS,
-	                      rb_http_handler->timeout) != CURLE_OK) {
+	                      rb_http_handler->options->timeout) != CURLE_OK) {
 		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
 		report->err_code = -1;
 		report->http_code = 0;
@@ -102,7 +77,7 @@ void rb_http_send_message(struct rb_http_handler_s *rb_http_handler,
 	}
 
 	if (curl_easy_setopt (handler, CURLOPT_CONNECTTIMEOUT_MS,
-	                      rb_http_handler->connttimeout) != CURLE_OK) {
+	                      rb_http_handler->options->conntimeout) != CURLE_OK) {
 		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
 		report->err_code = -1;
 		report->http_code = 0;
@@ -151,7 +126,7 @@ void rb_http_send_message(struct rb_http_handler_s *rb_http_handler,
  * @param  arg [description]
  * @return     [description]
  */
-void rb_http_recv_message (struct rb_http_handler_s *rb_http_handler) {
+static void rb_http_recv_message (struct rb_http_handler_s *rb_http_handler) {
 
 	struct rb_http_report_s *report = NULL;
 	struct rb_http_message_s *message = NULL;
@@ -282,11 +257,67 @@ void rb_http_recv_message (struct rb_http_handler_s *rb_http_handler) {
 	}
 }
 
-size_t write_null_callback (void *buffer,
-                            size_t size,
-                            size_t nmemb,
-                            void *opaque) {
-	(void) buffer;
-	(void) opaque;
-	return nmemb * size;
+void *rb_http_process_normal(void *arg) {
+
+	struct rb_http_handler_s *rb_http_handler = (struct rb_http_handler_s *) arg;
+
+	rd_fifoq_elm_t *rfqe = NULL;
+
+	if (arg != NULL) {
+		while (rb_http_handler->thread_running) {
+			rfqe = rd_fifoq_pop(&rb_http_handler->rfq);
+			if (rfqe != NULL && rfqe->rfqe_ptr != NULL) {
+				rb_http_send_message(rb_http_handler, rfqe->rfqe_ptr);
+				rd_fifoq_elm_release(&rb_http_handler->rfq, rfqe);
+			} else {
+				rb_http_recv_message(rb_http_handler);
+			}
+		}
+	}
+
+	return NULL;
+}
+
+int rb_http_get_reports_normal(struct rb_http_handler_s *rb_http_handler,
+                               cb_report report_fn, int timeout_ms) {
+	rd_fifoq_elm_t *rfqe;
+	struct rb_http_report_s *report = NULL;
+	struct rb_http_message_s *message = NULL;
+	int nowait = 0;
+	long http_code = 0;
+
+	if (timeout_ms == 0) {
+		nowait = 1;
+	}
+
+	while ((rfqe = rd_fifoq_pop0 (&rb_http_handler->rfq_reports,
+	                              nowait,
+	                              timeout_ms)) != NULL) {
+		if (rfqe->rfqe_ptr != NULL) {
+			report = rfqe->rfqe_ptr;
+			curl_easy_getinfo (report->handler,
+			                   CURLINFO_PRIVATE,
+			                   (char **)&message);
+			http_code = report->http_code;
+
+			report_fn (rb_http_handler,
+			           report->err_code,
+			           http_code, NULL,
+			           message->payload,
+			           message->len,
+			           message->client_opaque);
+
+			curl_slist_free_all (message->headers);
+			curl_easy_cleanup (report->handler);
+			ATOMIC_OP(sub, fetch, &rb_http_handler->left, 1);
+			if (message->free_message && message->payload != NULL) {
+				free (message->payload); message->payload = NULL;
+			}
+			free (message); message = NULL;
+			free (report); report = NULL;
+			rd_fifoq_elm_release (&rb_http_handler->rfq_reports, rfqe);
+		}
+	}
+
+	return rb_http_handler->left;
 }
