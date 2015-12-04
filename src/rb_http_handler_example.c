@@ -56,7 +56,7 @@ int main() {
 	// getchar();
 	char *message = NULL;
 
-	for (i = 0 ; i < 1024 && running; i++) {
+	for (i = 0 ; i < 100000 && running; i++) {
 		sprintf (string, "{\"message\": \"%d\"}", i);
 		while (rb_http_produce (handler,
 		                        message = strdup (string),
