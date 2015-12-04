@@ -1,36 +1,110 @@
 #include "rb_http_chunked.h"
 
-static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *userp) {
+// static size_t def(z_stream *strm, size_t chunksize,
+//                   char *message, size_t message_len, void *ptr, int flush) {
+
+// 	size_t writed = 0;
+// 	size_t have = 0;
+
+// 	char *out = calloc(chunksize, sizeof(char));
+// 	strm->avail_in = message_len;
+// 	strm->next_in = (Bytef *)message;
+
+// 	strm->avail_out = chunksize;
+// 	strm->next_out = (Bytef *)out;
+
+// 	deflate(strm, flush);
+// 	have = chunksize - strm->avail_out;
+
+// 	memcpy((char *)ptr, out, have);
+// 	free(out);
+// 	writed += have;
+
+// 	return writed;
+// }
+
+// static z_stream *prepare_zstream() {
+
+// 	z_stream strm;
+// 	z_stream *p_strm = calloc(1, sizeof(z_stream));
+
+// 	memcpy(p_strm, &strm, sizeof(z_stream));
+
+// 	strm.zalloc = Z_NULL;
+// 	strm.zfree = Z_NULL;
+// 	strm.opaque = Z_NULL;
+
+// 	return p_strm;
+// }
+
+static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
+                                  void *userp) {
+
+	(void) size;
 
 	rd_fifoq_elm_t *rfqe = NULL;
 	size_t writed = 0;
-	(void) nmemb;
-	(void) size;
-
+	struct rb_http_message_s *message = NULL;
 	struct rb_http_threaddata_s *rb_http_threaddata =
 	    (struct rb_http_threaddata_s *) userp;
 
 	struct rb_http_handler_s *rb_http_handler =
 	    (struct rb_http_handler_s *) rb_http_threaddata->rb_http_handler;
 
-	if ((rfqe = rd_fifoq_pop_timedwait(&rb_http_handler->rfq, 500)) == NULL) {
-		if (rb_http_threaddata->dirty) {
-			rb_http_threaddata->dirty = 0;
-			return 0;
+	// Send remaining message if neccesary
+	if (rb_http_threaddata->message_left != NULL ) {
+		message = rb_http_threaddata->message_left;
+
+		if (message->len <= nmemb - writed) {
+			if (rb_http_threaddata->chunks == 0 && writed == 0) {
+				rd_fifoq_init(&rb_http_threaddata->rfq_pending);
+			}
+			memcpy((char *)ptr + writed, message->payload, message->len);
+			writed += message->len;
+			rd_fifoq_add(&rb_http_threaddata->rfq_pending, message);
+			rb_http_threaddata->message_left = NULL;
 		} else {
+			return CURL_READFUNC_ABORT;
+		}
+	}
+
+	// Get a bunch of chunks
+	while ((rfqe = rd_fifoq_pop_timedwait(&rb_http_handler->rfq, 500)) != NULL
+	        && rfqe->rfqe_ptr != NULL) {
+		message = rfqe->rfqe_ptr;
+
+		if (message->len <= nmemb - writed) {
+			// If the message fit the buffer
+			if (rb_http_threaddata->chunks == 0 && writed == 0) {
+				rd_fifoq_init(&rb_http_threaddata->rfq_pending);
+			}
+			memcpy((char *)ptr + writed, message->payload, message->len);
+			writed += message->len;
+			rd_fifoq_add(&rb_http_threaddata->rfq_pending, message);
+			rd_fifoq_elm_release(&rb_http_handler->rfq, rfqe);
+		} else {
+			// If the message doesn't fit the buffer we need to save it for later
+			rb_http_threaddata->message_left = message;
+			break;
+		}
+	}
+
+	// If there is no data to send
+	if (writed == 0) {
+
+		// And we already sent data
+		if (rb_http_threaddata->chunks > 0) {
+
+			// Send the zero-length chunk and reset chunks counter
+			rb_http_threaddata->chunks = 0;
+		} else {
+
+			// Is not the first time we are not getting any data. Pause transfer.
 			return CURL_READFUNC_PAUSE;
 		}
-	} else if (rfqe->rfqe_ptr != NULL) {
-		if (rb_http_threaddata->dirty == 0) {
-			rd_fifoq_init(&rb_http_threaddata->rfq_pending);
-			rb_http_threaddata->dirty = 1;
-		}
-
-		struct rb_http_message_s *message = rfqe->rfqe_ptr;
-		memcpy(ptr, message->payload, message->len);
-		rd_fifoq_add(&rb_http_threaddata->rfq_pending, message);
-		rd_fifoq_elm_release(&rb_http_handler->rfq, rfqe);
-		writed = message->len;
+	} else {
+		// If we send data increase number of chunks
+		rb_http_threaddata->chunks++;
 	}
 
 	return writed;
@@ -80,6 +154,9 @@ void *rb_http_process_chunked (void *arg) {
 		headers = curl_slist_append(headers, "Expect:");
 		headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
 
+		// curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_ACCEPT_ENCODING,
+		// "deflate");
+
 		curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_WRITEFUNCTION,
 		                 write_null_callback);
 
@@ -126,7 +203,7 @@ void *rb_http_process_chunked (void *arg) {
 		curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_READDATA,
 		                 rb_http_threaddata);
 		curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_READFUNCTION,
-		                 read_callback);
+		                 read_callback_batch);
 		CURLcode res;
 
 		res = curl_easy_perform (rb_http_threaddata->easy_handle);
@@ -187,7 +264,6 @@ int rb_http_get_reports_chunked(struct rb_http_handler_s *rb_http_handler,
 				rd_fifoq_elm_release(report->rfq_msgs, rfqm);
 			}
 
-			// curl_easy_cleanup(report->handler); report->handler = NULL;
 			free(report); report = NULL;
 			rd_fifoq_elm_release(&rb_http_handler->rfq_reports, rfqe);
 		}
