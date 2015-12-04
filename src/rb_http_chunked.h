@@ -1,4 +1,5 @@
 #include "rb_http_handler.h"
+#include <zlib.h>
 
 /**
  * [rb_http_send_message description]
