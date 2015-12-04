@@ -1,42 +1,5 @@
 #include "rb_http_chunked.h"
 
-// static size_t def(z_stream *strm, size_t chunksize,
-//                   char *message, size_t message_len, void *ptr, int flush) {
-
-// 	size_t writed = 0;
-// 	size_t have = 0;
-
-// 	char *out = calloc(chunksize, sizeof(char));
-// 	strm->avail_in = message_len;
-// 	strm->next_in = (Bytef *)message;
-
-// 	strm->avail_out = chunksize;
-// 	strm->next_out = (Bytef *)out;
-
-// 	deflate(strm, flush);
-// 	have = chunksize - strm->avail_out;
-
-// 	memcpy((char *)ptr, out, have);
-// 	free(out);
-// 	writed += have;
-
-// 	return writed;
-// }
-
-// static z_stream *prepare_zstream() {
-
-// 	z_stream strm;
-// 	z_stream *p_strm = calloc(1, sizeof(z_stream));
-
-// 	memcpy(p_strm, &strm, sizeof(z_stream));
-
-// 	strm.zalloc = Z_NULL;
-// 	strm.zfree = Z_NULL;
-// 	strm.opaque = Z_NULL;
-
-// 	return p_strm;
-// }
-
 static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
                                   void *userp) {
 
@@ -153,9 +116,7 @@ void *rb_http_process_chunked (void *arg) {
 		headers = curl_slist_append (headers, "charsets: utf-8");
 		headers = curl_slist_append(headers, "Expect:");
 		headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
-
-		// curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_ACCEPT_ENCODING,
-		// "deflate");
+		headers = curl_slist_append(headers, "Content-Encoding: deflate");
 
 		curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_WRITEFUNCTION,
 		                 write_null_callback);
