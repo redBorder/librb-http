@@ -104,7 +104,8 @@ void rb_http_handler_run (struct rb_http_handler_s *rb_http_handler) {
 
 			rb_http_threaddata->rb_http_handler = rb_http_handler;
 			rb_http_threaddata->easy_handle = curl_easy_init();
-			rb_http_threaddata->dirty = 0;
+			rb_http_threaddata->chunks = 0;
+			rb_http_threaddata->opaque = NULL;
 
 			pthread_create (&rb_http_threaddata->p_thread,
 			                NULL,

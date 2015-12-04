@@ -56,11 +56,13 @@ struct rb_http_options_s {
 
 // @brief Contains information per thread.
 struct rb_http_threaddata_s {
-	int dirty;               // Set to 1 if last chunk hasn't been send yet
+	int chunks;
 	rd_fifoq_t rfq_pending;  // Chunks writed waiting for response
 	CURL *easy_handle;       // Curl easy handler
 	pthread_t p_thread;      // Thread id
 	struct rb_http_handler_s *rb_http_handler;       // Ref to the handler
+	struct rb_http_message_s *message_left;
+	void *opaque;            // Opaque
 };
 
 // @brief The message to send.
