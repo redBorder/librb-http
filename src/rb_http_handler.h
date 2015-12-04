@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
+#include <zlib.h>
 #include <curl/curl.h>
 #include <librd/rdlog.h>
 #include <librd/rdqueue.h>
@@ -57,6 +58,7 @@ struct rb_http_options_s {
 // @brief Contains information per thread.
 struct rb_http_threaddata_s {
 	int chunks;
+	z_stream *strm;
 	rd_fifoq_t rfq_pending;  // Chunks writed waiting for response
 	CURL *easy_handle;       // Curl easy handler
 	pthread_t p_thread;      // Thread id

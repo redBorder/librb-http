@@ -14,41 +14,58 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 	struct rb_http_handler_s *rb_http_handler =
 	    (struct rb_http_handler_s *) rb_http_threaddata->rb_http_handler;
 
+
 	// Send remaining message if neccesary
-	if (rb_http_threaddata->message_left != NULL ) {
-		message = rb_http_threaddata->message_left;
+	if ( rb_http_threaddata->strm != NULL
+	        && rb_http_threaddata->strm->avail_in > 0) {
 
-		if (message->len <= nmemb - writed) {
-			if (rb_http_threaddata->chunks == 0 && writed == 0) {
-				rd_fifoq_init(&rb_http_threaddata->rfq_pending);
-			}
-			memcpy((char *)ptr + writed, message->payload, message->len);
-			writed += message->len;
-			rd_fifoq_add(&rb_http_threaddata->rfq_pending, message);
-			rb_http_threaddata->message_left = NULL;
-		} else {
-			return CURL_READFUNC_ABORT;
+		rb_http_threaddata->strm->next_out = (Bytef *)ptr;
+		rb_http_threaddata->strm->avail_out = nmemb - (ulong) writed;
+
+		deflate(rb_http_threaddata->strm, Z_BLOCK);
+
+		writed = nmemb - rb_http_threaddata->strm->avail_out;
+		// writed += (ulong) have;
+
+		// This message has been completely read
+		if (rb_http_threaddata->strm->avail_in == 0) {
+			rd_fifoq_add(&rb_http_threaddata->rfq_pending,
+			             rb_http_threaddata->message_left);
 		}
-	}
+	} else {
 
-	// Get a bunch of chunks
-	while ((rfqe = rd_fifoq_pop_timedwait(&rb_http_handler->rfq, 500)) != NULL
-	        && rfqe->rfqe_ptr != NULL) {
-		message = rfqe->rfqe_ptr;
+		// Read messages until we fill the buffer
+		while ((rfqe = rd_fifoq_pop_timedwait(&rb_http_handler->rfq, 500)) != NULL
+		        && rfqe->rfqe_ptr != NULL) {
+			message = rfqe->rfqe_ptr;
 
-		if (message->len <= nmemb - writed) {
-			// If the message fit the buffer
+			// We need to initialize some things when starting new POST
 			if (rb_http_threaddata->chunks == 0 && writed == 0) {
+				rb_http_threaddata->strm = calloc(1, sizeof(z_stream));
+				rb_http_threaddata->strm->zalloc = Z_NULL;
+				rb_http_threaddata->strm->zfree  = Z_NULL;
+				rb_http_threaddata->strm->opaque = Z_NULL;
+				deflateInit(rb_http_threaddata->strm, Z_DEFAULT_COMPRESSION);
 				rd_fifoq_init(&rb_http_threaddata->rfq_pending);
 			}
-			memcpy((char *)ptr + writed, message->payload, message->len);
-			writed += message->len;
+
+			rb_http_threaddata->strm->next_in = (Bytef *)message->payload;
+			rb_http_threaddata->strm->avail_in = message->len;
+			rb_http_threaddata->strm->next_out = (Bytef *)ptr + writed;
+			rb_http_threaddata->strm->avail_out = nmemb - (ulong) writed;
+
+			deflate(rb_http_threaddata->strm, Z_NO_FLUSH);
+
+			writed = nmemb - rb_http_threaddata->strm->avail_out;
+
+			// This message hasn't been completely read
+			if (rb_http_threaddata->strm->avail_in > 0) {
+				rb_http_threaddata->message_left = message;
+				break;
+			}
+
 			rd_fifoq_add(&rb_http_threaddata->rfq_pending, message);
 			rd_fifoq_elm_release(&rb_http_handler->rfq, rfqe);
-		} else {
-			// If the message doesn't fit the buffer we need to save it for later
-			rb_http_threaddata->message_left = message;
-			break;
 		}
 	}
 
@@ -59,6 +76,8 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 		if (rb_http_threaddata->chunks > 0) {
 
 			// Send the zero-length chunk and reset chunks counter
+			deflateEnd(rb_http_threaddata->strm);
+			rb_http_threaddata->strm = NULL;
 			rb_http_threaddata->chunks = 0;
 		} else {
 
