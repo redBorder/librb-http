@@ -14,7 +14,6 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 	struct rb_http_handler_s *rb_http_handler =
 	    (struct rb_http_handler_s *) rb_http_threaddata->rb_http_handler;
 
-
 	// Send remaining message if neccesary
 	if ( rb_http_threaddata->strm != NULL
 	        && rb_http_threaddata->strm->avail_in > 0) {
@@ -135,7 +134,7 @@ void *rb_http_process_chunked (void *arg) {
 		headers = curl_slist_append (headers, "charsets: utf-8");
 		headers = curl_slist_append(headers, "Expect:");
 		headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
-		headers = curl_slist_append(headers, "Content-Encoding: deflate");
+		headers = curl_slist_append(headers, "Content-Encoding: gzip");
 
 		curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_WRITEFUNCTION,
 		                 write_null_callback);
