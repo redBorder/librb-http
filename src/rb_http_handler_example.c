@@ -6,6 +6,10 @@
 #include <librd/rdthread.h>
 #include <librbhttp/librb-http.h>
 
+#define MESSAGE "{\"client_mac\": \"54:26:96:db:88:01\", \"application_name\": \"wwww\", \"sensor_uuid\":\"abc\", \"a\":5}{\"client_mac\": \"54:26:96:db:88:01\", \"application_name\": \"wwww\", \"sensor_uuid\":\"abc\",\"f\":7}"
+#define N_MESSAGE 1024 * 100
+#define URL "http://eugeniodev:2057/rbdata/def/rb_flow/"
+
 static int running = 1;
 struct rb_http_handler_s *handler = NULL;
 
@@ -37,10 +41,8 @@ static void my_callback (struct rb_http_handler_s *rb_http_handler,
 }
 
 int main() {
-	char url[] = "http://localhost:8080/librb-http/";
-	char string[128];
 
-	handler = rb_http_handler_create (url, NULL, 0);
+	handler = rb_http_handler_create (URL, NULL, 0);
 	// rb_http_handler_set_opt(handler, "HTTP_TIMEOUT", "10000", NULL, 0);
 	// rb_http_handler_set_opt(handler, "HTTP_CONNTTIMEOUT", "5000", NULL, 0);
 	// rb_http_handler_set_opt(handler, "HTTP_VERBOSE", "0", NULL, 0);
@@ -50,17 +52,15 @@ int main() {
 
 	rb_http_handler_run(handler);
 
-	printf ("Sending 1024 messages\n");
+	printf ("Sending %d messages\n", N_MESSAGE);
 	int i = 0;
 
-	// getchar();
 	char *message = NULL;
 
-	for (i = 0 ; i < 100000 && running; i++) {
-		sprintf (string, "{\"message\": \"%d\"}", i);
+	for (i = 0 ; i < N_MESSAGE && running; i++) {
 		while (rb_http_produce (handler,
-		                        message = strdup (string),
-		                        strlen (string),
+		                        message = strdup (MESSAGE),
+		                        strlen (MESSAGE),
 		                        RB_HTTP_MESSAGE_F_FREE,
 		                        NULL,
 		                        0,
