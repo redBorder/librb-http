@@ -17,7 +17,7 @@
 #define RB_HTTP_MESSAGE_F_FREE        1
 #define RB_HTTP_MESSAGE_F_COPY        2
 #define DEFAULT_MAX_TOTAL_CONNECTIONS 4
-#define DEFAULT_MAX_MESSAGES          1500
+#define DEFAULT_MAX_MESSAGES          5000
 #define DEFAULT_TIMEOUT               10000L
 #define DEFAULT_CONTTIMEOUT           3000L
 #define DEFAULT_CONNECTIONS           4
