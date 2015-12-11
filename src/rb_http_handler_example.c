@@ -8,8 +8,6 @@
 #define N_MESSAGE 1000 * 1
 #define URL "http://eugeniodev:2057/rbdata/def/rb_flow/"
 
-volatile int running = 1;
-
 struct rb_http_handler_s *handler = NULL;
 
 static void my_callback (struct rb_http_handler_s *rb_http_handler,
@@ -29,25 +27,22 @@ static void my_callback (struct rb_http_handler_s *rb_http_handler,
 	}
 
 	if (status_code == 0) {
-		if (http_status != 200)
-			printf ("HTTP STATUS: %ld\n", http_status);
+		printf ("HTTP STATUS: %ld\n", http_status);
 	}
 
-	// if (buff != NULL) {
-	// 	printf ("MESSAGE: %s\n\n", buff);
-	// }
+	if (buff != NULL) {
+		printf ("MESSAGE: %s\n\n", buff);
+	}
 
-	// if (opaque != NULL) {
-	// 	printf ("OPAQUE: %p\n", opaque);
-	// }
+	if (opaque != NULL) {
+		printf ("OPAQUE: %p\n", opaque);
+	}
 }
 
 void *get_reports (void *ptr) {
 	(void) ptr;
 
-	while (running) {
-		rb_http_get_reports (handler, my_callback, 500);
-	}
+	while (rb_http_get_reports(handler, my_callback, 100) != 0);
 
 	return NULL;
 }
@@ -79,18 +74,16 @@ int main() {
 		                        RB_HTTP_MESSAGE_F_FREE,
 		                        NULL,
 		                        0,
-		                        NULL) > 0 && running) {
+		                        NULL) > 0) {
 			free(message);
 		}
 	}
 
-	while (rb_http_get_reports (handler, my_callback, 100));
-
-	ATOMIC_OP(sub, fetch, &running, 1);
+	while (rb_http_get_reports(handler, my_callback, 100) != 0);
 
 	pthread_join(p_thread, NULL);
 
-	rb_http_handler_destroy (handler, NULL, 0);
+	rb_http_handler_destroy(handler, NULL, 0);
 
 	return 0;
 }
