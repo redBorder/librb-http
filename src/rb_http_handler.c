@@ -133,7 +133,7 @@ void rb_http_handler_destroy (struct rb_http_handler_s *rb_http_handler,
 	(void) errsize;
 
 	int i = 0;
-	rb_http_handler->thread_running = 0;
+	ATOMIC_OP(sub, fetch, &rb_http_handler->thread_running, 1);
 
 	// TODO: Call destroy function
 

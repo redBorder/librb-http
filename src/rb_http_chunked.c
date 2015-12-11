@@ -143,7 +143,8 @@ void *rb_http_process_chunked (void *arg) {
 	assert(rb_http_handler != NULL);
 	assert(rb_http_handler->options != NULL);
 
-	while (rb_http_threaddata->rb_http_handler->thread_running) {
+	while (ATOMIC_OP(sub, fetch,
+	                 &rb_http_threaddata->rb_http_handler->thread_running, 0)) {
 		if (curl_easy_setopt (rb_http_threaddata->easy_handle,
 		                      CURLOPT_URL,
 		                      rb_http_handler->options->url)
