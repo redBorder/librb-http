@@ -22,7 +22,6 @@ struct rb_http_handler_s *rb_http_handler_create (const char *urls_str,
 
 	rb_http_handler->options = calloc (1, sizeof (struct rb_http_options_s));
 
-	rd_fifoq_init (&rb_http_handler->rfq);
 	rd_fifoq_init (&rb_http_handler->rfq_reports);
 
 	rb_http_handler->still_running = 0;
@@ -106,6 +105,7 @@ void rb_http_handler_run (struct rb_http_handler_s *rb_http_handler) {
 			rb_http_handler->options->post_timeout =
 			    rb_http_handler->options->timeout / 10;
 
+			rd_fifoq_init(&rb_http_threaddata->rfq);
 			rb_http_threaddata->post_timestamp = time(NULL);
 			rb_http_threaddata->rfq_pending = NULL;
 			rb_http_threaddata->rb_http_handler = rb_http_handler;
@@ -186,7 +186,11 @@ int rb_http_produce (struct rb_http_handler_s *handler,
 		}
 
 		if (message != NULL && message->len > 0 && message->payload != NULL) {
-			rd_fifoq_add (&handler->rfq, message);
+			if (handler->next_thread == handler->options->connections) {
+				handler->next_thread = 0;
+			}
+
+			rd_fifoq_add (&handler->threads[handler->next_thread++]->rfq, message);
 		}
 	} else {
 		ATOMIC_OP(sub, fetch, &handler->left, 1);

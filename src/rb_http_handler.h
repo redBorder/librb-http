@@ -36,10 +36,10 @@ struct rb_http_handler_s {
 	int still_running;       // NORMAL_MODE: Number of easy to be processed
 	int msgs_left;           // NORMAL_MODE
 	int left;                // NORMAL_MODE
+	int next_thread;
 
 	struct rb_http_options_s *options; // Options
 	int thread_running;                // Keep threads running if set to 1
-	rd_fifoq_t rfq;                    // Message queue
 	rd_fifoq_t rfq_reports;            // Reports queue
 	struct rb_http_threaddata_s *threads[MAX_CONNECTIONS];   // For GZIP_MODE
 };
@@ -61,6 +61,7 @@ struct rb_http_options_s {
 struct rb_http_threaddata_s {
 	int chunks;
 	int current_messages;    // Messages in POST
+	rd_fifoq_t rfq;          // Message queue
 	z_stream *strm;
 	rd_fifoq_t *rfq_pending; // Chunks writed waiting for response
 	CURL *easy_handle;       // Curl easy handler
