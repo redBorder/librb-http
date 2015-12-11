@@ -62,7 +62,7 @@ struct rb_http_threaddata_s {
 	int chunks;
 	int current_messages;    // Messages in POST
 	z_stream *strm;
-	rd_fifoq_t rfq_pending;  // Chunks writed waiting for response
+	rd_fifoq_t *rfq_pending; // Chunks writed waiting for response
 	CURL *easy_handle;       // Curl easy handler
 	long post_timestamp;
 	pthread_t p_thread;      // Thread id
