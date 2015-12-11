@@ -86,6 +86,7 @@ struct rb_http_report_s {
 	int err_code;          // Curl error code
 	long http_code;        // HTTP response code
 	rd_fifoq_t *rfq_msgs;  // Messages in the report
+	struct curl_slist *headers;   // HTTP headers
 	CURL *handler;         // Curl handler used for messages
 };
 

@@ -139,8 +139,11 @@ void rb_http_handler_destroy (struct rb_http_handler_s *rb_http_handler,
 
 	for (i = 0; i < rb_http_handler->options->connections ; i++) {
 		pthread_join(rb_http_handler->threads[i]->p_thread, NULL);
+		curl_easy_cleanup(rb_http_handler->threads[i]->easy_handle);
+		free(rb_http_handler->threads[i]);
 	}
 
+	rd_fifoq_destroy(&rb_http_handler->rfq_reports);
 	rd_fifoq_destroy(&rb_http_handler->rfq);
 	if (rb_http_handler->options->url != NULL) {
 		free (rb_http_handler->options->url);
@@ -148,6 +151,8 @@ void rb_http_handler_destroy (struct rb_http_handler_s *rb_http_handler,
 
 	free(rb_http_handler->options);
 	free(rb_http_handler);
+
+	curl_global_cleanup();
 }
 
 int rb_http_produce (struct rb_http_handler_s *handler,
