@@ -165,7 +165,7 @@ void *rb_http_process_chunked (void *arg) {
 		headers = curl_slist_append (headers, "charsets: utf-8");
 		headers = curl_slist_append(headers, "Expect:");
 		headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
-		headers = curl_slist_append(headers, "Content-Encoding: gzip");
+		headers = curl_slist_append(headers, "Content-Encoding: deflate");
 
 		curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_WRITEFUNCTION,
 		                 write_null_callback);
