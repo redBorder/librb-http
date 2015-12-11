@@ -220,7 +220,8 @@ void *rb_http_process_chunked (void *arg) {
 
 		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
 
-		report->rfq_msgs = &rb_http_threaddata->rfq_pending;
+		report->rfq_msgs = rb_http_threaddata->rfq_pending;
+		report->headers = headers;
 		report->err_code = res;
 		report->handler = rb_http_threaddata->easy_handle;
 		curl_easy_getinfo (rb_http_threaddata->easy_handle,
@@ -246,35 +247,39 @@ int rb_http_get_reports_chunked(struct rb_http_handler_s *rb_http_handler,
 		nowait = 1;
 	}
 
-	while ((rfqe = rd_fifoq_pop0(&rb_http_handler->rfq_reports,
-	                             nowait,
-	                             timeout_ms)) != NULL) {
-		if (rfqe->rfqe_ptr != NULL) {
-			report = (struct rb_http_report_s *)rfqe->rfqe_ptr;
-			http_code = report->http_code;
+	if (&rb_http_handler->rfq_reports != NULL) {
+		while ((rfqe = rd_fifoq_pop0(&rb_http_handler->rfq_reports,
+		                             nowait,
+		                             timeout_ms)) != NULL) {
+			if (rfqe->rfqe_ptr != NULL) {
+				report = (struct rb_http_report_s *)rfqe->rfqe_ptr;
+				http_code = report->http_code;
+				if (report->rfq_msgs != NULL) {
+					while ((rfqm = rd_fifoq_pop(report->rfq_msgs)) != NULL) {
+						if (rfqm->rfqe_ptr != NULL) {
+							ATOMIC_OP(sub, fetch, &rb_http_handler->left, 1);
+							message = rfqm->rfqe_ptr;
+							report_fn(rb_http_handler,
+							          report->err_code,
+							          http_code,
+							          NULL,
+							          message->payload,
+							          message->len,
+							          message->client_opaque);
 
-			while ((rfqm = rd_fifoq_pop(report->rfq_msgs)) != NULL) {
-				if (rfqm->rfqe_ptr != NULL) {
-					ATOMIC_OP(sub, fetch, &rb_http_handler->left, 1);
-					message = rfqm->rfqe_ptr;
-					report_fn(rb_http_handler,
-					          report->err_code,
-					          http_code,
-					          NULL,
-					          message->payload,
-					          message->len,
-					          message->client_opaque);
-
-					if (message->free_message && message->payload != NULL) {
-						free (message->payload); message->payload = NULL;
+							if (message->free_message && message->payload != NULL) {
+								free(message->payload);
+							}
+							free(message);
+						}
+						rd_fifoq_elm_release(report->rfq_msgs, rfqm);
 					}
-					curl_slist_free_all(message->headers);
-					free(message); message = NULL;
+					rd_fifoq_destroy(report->rfq_msgs);
 				}
-				rd_fifoq_elm_release(report->rfq_msgs, rfqm);
+				curl_slist_free_all(report->headers);
+				free(report->rfq_msgs);
+				free(report);
 			}
-
-			free(report); report = NULL;
 			rd_fifoq_elm_release(&rb_http_handler->rfq_reports, rfqe);
 		}
 	}
