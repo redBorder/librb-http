@@ -39,13 +39,13 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 		now = round(spec.tv_nsec / 1.0e6);
 
 		// Read messages until we fill the buffer
-		if (&rb_http_handler->rfq != NULL) {
+		if (&rb_http_threaddata->rfq != NULL) {
 			while (
 			    now - rb_http_threaddata->post_timestamp <
 			    rb_http_handler->options->post_timeout
 			    && rb_http_threaddata->current_messages <
 			    rb_http_handler->options->max_batch_messages
-			    && (rfqe = rd_fifoq_pop_timedwait(&rb_http_handler->rfq, 500)) != NULL
+			    && (rfqe = rd_fifoq_pop_timedwait(&rb_http_threaddata->rfq, 500)) != NULL
 			    && rfqe->rfqe_ptr != NULL) {
 
 				if (now - rb_http_threaddata->post_timestamp <
@@ -82,7 +82,7 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 					}
 
 					rd_fifoq_add(rb_http_threaddata->rfq_pending, message);
-					rd_fifoq_elm_release(&rb_http_handler->rfq, rfqe);
+					rd_fifoq_elm_release(&rb_http_threaddata->rfq, rfqe);
 					rb_http_threaddata->current_messages++;
 				} else {
 					break;
@@ -216,7 +216,15 @@ void *rb_http_process_chunked (void *arg) {
 		                 read_callback_batch);
 		CURLcode res;
 
-		res = curl_easy_perform (rb_http_threaddata->easy_handle);
+		while (rb_http_threaddata->rfq.rfq_cnt == 0) {
+			sleep(1);
+			if (rb_http_threaddata->rb_http_handler->thread_running == 0) {
+				curl_slist_free_all(headers);
+				return NULL;
+			}
+		}
+
+		res = curl_easy_perform(rb_http_threaddata->easy_handle);
 
 		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
 
