@@ -135,8 +135,6 @@ void rb_http_handler_destroy (struct rb_http_handler_s *rb_http_handler,
 	int i = 0;
 	ATOMIC_OP(sub, fetch, &rb_http_handler->thread_running, 1);
 
-	// TODO: Call destroy function
-
 	for (i = 0; i < rb_http_handler->options->connections ; i++) {
 		pthread_join(rb_http_handler->threads[i]->p_thread, NULL);
 		curl_easy_cleanup(rb_http_handler->threads[i]->easy_handle);
@@ -144,7 +142,6 @@ void rb_http_handler_destroy (struct rb_http_handler_s *rb_http_handler,
 	}
 
 	rd_fifoq_destroy(&rb_http_handler->rfq_reports);
-	rd_fifoq_destroy(&rb_http_handler->rfq);
 	if (rb_http_handler->options->url != NULL) {
 		free (rb_http_handler->options->url);
 	}
