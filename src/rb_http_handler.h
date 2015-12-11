@@ -79,7 +79,6 @@ struct rb_http_message_s {
 	int free_message;             // If message should be free'd by the library
 	int copy;                     // If message should be copied by the library
 	void *client_opaque;          // Opaque
-	struct curl_slist *headers;   // HTTP headers
 };
 
 // @brief Contains one or more reports for a transfer

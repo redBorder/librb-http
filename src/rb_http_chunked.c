@@ -158,11 +158,11 @@ void *rb_http_process_chunked (void *arg) {
 
 		struct curl_slist *headers = NULL;
 
-		headers = curl_slist_append (headers,
-		                             "Accept: application/json");
-		headers = curl_slist_append (headers,
-		                             "Content-Type: application/json");
-		headers = curl_slist_append (headers, "charsets: utf-8");
+		headers = curl_slist_append(headers,
+		                            "Accept: application/json");
+		headers = curl_slist_append(headers,
+		                            "Content-Type: application/json");
+		headers = curl_slist_append(headers, "charsets: utf-8");
 		headers = curl_slist_append(headers, "Expect:");
 		headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
 		headers = curl_slist_append(headers, "Content-Encoding: deflate");
@@ -187,26 +187,26 @@ void *rb_http_process_chunked (void *arg) {
 			report->err_code = -1;
 			report->http_code = 0;
 			report->handler = NULL;
-			rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+			rd_fifoq_add(&rb_http_handler->rfq_reports, report);
 		}
 
-		if (curl_easy_setopt (rb_http_threaddata->easy_handle, CURLOPT_TIMEOUT_MS,
-		                      rb_http_handler->options->timeout) != CURLE_OK) {
+		if (curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_TIMEOUT_MS,
+		                     rb_http_handler->options->timeout) != CURLE_OK) {
 			struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
 			report->err_code = -1;
 			report->http_code = 0;
 			report->handler = NULL;
-			rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+			rd_fifoq_add(&rb_http_handler->rfq_reports, report);
 		}
 
-		if (curl_easy_setopt (rb_http_threaddata->easy_handle,
-		                      CURLOPT_CONNECTTIMEOUT_MS,
-		                      rb_http_handler->options->conntimeout) != CURLE_OK) {
+		if (curl_easy_setopt(rb_http_threaddata->easy_handle,
+		                     CURLOPT_CONNECTTIMEOUT_MS,
+		                     rb_http_handler->options->conntimeout) != CURLE_OK) {
 			struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
 			report->err_code = -1;
 			report->http_code = 0;
 			report->handler = NULL;
-			rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+			rd_fifoq_add(&rb_http_handler->rfq_reports, report);
 		}
 
 		curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_POST, 1L);
@@ -278,6 +278,7 @@ int rb_http_get_reports_chunked(struct rb_http_handler_s *rb_http_handler,
 							if (message->free_message && message->payload != NULL) {
 								free(message->payload);
 							}
+							free(message->client_opaque);
 							free(message);
 						}
 						rd_fifoq_elm_release(report->rfq_msgs, rfqm);
