@@ -1,4 +1,5 @@
 #include "rb_http_chunked.h"
+#include <math.h>
 
 static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
                                   void *userp) {
@@ -7,6 +8,8 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 
 	rd_fifoq_elm_t *rfqe = NULL;
 	size_t writed = 0;
+	long now;
+	struct timespec spec;
 	struct rb_http_message_s *message = NULL;
 	struct rb_http_threaddata_s *rb_http_threaddata =
 	    (struct rb_http_threaddata_s *) userp;
@@ -24,47 +27,70 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 		deflate(rb_http_threaddata->strm, Z_BLOCK);
 
 		writed = nmemb - rb_http_threaddata->strm->avail_out;
-		// writed += (ulong) have;
 
 		// This message has been completely read
 		if (rb_http_threaddata->strm->avail_in == 0) {
-			rd_fifoq_add(&rb_http_threaddata->rfq_pending,
+			rd_fifoq_add(rb_http_threaddata->rfq_pending,
 			             rb_http_threaddata->message_left);
 		}
 	} else {
 
+		clock_gettime(CLOCK_REALTIME, &spec);
+		now = round(spec.tv_nsec / 1.0e6);
+
 		// Read messages until we fill the buffer
-		while ((rfqe = rd_fifoq_pop_timedwait(&rb_http_handler->rfq, 500)) != NULL
-		        && rfqe->rfqe_ptr != NULL) {
-			message = rfqe->rfqe_ptr;
+		if (&rb_http_handler->rfq != NULL) {
+			while (
+			    now - rb_http_threaddata->post_timestamp <
+			    rb_http_handler->options->post_timeout
+			    && rb_http_threaddata->current_messages <
+			    rb_http_handler->options->max_batch_messages
+			    && (rfqe = rd_fifoq_pop_timedwait(&rb_http_handler->rfq, 500)) != NULL
+			    && rfqe->rfqe_ptr != NULL) {
 
-			// We need to initialize some things when starting new POST
-			if (rb_http_threaddata->chunks == 0 && writed == 0) {
-				rb_http_threaddata->strm = calloc(1, sizeof(z_stream));
-				rb_http_threaddata->strm->zalloc = Z_NULL;
-				rb_http_threaddata->strm->zfree  = Z_NULL;
-				rb_http_threaddata->strm->opaque = Z_NULL;
-				deflateInit(rb_http_threaddata->strm, Z_DEFAULT_COMPRESSION);
-				rd_fifoq_init(&rb_http_threaddata->rfq_pending);
+				if (now - rb_http_threaddata->post_timestamp <
+				        rb_http_handler->options->post_timeout) {
+
+					message = rfqe->rfqe_ptr;
+
+					// We need to initialize a few things when starting new POST
+					if (rb_http_threaddata->chunks == 0 && writed == 0) {
+						clock_gettime(CLOCK_REALTIME, &spec);
+						rb_http_threaddata->post_timestamp = round(spec.tv_nsec / 1.0e6);
+						rb_http_threaddata->strm = calloc(1, sizeof(z_stream));
+						rb_http_threaddata->strm->zalloc = Z_NULL;
+						rb_http_threaddata->strm->zfree  = Z_NULL;
+						rb_http_threaddata->strm->opaque = Z_NULL;
+						deflateInit(rb_http_threaddata->strm, Z_DEFAULT_COMPRESSION);
+						rb_http_threaddata->rfq_pending = calloc(1, sizeof(rd_fifoq_t));
+						rd_fifoq_init(rb_http_threaddata->rfq_pending);
+					}
+
+					rb_http_threaddata->strm->next_in = (Bytef *)message->payload;
+					rb_http_threaddata->strm->avail_in = message->len;
+					rb_http_threaddata->strm->next_out = (Bytef *)ptr + writed;
+					rb_http_threaddata->strm->avail_out = nmemb - (ulong) writed;
+
+					deflate(rb_http_threaddata->strm, Z_SYNC_FLUSH);
+
+					writed = nmemb - rb_http_threaddata->strm->avail_out;
+
+					// This message hasn't been completely read
+					if (rb_http_threaddata->strm->avail_in > 0) {
+						rb_http_threaddata->message_left = message;
+						break;
+					}
+
+					rd_fifoq_add(rb_http_threaddata->rfq_pending, message);
+					rd_fifoq_elm_release(&rb_http_handler->rfq, rfqe);
+					rb_http_threaddata->current_messages++;
+				} else {
+					break;
+				}
+
+				clock_gettime(CLOCK_REALTIME, &spec);
+				now = round(spec.tv_nsec / 1.0e6);
 			}
-
-			rb_http_threaddata->strm->next_in = (Bytef *)message->payload;
-			rb_http_threaddata->strm->avail_in = message->len;
-			rb_http_threaddata->strm->next_out = (Bytef *)ptr + writed;
-			rb_http_threaddata->strm->avail_out = nmemb - (ulong) writed;
-
-			deflate(rb_http_threaddata->strm, Z_BLOCK);
-
-			writed = nmemb - rb_http_threaddata->strm->avail_out;
-
-			// This message hasn't been completely read
-			if (rb_http_threaddata->strm->avail_in > 0) {
-				rb_http_threaddata->message_left = message;
-				break;
-			}
-
-			rd_fifoq_add(&rb_http_threaddata->rfq_pending, message);
-			rd_fifoq_elm_release(&rb_http_handler->rfq, rfqe);
 		}
 	}
 
@@ -76,11 +102,15 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 
 			// Send the zero-length chunk and reset chunks counter
 			deflateEnd(rb_http_threaddata->strm);
+			free(rb_http_threaddata->strm);
+			rb_http_threaddata->current_messages = 0;
 			rb_http_threaddata->strm = NULL;
 			rb_http_threaddata->chunks = 0;
 		} else {
 
 			// Is not the first time we are not getting any data. Pause transfer.
+			rb_http_threaddata->rfq_pending = calloc(1, sizeof(rd_fifoq_t));
+			rd_fifoq_init(rb_http_threaddata->rfq_pending);
 			return CURL_READFUNC_PAUSE;
 		}
 	} else {

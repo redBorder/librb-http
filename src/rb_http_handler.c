@@ -101,7 +101,13 @@ void rb_http_handler_run (struct rb_http_handler_s *rb_http_handler) {
 		for (i = 0;  i < rb_http_handler->options->connections; i++) {
 			rb_http_threaddata = calloc(1, sizeof(struct rb_http_threaddata_s));
 			rb_http_handler->threads[i] = rb_http_threaddata;
+			rb_http_handler->options->max_batch_messages =
+			    rb_http_handler->options->max_messages / 10;
+			rb_http_handler->options->post_timeout =
+			    rb_http_handler->options->timeout / 10;
 
+			rb_http_threaddata->post_timestamp = time(NULL);
+			rb_http_threaddata->rfq_pending = NULL;
 			rb_http_threaddata->rb_http_handler = rb_http_handler;
 			rb_http_threaddata->easy_handle = curl_easy_init();
 			rb_http_threaddata->chunks = 0;
