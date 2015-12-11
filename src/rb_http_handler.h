@@ -49,7 +49,9 @@ struct rb_http_options_s {
 	char *url;               // Endpoint URL
 	int mode;                // NORMAL_MODE or GZIP_MODE
 	int max_messages;        // Max messages in queue
+	int max_batch_messages;  // Max messages per POST
 	int connections;         // Number of simultaneous connections
+	long post_timeout;
 	long timeout;            // Total timeout
 	long conntimeout;        // Connection timeout
 	long verbose;            // Curl verbose mode if set to 1
@@ -58,9 +60,11 @@ struct rb_http_options_s {
 // @brief Contains information per thread.
 struct rb_http_threaddata_s {
 	int chunks;
+	int current_messages;    // Messages in POST
 	z_stream *strm;
 	rd_fifoq_t rfq_pending;  // Chunks writed waiting for response
 	CURL *easy_handle;       // Curl easy handler
+	long post_timestamp;
 	pthread_t p_thread;      // Thread id
 	struct rb_http_handler_s *rb_http_handler;       // Ref to the handler
 	struct rb_http_message_s *message_left;

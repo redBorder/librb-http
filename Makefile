@@ -24,7 +24,7 @@ build-test:
 	$(CC) $(CFLAGS) $(TESTS) src/rb_http_handler.c librbhttp.a -lcmocka $(LDFLAGS) $(LIBS) -o bin/run_tests
 
 example:
-	$(CC) $(CFLAGS) src/rb_http_handler_example.c librbhttp.a -lcurl $(LDFLAGS) $(LIBS) -o bin/example
+	$(CC) $(CFLAGS) src/rb_http_handler_example.c librbhttp.a -lcurl $(LDFLAGS) $(LIBS) -o bin/example -lm
 
 run-tests:
 	-CMOCKA_MESSAGE_OUTPUT=XML CMOCKA_XML_FILE=./test-results.xml bin/run_tests
