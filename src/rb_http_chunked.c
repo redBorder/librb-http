@@ -143,8 +143,7 @@ void *rb_http_process_chunked (void *arg) {
 	assert(rb_http_handler != NULL);
 	assert(rb_http_handler->options != NULL);
 
-	while (ATOMIC_OP(sub, fetch,
-	                 &rb_http_threaddata->rb_http_handler->thread_running, 0)) {
+	while (1) {
 		if (curl_easy_setopt (rb_http_threaddata->easy_handle,
 		                      CURLOPT_URL,
 		                      rb_http_handler->options->url)
@@ -215,14 +214,22 @@ void *rb_http_process_chunked (void *arg) {
 		curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_READFUNCTION,
 		                 read_callback_batch);
 		CURLcode res;
+		int cnt = 0;
 
-		while (rb_http_threaddata->rfq.rfq_cnt == 0) {
-			sleep(1);
-			if (rb_http_threaddata->rb_http_handler->thread_running == 0) {
-				curl_slist_free_all(headers);
-				return NULL;
+		do {
+			pthread_mutex_lock(&rb_http_threaddata->rfq.rfq_lock);
+			cnt = rb_http_threaddata->rfq.rfq_cnt;
+			pthread_mutex_unlock(&rb_http_threaddata->rfq.rfq_lock);
+
+			if (cnt == 0) {
+				sleep(1);
+				if (ATOMIC_OP(sub, fetch,
+				              &rb_http_threaddata->rb_http_handler->thread_running, 0) == 0) {
+					curl_slist_free_all(headers);
+					return NULL;
+				}
 			}
-		}
+		}	while (cnt == 0);
 
 		res = curl_easy_perform(rb_http_threaddata->easy_handle);
 
@@ -232,11 +239,11 @@ void *rb_http_process_chunked (void *arg) {
 		report->headers = headers;
 		report->err_code = res;
 		report->handler = rb_http_threaddata->easy_handle;
-		curl_easy_getinfo (rb_http_threaddata->easy_handle,
-		                   CURLINFO_RESPONSE_CODE,
-		                   &report->http_code);
+		curl_easy_getinfo(rb_http_threaddata->easy_handle,
+		                  CURLINFO_RESPONSE_CODE,
+		                  &report->http_code);
 
-		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+		rd_fifoq_add(&rb_http_handler->rfq_reports, report);
 	}
 
 	return NULL;

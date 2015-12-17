@@ -226,6 +226,7 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 	switch (rb_http_handler->options->mode) {
 	case NORMAL_MODE:
 		// return rb_http_get_reports_normal(rb_http_handler, report_fn, timeout_ms);
+		return 0;
 		break;
 	case CHUNKED_MODE:
 		return rb_http_get_reports_chunked(rb_http_handler, report_fn, timeout_ms);
