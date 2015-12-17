@@ -2,6 +2,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <librbhttp/librb-http.h>
+#include <pthread.h>
+#include <stdlib.h>
+
 #include "../config.h"
 
 #define MESSAGE "{\"client_mac\": \"54:26:96:db:88:01\", \"application_name\": \"wwww\", \"sensor_uuid\":\"abc\", \"a\":5}"
@@ -54,7 +57,7 @@ int main() {
 	// rb_http_handler_set_opt(handler, "HTTP_CONNTTIMEOUT", "5000", NULL, 0);
 	// rb_http_handler_set_opt(handler, "HTTP_VERBOSE", "0", NULL, 0);
 	// rb_http_handler_set_opt(handler, "RB_HTTP_MAX_MESSAGES", "512", NULL, 0);
-	rb_http_handler_set_opt(handler, "RB_HTTP_CONNECTIONS", "1", NULL, 0);
+	rb_http_handler_set_opt(handler, "RB_HTTP_CONNECTIONS", "2", NULL, 0);
 	rb_http_handler_set_opt(handler, "RB_HTTP_MODE", "1", NULL, 0);
 
 	rb_http_handler_run(handler);
@@ -78,8 +81,6 @@ int main() {
 			free(message);
 		}
 	}
-
-	while (rb_http_get_reports(handler, my_callback, 100) != 0);
 
 	pthread_join(p_thread, NULL);
 
