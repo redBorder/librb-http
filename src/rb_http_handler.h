@@ -2,6 +2,7 @@
 #define RB_HTTP_HANDLER
 
 #include "../config.h"
+#include "rb_http_message_queue.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -63,7 +64,7 @@ struct rb_http_threaddata_s {
 	int current_messages;    // Messages in POST
 	rd_fifoq_t rfq;          // Message queue
 	z_stream *strm;
-	rd_fifoq_t *rfq_pending; // Chunks writed waiting for response
+	rb_http_msg_q_t *rfq_pending; // Chunks writed waiting for response
 	CURL *easy_handle;       // Curl easy handler
 	long post_timestamp;
 	pthread_t p_thread;      // Thread id
@@ -72,20 +73,12 @@ struct rb_http_threaddata_s {
 	void *opaque;            // Opaque
 };
 
-// @brief The message to send.
-struct rb_http_message_s {
-	char *payload;                // Content of the message
-	size_t len;                   // Length of the message
-	int free_message;             // If message should be free'd by the library
-	int copy;                     // If message should be copied by the library
-	void *client_opaque;          // Opaque
-};
-
 // @brief Contains one or more reports for a transfer
 struct rb_http_report_s {
 	int err_code;          // Curl error code
 	long http_code;        // HTTP response code
-	rd_fifoq_t *rfq_msgs;  // Messages in the report
+	// rd_fifoq_t *rfq_msgs;  // Messages in the report
+	rb_http_msg_q_t *rfq_msgs;  // Messages in the report
 	struct curl_slist *headers;   // HTTP headers
 	CURL *handler;         // Curl handler used for messages
 };

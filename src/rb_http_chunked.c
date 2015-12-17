@@ -30,8 +30,8 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 
 		// This message has been completely read
 		if (rb_http_threaddata->strm->avail_in == 0) {
-			rd_fifoq_add(rb_http_threaddata->rfq_pending,
-			             rb_http_threaddata->message_left);
+			rb_http_msg_q_add(rb_http_threaddata->rfq_pending,
+			                  rb_http_threaddata->message_left);
 		}
 	} else {
 
@@ -63,7 +63,7 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 						rb_http_threaddata->strm->opaque = Z_NULL;
 						deflateInit(rb_http_threaddata->strm, Z_DEFAULT_COMPRESSION);
 						rb_http_threaddata->rfq_pending = calloc(1, sizeof(rd_fifoq_t));
-						rd_fifoq_init(rb_http_threaddata->rfq_pending);
+						rb_http_msg_q_init(rb_http_threaddata->rfq_pending);
 					}
 
 					rb_http_threaddata->strm->next_in = (Bytef *)message->payload;
@@ -81,7 +81,7 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 						break;
 					}
 
-					rd_fifoq_add(rb_http_threaddata->rfq_pending, message);
+					rb_http_msg_q_add(rb_http_threaddata->rfq_pending, message);
 					rd_fifoq_elm_release(&rb_http_threaddata->rfq, rfqe);
 					rb_http_threaddata->current_messages++;
 				} else {
@@ -110,7 +110,7 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 
 			// Is not the first time we are not getting any data. Pause transfer.
 			rb_http_threaddata->rfq_pending = calloc(1, sizeof(rd_fifoq_t));
-			rd_fifoq_init(rb_http_threaddata->rfq_pending);
+			rb_http_msg_q_init(rb_http_threaddata->rfq_pending);
 			return CURL_READFUNC_PAUSE;
 		}
 	} else {
@@ -245,7 +245,6 @@ void *rb_http_process_chunked (void *arg) {
 int rb_http_get_reports_chunked(struct rb_http_handler_s *rb_http_handler,
                                 cb_report report_fn, int timeout_ms) {
 	rd_fifoq_elm_t *rfqe = NULL;
-	rd_fifoq_elm_t *rfqm = NULL;
 	struct rb_http_report_s *report = NULL;
 	struct rb_http_message_s *message = NULL;
 	int nowait = 0;
@@ -263,10 +262,11 @@ int rb_http_get_reports_chunked(struct rb_http_handler_s *rb_http_handler,
 				report = (struct rb_http_report_s *)rfqe->rfqe_ptr;
 				http_code = report->http_code;
 				if (report->rfq_msgs != NULL) {
-					while ((rfqm = rd_fifoq_pop(report->rfq_msgs)) != NULL) {
-						if (rfqm->rfqe_ptr != NULL) {
+
+					while (!rb_http_msg_q_empty(report->rfq_msgs)) {
+						message = rb_http_msg_q_pop(report->rfq_msgs);
+						if (message != NULL) {
 							ATOMIC_OP(sub, fetch, &rb_http_handler->left, 1);
-							message = rfqm->rfqe_ptr;
 							report_fn(rb_http_handler,
 							          report->err_code,
 							          http_code,
@@ -281,9 +281,7 @@ int rb_http_get_reports_chunked(struct rb_http_handler_s *rb_http_handler,
 							free(message->client_opaque);
 							free(message);
 						}
-						rd_fifoq_elm_release(report->rfq_msgs, rfqm);
 					}
-					rd_fifoq_destroy(report->rfq_msgs);
 				}
 				curl_slist_free_all(report->headers);
 				free(report->rfq_msgs);
