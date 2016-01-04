@@ -1,0 +1,361 @@
+\hypertarget{rb__http__handler_8h}{}\section{src/rb\+\_\+http\+\_\+handler.h File Reference}
+\label{rb__http__handler_8h}\index{src/rb\+\_\+http\+\_\+handler.\+h@{src/rb\+\_\+http\+\_\+handler.\+h}}
+{\ttfamily \#include \char`\"{}../config.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}rb\+\_\+http\+\_\+message\+\_\+queue.\+h\char`\"{}}\\*
+{\ttfamily \#include $<$stdio.\+h$>$}\\*
+{\ttfamily \#include $<$assert.\+h$>$}\\*
+{\ttfamily \#include $<$stdlib.\+h$>$}\\*
+{\ttfamily \#include $<$pthread.\+h$>$}\\*
+{\ttfamily \#include $<$string.\+h$>$}\\*
+{\ttfamily \#include $<$zlib.\+h$>$}\\*
+{\ttfamily \#include $<$curl/curl.\+h$>$}\\*
+{\ttfamily \#include $<$librd/rdlog.\+h$>$}\\*
+{\ttfamily \#include $<$librd/rdqueue.\+h$>$}\\*
+{\ttfamily \#include $<$librd/rdthread.\+h$>$}\\*
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structrb__http__handler__s}{rb\+\_\+http\+\_\+handler\+\_\+s}
+\item 
+struct \hyperlink{structrb__http__options__s}{rb\+\_\+http\+\_\+options\+\_\+s}
+\item 
+struct \hyperlink{structrb__http__threaddata__s}{rb\+\_\+http\+\_\+threaddata\+\_\+s}
+\item 
+struct \hyperlink{structrb__http__report__s}{rb\+\_\+http\+\_\+report\+\_\+s}
+\end{DoxyCompactItemize}
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{rb__http__handler_8h_aef79f44f520e54cbedce1068fe324720}{R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+F\+R\+E\+E}~1
+\item 
+\#define \hyperlink{rb__http__handler_8h_a0ffdecd586e5dc8f1eeede6bac9bc19f}{R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+C\+O\+P\+Y}~2
+\item 
+\#define \hyperlink{rb__http__handler_8h_a21474916371fa38cf4ac2bcd1701ccce}{D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+T\+O\+T\+A\+L\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S}~4
+\item 
+\#define \hyperlink{rb__http__handler_8h_acbcaf1a46da1c8312a9216fecae74458}{D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+M\+E\+S\+S\+A\+G\+E\+S}~5000
+\item 
+\#define \hyperlink{rb__http__handler_8h_aad2dd72565852b91c809cd4685833b17}{D\+E\+F\+A\+U\+L\+T\+\_\+\+T\+I\+M\+E\+O\+U\+T}~10000\+L
+\item 
+\#define \hyperlink{rb__http__handler_8h_a74cf0c869a3e674e0b8a522ee4b05490}{D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+T\+T\+I\+M\+E\+O\+U\+T}~3000\+L
+\item 
+\#define \hyperlink{rb__http__handler_8h_ad2eb289d4b334be6c858fd71ea709cca}{D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S}~4
+\item 
+\#define \hyperlink{rb__http__handler_8h_a053b7859476cc9867ec62c49e68d3fa1}{M\+A\+X\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S}~4096
+\item 
+\#define \hyperlink{rb__http__handler_8h_aa045b6864425ecb90f2c253e8440d21c}{N\+O\+R\+M\+A\+L\+\_\+\+M\+O\+D\+E}~0
+\item 
+\#define \hyperlink{rb__http__handler_8h_a4ee65cfd03582583faf99c4e0f2710f4}{C\+H\+U\+N\+K\+E\+D\+\_\+\+M\+O\+D\+E}~1
+\end{DoxyCompactItemize}
+\subsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef void($\ast$ \hyperlink{rb__http__handler_8h_afd9ccf19b724dbf3ce572d01455b99bf}{cb\+\_\+report}) (struct \hyperlink{structrb__http__handler__s}{rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$rb\+\_\+http\+\_\+handler, int status\+\_\+code, long http\+\_\+code, const char $\ast$status\+\_\+code\+\_\+str, char $\ast$buff, size\+\_\+t bufsiz, void $\ast$opaque)
+\begin{DoxyCompactList}\small\item\em Types. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structrb__http__handler__s}{rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$ \hyperlink{rb__http__handler_8h_aa84a3dadccb44fa421655ad1b09c3157}{rb\+\_\+http\+\_\+handler\+\_\+create} (const char $\ast$urls\+\_\+str, char $\ast$err, size\+\_\+t errbuf)
+\begin{DoxyCompactList}\small\item\em Functions. \end{DoxyCompactList}\item 
+void \hyperlink{rb__http__handler_8h_aec9a18015fc9221b582348ccfb48cb34}{rb\+\_\+http\+\_\+handler\+\_\+run} (struct \hyperlink{structrb__http__handler__s}{rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$rb\+\_\+http\+\_\+handler)
+\item 
+void \hyperlink{rb__http__handler_8h_aa0bd3f75d87af6c49108638a0037de86}{rb\+\_\+http\+\_\+handler\+\_\+destroy} (struct \hyperlink{structrb__http__handler__s}{rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$rb\+\_\+http\+\_\+handler, char $\ast$err, size\+\_\+t errsize)
+\item 
+int \hyperlink{rb__http__handler_8h_a0d0d31d9c2dc9ed04d6722e5653b4682}{rb\+\_\+http\+\_\+produce} (struct \hyperlink{structrb__http__handler__s}{rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$\hyperlink{rb__http__handler__example_8c_a0165697b451a136ac74647662a5a39e1}{handler}, char $\ast$buff, size\+\_\+t len, int flags, char $\ast$err, size\+\_\+t errsize, void $\ast$opaque)
+\item 
+int \hyperlink{rb__http__handler_8h_a309fed4678d407d03df1eb22bad356cc}{rb\+\_\+http\+\_\+batch\+\_\+produce} (struct \hyperlink{structrb__http__handler__s}{rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$\hyperlink{rb__http__handler__example_8c_a0165697b451a136ac74647662a5a39e1}{handler}, char $\ast$buff, size\+\_\+t len, int flags, char $\ast$err, size\+\_\+t errsize, void $\ast$opaque)
+\item 
+int \hyperlink{rb__http__handler_8h_a890e981b619b1bdd5cc37fa16bb06f06}{rb\+\_\+http\+\_\+get\+\_\+reports} (struct \hyperlink{structrb__http__handler__s}{rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$rb\+\_\+http\+\_\+handler, \hyperlink{rb__http__handler_8h_afd9ccf19b724dbf3ce572d01455b99bf}{cb\+\_\+report} report\+\_\+fn, int timeout\+\_\+ms)
+\item 
+int \hyperlink{rb__http__handler_8h_ab306abb2b4a66b092205de2677d342aa}{rb\+\_\+http\+\_\+handler\+\_\+set\+\_\+opt} (struct \hyperlink{structrb__http__handler__s}{rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$rb\+\_\+http\+\_\+handler, const char $\ast$key, const char $\ast$val, char $\ast$err, size\+\_\+t errsize)
+\end{DoxyCompactItemize}
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{rb__http__handler_8h_a4ee65cfd03582583faf99c4e0f2710f4}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!C\+H\+U\+N\+K\+E\+D\+\_\+\+M\+O\+D\+E@{C\+H\+U\+N\+K\+E\+D\+\_\+\+M\+O\+D\+E}}
+\index{C\+H\+U\+N\+K\+E\+D\+\_\+\+M\+O\+D\+E@{C\+H\+U\+N\+K\+E\+D\+\_\+\+M\+O\+D\+E}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{C\+H\+U\+N\+K\+E\+D\+\_\+\+M\+O\+D\+E}]{\setlength{\rightskip}{0pt plus 5cm}\#define C\+H\+U\+N\+K\+E\+D\+\_\+\+M\+O\+D\+E~1}\label{rb__http__handler_8h_a4ee65cfd03582583faf99c4e0f2710f4}
+
+
+Definition at line 28 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{rb__http__handler_8h_ad2eb289d4b334be6c858fd71ea709cca}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S@{D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S}}
+\index{D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S@{D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S}]{\setlength{\rightskip}{0pt plus 5cm}\#define D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S~4}\label{rb__http__handler_8h_ad2eb289d4b334be6c858fd71ea709cca}
+
+
+Definition at line 24 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{rb__http__handler_8h_a74cf0c869a3e674e0b8a522ee4b05490}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+T\+T\+I\+M\+E\+O\+U\+T@{D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+T\+T\+I\+M\+E\+O\+U\+T}}
+\index{D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+T\+T\+I\+M\+E\+O\+U\+T@{D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+T\+T\+I\+M\+E\+O\+U\+T}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+T\+T\+I\+M\+E\+O\+U\+T}]{\setlength{\rightskip}{0pt plus 5cm}\#define D\+E\+F\+A\+U\+L\+T\+\_\+\+C\+O\+N\+T\+T\+I\+M\+E\+O\+U\+T~3000\+L}\label{rb__http__handler_8h_a74cf0c869a3e674e0b8a522ee4b05490}
+
+
+Definition at line 23 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{rb__http__handler_8h_acbcaf1a46da1c8312a9216fecae74458}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+M\+E\+S\+S\+A\+G\+E\+S@{D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+M\+E\+S\+S\+A\+G\+E\+S}}
+\index{D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+M\+E\+S\+S\+A\+G\+E\+S@{D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+M\+E\+S\+S\+A\+G\+E\+S}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+M\+E\+S\+S\+A\+G\+E\+S}]{\setlength{\rightskip}{0pt plus 5cm}\#define D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+M\+E\+S\+S\+A\+G\+E\+S~5000}\label{rb__http__handler_8h_acbcaf1a46da1c8312a9216fecae74458}
+
+
+Definition at line 21 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{rb__http__handler_8h_a21474916371fa38cf4ac2bcd1701ccce}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+T\+O\+T\+A\+L\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S@{D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+T\+O\+T\+A\+L\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S}}
+\index{D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+T\+O\+T\+A\+L\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S@{D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+T\+O\+T\+A\+L\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+T\+O\+T\+A\+L\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S}]{\setlength{\rightskip}{0pt plus 5cm}\#define D\+E\+F\+A\+U\+L\+T\+\_\+\+M\+A\+X\+\_\+\+T\+O\+T\+A\+L\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S~4}\label{rb__http__handler_8h_a21474916371fa38cf4ac2bcd1701ccce}
+
+
+Definition at line 20 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{rb__http__handler_8h_aad2dd72565852b91c809cd4685833b17}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!D\+E\+F\+A\+U\+L\+T\+\_\+\+T\+I\+M\+E\+O\+U\+T@{D\+E\+F\+A\+U\+L\+T\+\_\+\+T\+I\+M\+E\+O\+U\+T}}
+\index{D\+E\+F\+A\+U\+L\+T\+\_\+\+T\+I\+M\+E\+O\+U\+T@{D\+E\+F\+A\+U\+L\+T\+\_\+\+T\+I\+M\+E\+O\+U\+T}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{D\+E\+F\+A\+U\+L\+T\+\_\+\+T\+I\+M\+E\+O\+U\+T}]{\setlength{\rightskip}{0pt plus 5cm}\#define D\+E\+F\+A\+U\+L\+T\+\_\+\+T\+I\+M\+E\+O\+U\+T~10000\+L}\label{rb__http__handler_8h_aad2dd72565852b91c809cd4685833b17}
+
+
+Definition at line 22 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{rb__http__handler_8h_a053b7859476cc9867ec62c49e68d3fa1}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!M\+A\+X\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S@{M\+A\+X\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S}}
+\index{M\+A\+X\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S@{M\+A\+X\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{M\+A\+X\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S}]{\setlength{\rightskip}{0pt plus 5cm}\#define M\+A\+X\+\_\+\+C\+O\+N\+N\+E\+C\+T\+I\+O\+N\+S~4096}\label{rb__http__handler_8h_a053b7859476cc9867ec62c49e68d3fa1}
+
+
+Definition at line 25 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{rb__http__handler_8h_aa045b6864425ecb90f2c253e8440d21c}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!N\+O\+R\+M\+A\+L\+\_\+\+M\+O\+D\+E@{N\+O\+R\+M\+A\+L\+\_\+\+M\+O\+D\+E}}
+\index{N\+O\+R\+M\+A\+L\+\_\+\+M\+O\+D\+E@{N\+O\+R\+M\+A\+L\+\_\+\+M\+O\+D\+E}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{N\+O\+R\+M\+A\+L\+\_\+\+M\+O\+D\+E}]{\setlength{\rightskip}{0pt plus 5cm}\#define N\+O\+R\+M\+A\+L\+\_\+\+M\+O\+D\+E~0}\label{rb__http__handler_8h_aa045b6864425ecb90f2c253e8440d21c}
+
+
+Definition at line 27 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{rb__http__handler_8h_a0ffdecd586e5dc8f1eeede6bac9bc19f}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+C\+O\+P\+Y@{R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+C\+O\+P\+Y}}
+\index{R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+C\+O\+P\+Y@{R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+C\+O\+P\+Y}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+C\+O\+P\+Y}]{\setlength{\rightskip}{0pt plus 5cm}\#define R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+C\+O\+P\+Y~2}\label{rb__http__handler_8h_a0ffdecd586e5dc8f1eeede6bac9bc19f}
+
+
+Definition at line 19 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{rb__http__handler_8h_aef79f44f520e54cbedce1068fe324720}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+F\+R\+E\+E@{R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+F\+R\+E\+E}}
+\index{R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+F\+R\+E\+E@{R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+F\+R\+E\+E}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+F\+R\+E\+E}]{\setlength{\rightskip}{0pt plus 5cm}\#define R\+B\+\_\+\+H\+T\+T\+P\+\_\+\+M\+E\+S\+S\+A\+G\+E\+\_\+\+F\+\_\+\+F\+R\+E\+E~1}\label{rb__http__handler_8h_aef79f44f520e54cbedce1068fe324720}
+
+
+Definition at line 18 of file rb\+\_\+http\+\_\+handler.\+h.
+
+
+
+\subsection{Typedef Documentation}
+\hypertarget{rb__http__handler_8h_afd9ccf19b724dbf3ce572d01455b99bf}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!cb\+\_\+report@{cb\+\_\+report}}
+\index{cb\+\_\+report@{cb\+\_\+report}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{cb\+\_\+report}]{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ cb\+\_\+report) (struct {\bf rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$rb\+\_\+http\+\_\+handler, int status\+\_\+code, long http\+\_\+code, const char $\ast$status\+\_\+code\+\_\+str, char $\ast$buff, size\+\_\+t bufsiz, void $\ast$opaque)}\label{rb__http__handler_8h_afd9ccf19b724dbf3ce572d01455b99bf}
+
+
+Types. 
+
+\mbox{[}void description\mbox{]} 
+\begin{DoxyParams}{Parameters}
+{\em opaque} & \mbox{[}description\mbox{]} \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\mbox{[}description\mbox{]} 
+\end{DoxyReturn}
+
+
+Definition at line 95 of file rb\+\_\+http\+\_\+handler.\+h.
+
+
+
+\subsection{Function Documentation}
+\hypertarget{rb__http__handler_8h_a309fed4678d407d03df1eb22bad356cc}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!rb\+\_\+http\+\_\+batch\+\_\+produce@{rb\+\_\+http\+\_\+batch\+\_\+produce}}
+\index{rb\+\_\+http\+\_\+batch\+\_\+produce@{rb\+\_\+http\+\_\+batch\+\_\+produce}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{rb\+\_\+http\+\_\+batch\+\_\+produce}]{\setlength{\rightskip}{0pt plus 5cm}int rb\+\_\+http\+\_\+batch\+\_\+produce (
+\begin{DoxyParamCaption}
+\item[{struct {\bf rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$}]{handler, }
+\item[{char $\ast$}]{buff, }
+\item[{size\+\_\+t}]{len, }
+\item[{int}]{flags, }
+\item[{char $\ast$}]{err, }
+\item[{size\+\_\+t}]{errsize, }
+\item[{void $\ast$}]{opaque}
+\end{DoxyParamCaption}
+)}\label{rb__http__handler_8h_a309fed4678d407d03df1eb22bad356cc}
+\mbox{[}rb\+\_\+http\+\_\+batch\+\_\+produce description\mbox{]} 
+\begin{DoxyParams}{Parameters}
+{\em handler} & \mbox{[}description\mbox{]} \\
+\hline
+{\em buff} & \mbox{[}description\mbox{]} \\
+\hline
+{\em len} & \mbox{[}description\mbox{]} \\
+\hline
+{\em flags} & \mbox{[}description\mbox{]} \\
+\hline
+{\em err} & \mbox{[}description\mbox{]} \\
+\hline
+{\em errsize} & \mbox{[}description\mbox{]} \\
+\hline
+{\em opaque} & \mbox{[}description\mbox{]} \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\mbox{[}description\mbox{]} 
+\end{DoxyReturn}
+
+
+Definition at line 209 of file rb\+\_\+http\+\_\+handler.\+c.
+
+\hypertarget{rb__http__handler_8h_a890e981b619b1bdd5cc37fa16bb06f06}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!rb\+\_\+http\+\_\+get\+\_\+reports@{rb\+\_\+http\+\_\+get\+\_\+reports}}
+\index{rb\+\_\+http\+\_\+get\+\_\+reports@{rb\+\_\+http\+\_\+get\+\_\+reports}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{rb\+\_\+http\+\_\+get\+\_\+reports}]{\setlength{\rightskip}{0pt plus 5cm}int rb\+\_\+http\+\_\+get\+\_\+reports (
+\begin{DoxyParamCaption}
+\item[{struct {\bf rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$}]{rb\+\_\+http\+\_\+handler, }
+\item[{{\bf cb\+\_\+report}}]{report\+\_\+fn, }
+\item[{int}]{timeout\+\_\+ms}
+\end{DoxyParamCaption}
+)}\label{rb__http__handler_8h_a890e981b619b1bdd5cc37fa16bb06f06}
+\mbox{[}rb\+\_\+http\+\_\+get\+\_\+reports description\mbox{]} 
+\begin{DoxyParams}{Parameters}
+{\em rb\+\_\+http\+\_\+handler} & \mbox{[}description\mbox{]} \\
+\hline
+{\em report\+\_\+fn} & \mbox{[}description\mbox{]} \\
+\hline
+{\em timeout\+\_\+ms} & \mbox{[}description\mbox{]} \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\mbox{[}description\mbox{]} 
+\end{DoxyReturn}
+
+
+Definition at line 229 of file rb\+\_\+http\+\_\+handler.\+c.
+
+\hypertarget{rb__http__handler_8h_aa84a3dadccb44fa421655ad1b09c3157}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!rb\+\_\+http\+\_\+handler\+\_\+create@{rb\+\_\+http\+\_\+handler\+\_\+create}}
+\index{rb\+\_\+http\+\_\+handler\+\_\+create@{rb\+\_\+http\+\_\+handler\+\_\+create}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{rb\+\_\+http\+\_\+handler\+\_\+create}]{\setlength{\rightskip}{0pt plus 5cm}struct {\bf rb\+\_\+http\+\_\+handler\+\_\+s}$\ast$ rb\+\_\+http\+\_\+handler\+\_\+create (
+\begin{DoxyParamCaption}
+\item[{const char $\ast$}]{urls\+\_\+str, }
+\item[{char $\ast$}]{err, }
+\item[{size\+\_\+t}]{errbuf}
+\end{DoxyParamCaption}
+)}\label{rb__http__handler_8h_aa84a3dadccb44fa421655ad1b09c3157}
+
+
+Functions. 
+
+Creates a handler to produce messages. 
+\begin{DoxyParams}{Parameters}
+{\em urls\+\_\+str} & List of comma sepparated U\+R\+Ls. If the first U\+R\+L doesn\textquotesingle{}t work it will try the next one. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Handler for send messages to the provided U\+R\+L. 
+\end{DoxyReturn}
+
+
+Definition at line 10 of file rb\+\_\+http\+\_\+handler.\+c.
+
+\hypertarget{rb__http__handler_8h_aa0bd3f75d87af6c49108638a0037de86}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!rb\+\_\+http\+\_\+handler\+\_\+destroy@{rb\+\_\+http\+\_\+handler\+\_\+destroy}}
+\index{rb\+\_\+http\+\_\+handler\+\_\+destroy@{rb\+\_\+http\+\_\+handler\+\_\+destroy}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{rb\+\_\+http\+\_\+handler\+\_\+destroy}]{\setlength{\rightskip}{0pt plus 5cm}void rb\+\_\+http\+\_\+handler\+\_\+destroy (
+\begin{DoxyParamCaption}
+\item[{struct {\bf rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$}]{rb\+\_\+http\+\_\+handler, }
+\item[{char $\ast$}]{err, }
+\item[{size\+\_\+t}]{errsize}
+\end{DoxyParamCaption}
+)}\label{rb__http__handler_8h_aa0bd3f75d87af6c49108638a0037de86}
+Destroy and cleans the Handler 
+\begin{DoxyParams}{Parameters}
+{\em rb\+\_\+http\+\_\+handler} & Handler to destroy \\
+\hline
+{\em err} & Error string \\
+\hline
+{\em errsize} & Length of the error \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 133 of file rb\+\_\+http\+\_\+handler.\+c.
+
+\hypertarget{rb__http__handler_8h_aec9a18015fc9221b582348ccfb48cb34}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!rb\+\_\+http\+\_\+handler\+\_\+run@{rb\+\_\+http\+\_\+handler\+\_\+run}}
+\index{rb\+\_\+http\+\_\+handler\+\_\+run@{rb\+\_\+http\+\_\+handler\+\_\+run}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{rb\+\_\+http\+\_\+handler\+\_\+run}]{\setlength{\rightskip}{0pt plus 5cm}void rb\+\_\+http\+\_\+handler\+\_\+run (
+\begin{DoxyParamCaption}
+\item[{struct {\bf rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$}]{rb\+\_\+http\+\_\+handler}
+\end{DoxyParamCaption}
+)}\label{rb__http__handler_8h_aec9a18015fc9221b582348ccfb48cb34}
+Initializes threads 
+\begin{DoxyParams}{Parameters}
+{\em rb\+\_\+http\+\_\+handler} & Handler to initialize \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 76 of file rb\+\_\+http\+\_\+handler.\+c.
+
+\hypertarget{rb__http__handler_8h_ab306abb2b4a66b092205de2677d342aa}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!rb\+\_\+http\+\_\+handler\+\_\+set\+\_\+opt@{rb\+\_\+http\+\_\+handler\+\_\+set\+\_\+opt}}
+\index{rb\+\_\+http\+\_\+handler\+\_\+set\+\_\+opt@{rb\+\_\+http\+\_\+handler\+\_\+set\+\_\+opt}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{rb\+\_\+http\+\_\+handler\+\_\+set\+\_\+opt}]{\setlength{\rightskip}{0pt plus 5cm}int rb\+\_\+http\+\_\+handler\+\_\+set\+\_\+opt (
+\begin{DoxyParamCaption}
+\item[{struct {\bf rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$}]{rb\+\_\+http\+\_\+handler, }
+\item[{const char $\ast$}]{key, }
+\item[{const char $\ast$}]{val, }
+\item[{char $\ast$}]{err, }
+\item[{size\+\_\+t}]{errsize}
+\end{DoxyParamCaption}
+)}\label{rb__http__handler_8h_ab306abb2b4a66b092205de2677d342aa}
+\mbox{[}rb\+\_\+http\+\_\+handler\+\_\+set\+\_\+opt description\mbox{]} 
+\begin{DoxyParams}{Parameters}
+{\em rb\+\_\+http\+\_\+handler} & \mbox{[}description\mbox{]} \\
+\hline
+{\em key} & \mbox{[}description\mbox{]} \\
+\hline
+{\em val} & \mbox{[}description\mbox{]} \\
+\hline
+{\em err} & \mbox{[}description\mbox{]} \\
+\hline
+{\em errsize} & \mbox{[}description\mbox{]} \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\mbox{[}description\mbox{]} 
+\end{DoxyReturn}
+
+
+Definition at line 43 of file rb\+\_\+http\+\_\+handler.\+c.
+
+\hypertarget{rb__http__handler_8h_a0d0d31d9c2dc9ed04d6722e5653b4682}{}\index{rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}!rb\+\_\+http\+\_\+produce@{rb\+\_\+http\+\_\+produce}}
+\index{rb\+\_\+http\+\_\+produce@{rb\+\_\+http\+\_\+produce}!rb\+\_\+http\+\_\+handler.\+h@{rb\+\_\+http\+\_\+handler.\+h}}
+\subsubsection[{rb\+\_\+http\+\_\+produce}]{\setlength{\rightskip}{0pt plus 5cm}int rb\+\_\+http\+\_\+produce (
+\begin{DoxyParamCaption}
+\item[{struct {\bf rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$}]{handler, }
+\item[{char $\ast$}]{buff, }
+\item[{size\+\_\+t}]{len, }
+\item[{int}]{flags, }
+\item[{char $\ast$}]{err, }
+\item[{size\+\_\+t}]{errsize, }
+\item[{void $\ast$}]{opaque}
+\end{DoxyParamCaption}
+)}\label{rb__http__handler_8h_a0d0d31d9c2dc9ed04d6722e5653b4682}
+\mbox{[}rb\+\_\+http\+\_\+produce description\mbox{]} 
+\begin{DoxyParams}{Parameters}
+{\em handler} & \mbox{[}description\mbox{]} \\
+\hline
+{\em buff} & \mbox{[}description\mbox{]} \\
+\hline
+{\em len} & \mbox{[}description\mbox{]} \\
+\hline
+{\em flags} & \mbox{[}description\mbox{]} \\
+\hline
+{\em err} & \mbox{[}description\mbox{]} \\
+\hline
+{\em errsize} & \mbox{[}description\mbox{]} \\
+\hline
+{\em opaque} & \mbox{[}description\mbox{]} \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\mbox{[}description\mbox{]} 
+\end{DoxyReturn}
+
+
+Definition at line 161 of file rb\+\_\+http\+\_\+handler.\+c.
+

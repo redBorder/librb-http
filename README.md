@@ -5,15 +5,18 @@ Non-blocking high-level wrapper for libcurl.
 ## Example
 
 ~~~c
+#include "rb_http_handler.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <signal.h>
-#include <signal.h>
-#include <librd/rdthread.h>
-#include <librbhttp/librb-http.h>
+#include <pthread.h>
+#include <stdlib.h>
 
-static int running = 1;
+#define MESSAGE "{\"client_mac\": \"54:26:96:db:88:01\", \"application_name\": \"wwww\", \"sensor_uuid\":\"abc\", \"a\":5}"
+#define N_MESSAGE 1000 * 1
+#define URL "http://eugeniodev:2057/rbdata/def/rb_flow/"
+
 struct rb_http_handler_s *handler = NULL;
 
 static void my_callback (struct rb_http_handler_s *rb_http_handler,
@@ -24,6 +27,10 @@ static void my_callback (struct rb_http_handler_s *rb_http_handler,
                          size_t bufsiz,
                          void *opaque) {
 
+    (void) rb_http_handler;
+    (void) bufsiz;
+    (void) status_code_str;
+
     if (status_code != 0) {
         printf ("CURL CODE: %d\n", status_code);
     }
@@ -32,51 +39,56 @@ static void my_callback (struct rb_http_handler_s *rb_http_handler,
         printf ("HTTP STATUS: %ld\n", http_status);
     }
 
-    if (buff != NULL)
-        printf ("MESSAGE: %s\n", buff);
+    if (buff != NULL) {
+        printf ("MESSAGE: %s\n\n", buff);
+    }
 
-    if (opaque != NULL)
+    if (opaque != NULL) {
         printf ("OPAQUE: %p\n", opaque);
+    }
+}
 
-    (void) rb_http_handler;
-    (void) bufsiz;
-    (void) status_code_str;
+void *get_reports (void *ptr) {
+    (void) ptr;
+
+    while (rb_http_get_reports(handler, my_callback, 100) != 0);
+
+    return NULL;
 }
 
 int main() {
-    char url[] = "http://localhost:8080/librb-http/";
-    char string[128];
 
-    handler = rb_http_handler_create (url, NULL, 0);
-    rb_http_handler_set_opt(handler, "HTTP_MAX_TOTAL_CONNECTIONS", "4", NULL, 0);
-    rb_http_handler_set_opt(handler, "HTTP_TIMEOUT", "10", NULL, 0);
-    rb_http_handler_set_opt(handler, "HTTP_CONNTTIMEOUT", "3000", NULL, 0);
+    handler = rb_http_handler_create (URL, NULL, 0);
     rb_http_handler_set_opt(handler, "HTTP_VERBOSE", "0", NULL, 0);
     rb_http_handler_set_opt(handler, "RB_HTTP_MAX_MESSAGES", "512", NULL, 0);
+    rb_http_handler_set_opt(handler, "RB_HTTP_CONNECTIONS", "1", NULL, 0);
+    rb_http_handler_set_opt(handler, "RB_HTTP_MODE", "0", NULL, 0);
 
-    printf ("Sending 1024 messages\n");
+    rb_http_handler_run(handler);
+
+    printf ("Sending %d messages\n", N_MESSAGE);
     int i = 0;
 
-    // getchar();
     char *message = NULL;
+    pthread_t p_thread;
 
-    for (i = 0 ; i < 1024 && running; i++) {
-        sprintf (string, "{\"message\": \"%d\"}", i);
+    pthread_create (&p_thread, NULL, &get_reports, NULL);
+
+    for (i = 0 ; i < N_MESSAGE; i++) {
         while (rb_http_produce (handler,
-                                message = strdup (string),
-                                strlen (string),
+                                message = strdup (MESSAGE),
+                                strlen (MESSAGE),
                                 RB_HTTP_MESSAGE_F_FREE,
                                 NULL,
                                 0,
-                                NULL) > 0 && running) {
-            rb_http_get_reports (handler, my_callback, 1000);
+                                NULL) > 0) {
             free(message);
         }
     }
 
-    while (rb_http_get_reports (handler, my_callback, 100) && running);
+    pthread_join(p_thread, NULL);
 
-    rb_http_handler_destroy (handler, NULL, 0);
+    rb_http_handler_destroy(handler, NULL, 0);
 
     return 0;
 }
