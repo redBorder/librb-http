@@ -233,17 +233,20 @@ void *rb_http_process_chunked (void *arg) {
 
 		res = curl_easy_perform(rb_http_threaddata->easy_handle);
 
-		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+		if (res == CURLE_OK) {
 
-		report->rfq_msgs = rb_http_threaddata->rfq_pending;
-		report->headers = headers;
-		report->err_code = res;
-		report->handler = rb_http_threaddata->easy_handle;
-		curl_easy_getinfo(rb_http_threaddata->easy_handle,
-		                  CURLINFO_RESPONSE_CODE,
-		                  &report->http_code);
+			struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
 
-		rd_fifoq_add(&rb_http_handler->rfq_reports, report);
+			report->rfq_msgs = rb_http_threaddata->rfq_pending;
+			report->headers = headers;
+			report->err_code = res;
+			report->handler = rb_http_threaddata->easy_handle;
+			curl_easy_getinfo(rb_http_threaddata->easy_handle,
+			                  CURLINFO_RESPONSE_CODE,
+			                  &report->http_code);
+
+			rd_fifoq_add(&rb_http_handler->rfq_reports, report);
+		}
 	}
 
 	return NULL;
