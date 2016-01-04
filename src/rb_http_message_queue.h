@@ -9,6 +9,7 @@ struct rb_http_message_s {
 	int free_message;             // If message should be free'd by the library
 	int copy;                     // If message should be copied by the library
 	void *client_opaque;          // Opaque
+	time_t timestamp;
 	TAILQ_ENTRY(rb_http_message_s) tailq;
 };
 
