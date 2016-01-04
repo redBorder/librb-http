@@ -82,20 +82,26 @@ void rb_http_handler_run (struct rb_http_handler_s *rb_http_handler) {
 
 	switch (rb_http_handler->options->mode) {
 	case NORMAL_MODE:
-	// rb_http_threaddata = (struct rb_http_threaddata_s *)
-	//                      calloc(1, sizeof(struct rb_http_threaddata_s));
+		rb_http_threaddata = calloc(1, sizeof(struct rb_http_threaddata_s));
+		rb_http_handler->threads[0] = rb_http_threaddata;
 
-	// rb_http_handler->multi_handle = curl_multi_init();
+		rd_fifoq_init(&rb_http_threaddata->rfq);
+		rd_fifoq_init(&rb_http_handler->rfq_reports);
+		rb_http_threaddata->rfq_pending = NULL;
+		rb_http_threaddata->rb_http_handler = rb_http_handler;
+		rb_http_threaddata->opaque = NULL;
+		rb_http_handler->options->max_batch_messages =
+		    rb_http_handler->options->max_messages / 10;
+		rb_http_handler->multi_handle = curl_multi_init();
 
-	// curl_multi_setopt (rb_http_handler->multi_handle,
-	//                    CURLMOPT_MAX_TOTAL_CONNECTIONS,
-	//                    rb_http_handler->options->connections);
-
-	// pthread_create (&rb_http_threaddata->p_thread,
-	//                 NULL,
-	//                 &rb_http_process_normal,
-	//                 rb_http_handler);
-	// break;
+		curl_multi_setopt (rb_http_handler->multi_handle,
+		                   CURLMOPT_MAX_TOTAL_CONNECTIONS,
+		                   rb_http_handler->options->connections);
+		pthread_create (&rb_http_threaddata->p_thread,
+		                NULL,
+		                &rb_http_process_normal,
+		                rb_http_threaddata);
+		break;
 	case CHUNKED_MODE:
 		for (i = 0;  i < rb_http_handler->options->connections; i++) {
 			rb_http_threaddata = calloc(1, sizeof(struct rb_http_threaddata_s));
@@ -225,7 +231,7 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 
 	switch (rb_http_handler->options->mode) {
 	case NORMAL_MODE:
-		// return rb_http_get_reports_normal(rb_http_handler, report_fn, timeout_ms);
+		return rb_http_get_reports_normal(rb_http_handler, report_fn, timeout_ms);
 		return 0;
 		break;
 	case CHUNKED_MODE:

@@ -4,6 +4,7 @@
 // @brief The message to send.
 struct rb_http_message_s {
 	char *payload;                // Content of the message
+	struct curl_slist *headers;
 	size_t len;                   // Length of the message
 	int free_message;             // If message should be free'd by the library
 	int copy;                     // If message should be copied by the library
