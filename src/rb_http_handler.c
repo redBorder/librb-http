@@ -3,154 +3,68 @@
  * @author Diego Fernández Barrera
  * @brief Main library.
  */
-#include "../config.h"
-#include "librb-http.h"
+#include "rb_http_handler.h"
+#include "rb_http_normal.h"
+#include "rb_http_chunked.h"
 
-#include <stdio.h>
-#include <curl/curl.h>
-#include <assert.h>
-#include <string.h>
-#include <stdlib.h>
-#include <librd/rdqueue.h>
-#include <librd/rdlog.h>
-#include <pthread.h>
-#include <librd/rdthread.h>
+struct rb_http_handler_s *rb_http_handler_create (const char *urls_str,
+        char *err,
+        size_t errsize) {
 
-////////////////////
-// Structures
-////////////////////
-
-/**
- *  @struct rb_http_handler_s rb_http_handler.c "rb_http_handler.c"
- *  @brief Contains the "handler" information.
- */
-struct rb_http_handler_s {
-	int still_running;
-	int thread_running;
-	int msgs_left;
-	int left;
-	int max_messages;
-	long timeout;
-	long connttimeout;
-	long verbose;
-	char *url;
-	CURLM *multi_handle;
-	rd_fifoq_t rfq;
-	rd_fifoq_t rfq_reports;
-	pthread_t p_thread_send;
-};
-
-/**
- *  @struct rb_http_message_s rb_http_handler.c "rb_http_handler.c"
- *  @brief The message to send.
- */
-struct rb_http_message_s {
-	char *payload;
-	size_t len;
-	int free_message;
-	int copy;
-	struct curl_slist *headers;
-	void *client_opaque;
-};
-
-struct rb_http_report_s {
-	int err_code;
-	long http_code;
-	CURL *handler;
-};
-
-////////////////////
-// Private functions
-////////////////////
-static void *rb_http_process_message (void *arg);
-static void rb_http_send_message(struct rb_http_handler_s *rb_http_handler,
-                                 struct rb_http_message_s *message);
-static void rb_http_recv_message(struct rb_http_handler_s *rb_http_handler);
-static size_t write_null_callback (void *buffer,
-                                   size_t size,
-                                   size_t nmemb,
-                                   void *opaque);
-
-/**
- * @brief Creates a handler to produce messages.
- * @param  urls_str List of comma sepparated URLs. If the first URL doesn't work
- * it will try the next one.
- * @return          Handler for send messages to the provided URL.
- */
-struct rb_http_handler_s *rb_http_handler_create (
-    const char *urls_str,
-    char *err,
-    size_t errsize) {
-
-	struct rb_http_handler_s *rb_http_handler = NULL;
 	(void) err;
 	(void) errsize;
 
-	if (urls_str != NULL) {
-		rb_http_handler = calloc (1, sizeof (struct rb_http_handler_s));
-
-		rd_fifoq_init (&rb_http_handler->rfq);
-		rd_fifoq_init (&rb_http_handler->rfq_reports);
-
-		rb_http_handler->max_messages = DEFAULT_MAX_MESSAGES;
-		rb_http_handler->timeout = DEFAULT_TIMEOUT;
-		rb_http_handler->timeout = DEFAULT_CONTTIMEOUT;
-		rb_http_handler->timeout = 0;
-
-		rb_http_handler->url = strdup(urls_str);
-		rb_http_handler->still_running = 0;
-		rb_http_handler->msgs_left = 0;
-
-		curl_global_init(CURL_GLOBAL_ALL);
-
-		if ((rb_http_handler->multi_handle = curl_multi_init()) == NULL ) {
-			return NULL;
-		}
-		rb_http_handler->thread_running = 1;
-		const int set_max_connection_rc = curl_multi_setopt (
-		                                      rb_http_handler->multi_handle,
-		                                      CURLMOPT_MAX_TOTAL_CONNECTIONS,
-		                                      DEFAULT_MAX_TOTAL_CONNECTIONS);
-		if (CURLM_OK != set_max_connection_rc) {
-			snprintf (err, errsize, "Error setting MAX_TOTAL_CONNECTIONS: %s",
-			          curl_multi_strerror(set_max_connection_rc));
-			return NULL;
-		}
-
-		pthread_create (&rb_http_handler->p_thread_send, NULL, &rb_http_process_message,
-		                rb_http_handler);
-
-		return rb_http_handler;
-	} else {
+	if (urls_str == NULL)
 		return NULL;
-	}
+
+	struct rb_http_handler_s *rb_http_handler =
+	    calloc (1, sizeof (struct rb_http_handler_s));
+
+	rb_http_handler->options = calloc (1, sizeof (struct rb_http_options_s));
+
+	rd_fifoq_init (&rb_http_handler->rfq_reports);
+
+	rb_http_handler->still_running = 0;
+	rb_http_handler->msgs_left = 0;
+	rb_http_handler->thread_running = 1;
+
+	rb_http_handler->options->max_messages = DEFAULT_MAX_MESSAGES;
+	rb_http_handler->options->conntimeout = DEFAULT_CONTTIMEOUT;
+	rb_http_handler->options->connections = DEFAULT_CONNECTIONS;
+	rb_http_handler->options->timeout = DEFAULT_TIMEOUT;
+	rb_http_handler->options->url = strdup(urls_str);
+	rb_http_handler->options->mode = -1;
+
+	curl_global_init(CURL_GLOBAL_ALL);
+
+	return rb_http_handler;
 }
 
 int rb_http_handler_set_opt (struct rb_http_handler_s *rb_http_handler,
                              const char *key,
-                             const char *val, char *err,
+                             const char *val,
+                             char *err,
                              size_t errsize) {
+	assert(rb_http_handler != NULL);
+	assert(rb_http_handler->options != NULL);
 
 	if (key == NULL || val == NULL) {
 		snprintf (err, errsize, "Invalid option");
 		return -1;
 	}
 
-	if (!strcmp(key, "HTTP_MAX_TOTAL_CONNECTIONS")) {
-		if (CURLM_OK != (curl_multi_setopt (rb_http_handler->multi_handle,
-		                                    CURLMOPT_MAX_TOTAL_CONNECTIONS,
-		                                    atol(val)))) {
-			snprintf (err, errsize, "Error setting MAX_TOTAL_CONNECTIONS");
-			return -1;
-		}
+	if (!strcmp(key, "RB_HTTP_CONNECTIONS")) {
+		rb_http_handler->options->connections =  atoi(val);
 	} else if (!strcmp(key, "HTTP_VERBOSE")) {
-		rb_http_handler->verbose =  atol(val);
+		rb_http_handler->options->verbose =  atol(val);
+	} else if (!strcmp(key, "RB_HTTP_MODE")) {
+		rb_http_handler->options->mode =  atoi(val);
 	} else if (!strcmp(key, "HTTP_TIMEOUT")) {
-		rb_http_handler->timeout =  atol(val);
+		rb_http_handler->options->timeout =  atol(val);
 	} else if (!strcmp(key, "HTTP_CONNTTIMEOUT")) {
-		rb_http_handler->connttimeout = atol(val);
+		rb_http_handler->options->conntimeout = atol(val);
 	} else if (!strcmp(key, "RB_HTTP_MAX_MESSAGES")) {
-		rb_http_handler->max_messages = atoi(val);
+		rb_http_handler->options->max_messages = atoi(val);
 	} else {
 		snprintf (err, errsize, "Error decoding option: \"%s: %s\"", key, val);
 		return -1;
@@ -159,38 +73,91 @@ int rb_http_handler_set_opt (struct rb_http_handler_s *rb_http_handler,
 	return 0;
 }
 
-/**
- * @brief Free memory from a handler
- * @param rb_http_handler Handler that will freed
- */
-int rb_http_handler_destroy (struct rb_http_handler_s *rb_http_handler,
-                             char *err,
-                             size_t errsize) {
-	rb_http_handler->thread_running = 0;
-	pthread_join(rb_http_handler->p_thread_send, NULL);
+void rb_http_handler_run (struct rb_http_handler_s *rb_http_handler) {
+	assert(rb_http_handler != NULL);
+	assert(rb_http_handler->options != NULL);
 
-	if (CURLM_OK != curl_multi_cleanup (rb_http_handler->multi_handle)) {
-		snprintf (err, errsize, "Error cleaning up curl multi");
-		return 1;
+	int i = 0;
+	struct rb_http_threaddata_s *rb_http_threaddata = NULL;
+
+	switch (rb_http_handler->options->mode) {
+	case NORMAL_MODE:
+		rb_http_threaddata = calloc(1, sizeof(struct rb_http_threaddata_s));
+		rb_http_handler->threads[0] = rb_http_threaddata;
+
+		rd_fifoq_init(&rb_http_threaddata->rfq);
+		rd_fifoq_init(&rb_http_handler->rfq_reports);
+		rb_http_threaddata->rfq_pending = NULL;
+		rb_http_threaddata->rb_http_handler = rb_http_handler;
+		rb_http_threaddata->opaque = NULL;
+		rb_http_handler->options->max_batch_messages =
+		    rb_http_handler->options->max_messages / 10;
+		rb_http_handler->multi_handle = curl_multi_init();
+
+		curl_multi_setopt (rb_http_handler->multi_handle,
+		                   CURLMOPT_MAX_TOTAL_CONNECTIONS,
+		                   rb_http_handler->options->connections);
+		pthread_create (&rb_http_threaddata->p_thread,
+		                NULL,
+		                &rb_http_process_normal,
+		                rb_http_threaddata);
+		break;
+	case CHUNKED_MODE:
+		for (i = 0;  i < rb_http_handler->options->connections; i++) {
+			rb_http_threaddata = calloc(1, sizeof(struct rb_http_threaddata_s));
+			rb_http_handler->threads[i] = rb_http_threaddata;
+			rb_http_handler->options->max_batch_messages =
+			    rb_http_handler->options->max_messages / 10;
+			rb_http_handler->options->post_timeout =
+			    rb_http_handler->options->timeout / 10;
+
+			rd_fifoq_init(&rb_http_threaddata->rfq);
+			rb_http_threaddata->post_timestamp = time(NULL);
+			rb_http_threaddata->rfq_pending = NULL;
+			rb_http_threaddata->rb_http_handler = rb_http_handler;
+			rb_http_threaddata->easy_handle = curl_easy_init();
+			rb_http_threaddata->chunks = 0;
+			rb_http_threaddata->opaque = NULL;
+
+			pthread_create (&rb_http_threaddata->p_thread,
+			                NULL,
+			                &rb_http_process_chunked,
+			                rb_http_threaddata);
+		}
+		break;
+	default:
+		exit(1);
 	}
-
-	rd_fifoq_destroy (&rb_http_handler->rfq);
-
-	if (rb_http_handler->url != NULL) {
-		free (rb_http_handler->url);
-	}
-
-	free (rb_http_handler);
-
-	return 0;
 }
 
-/**
- * @brief Enqueues a message (non-blocking)
- * @param handler The handler that will be used to send the message.
- * @param message Message to be enqueued.
- * @param options Options
- */
+void rb_http_handler_destroy (struct rb_http_handler_s *rb_http_handler,
+                              char *err,
+                              size_t errsize) {
+	assert(rb_http_handler != NULL);
+
+	(void) err;
+	(void) errsize;
+
+	int i = 0;
+	ATOMIC_OP(sub, fetch, &rb_http_handler->thread_running, 1);
+
+	for (i = 0; i < rb_http_handler->options->connections ; i++) {
+		pthread_join(rb_http_handler->threads[i]->p_thread, NULL);
+		curl_easy_cleanup(rb_http_handler->threads[i]->easy_handle);
+		free(rb_http_handler->threads[i]);
+	}
+
+	rd_fifoq_destroy(&rb_http_handler->rfq_reports);
+	if (rb_http_handler->options->url != NULL) {
+		free (rb_http_handler->options->url);
+	}
+
+	free(rb_http_handler->options);
+	free(rb_http_handler);
+
+	curl_global_cleanup();
+}
+
 int rb_http_produce (struct rb_http_handler_s *handler,
                      char *buff,
                      size_t len,
@@ -200,10 +167,10 @@ int rb_http_produce (struct rb_http_handler_s *handler,
                      void *opaque) {
 
 	int error = 0;
-	if (ATOMIC_OP(add, fetch, &handler->left, 1) < handler->max_messages) {
-		struct rb_http_message_s *message = calloc (1,
-		                                    sizeof (struct rb_http_message_s)
-		                                    + ((flags & RB_HTTP_MESSAGE_F_COPY) ? len : 0));
+	if (ATOMIC_OP(add, fetch, &handler->left, 1) < handler->options->max_messages) {
+		struct rb_http_message_s *message = calloc(1,
+		                                    sizeof(struct rb_http_message_s) +
+		                                    ((flags & RB_HTTP_MESSAGE_F_COPY) ? len : 0));
 
 		message->len = len;
 		message->client_opaque = opaque;
@@ -222,7 +189,11 @@ int rb_http_produce (struct rb_http_handler_s *handler,
 		}
 
 		if (message != NULL && message->len > 0 && message->payload != NULL) {
-			rd_fifoq_add (&handler->rfq, message);
+			if (handler->next_thread == handler->options->connections) {
+				handler->next_thread = 0;
+			}
+
+			rd_fifoq_add (&handler->threads[handler->next_thread++]->rfq, message);
 		}
 	} else {
 		ATOMIC_OP(sub, fetch, &handler->left, 1);
@@ -235,332 +206,38 @@ int rb_http_produce (struct rb_http_handler_s *handler,
 	return error;
 }
 
-/**
- * @brief Send a message from the queue
- * @param  arg Opaque that contains a struct thread_arguments_t with the URL
- * and message queue.
- */
-void *rb_http_process_message (void *arg) {
+int rb_http_batch_produce (struct rb_http_handler_s *handler,
+                           char *buff,
+                           size_t len,
+                           int flags,
+                           char *err,
+                           size_t errsize,
+                           void *opaque) {
 
-	struct rb_http_handler_s *rb_http_handler = (struct rb_http_handler_s *) arg;
+	(void) handler;
+	(void) buff;
+	(void) len;
+	(void) flags;
+	(void) err;
+	(void) errsize;
+	(void) opaque;
 
-	rd_fifoq_elm_t *rfqe = NULL;
-
-	if (arg != NULL) {
-		while (rb_http_handler->thread_running) {
-			rfqe = rd_fifoq_pop (&rb_http_handler->rfq);
-			if (rfqe != NULL && rfqe->rfqe_ptr != NULL) {
-				rb_http_send_message(rb_http_handler, rfqe->rfqe_ptr);
-				rd_fifoq_elm_release (&rb_http_handler->rfq, rfqe);
-			} else {
-				rb_http_recv_message(rb_http_handler);
-			}
-		}
-	}
-
-	return NULL;
+	// TODO
+	return 0;
 }
 
-void rb_http_send_message(struct rb_http_handler_s *rb_http_handler,
-                          struct rb_http_message_s *message) {
-	CURL *handler;
-	handler  =  curl_easy_init();
-
-	if (handler == NULL) {
-		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-		report->err_code = -1;
-		report->http_code = 0;
-		report->handler = NULL;
-		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-	}
-
-	if (curl_easy_setopt (handler,
-	                      CURLOPT_URL,
-	                      rb_http_handler->url)
-	        != CURLE_OK) {
-		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-		report->err_code = -1;
-		report->http_code = 0;
-		report->handler = NULL;
-		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-	}
-
-	message->headers = NULL;
-	message->headers = curl_slist_append (message->headers,
-	                                      "Accept: application/json");
-	message->headers = curl_slist_append (message->headers,
-	                                      "Content-Type: application/json");
-	message->headers = curl_slist_append (message->headers, "charsets: utf-8");
-
-	if (curl_easy_setopt (handler, CURLOPT_PRIVATE, message) != CURLE_OK) {
-		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-		report->err_code = -1;
-		report->http_code = 0;
-		report->handler = NULL;
-		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-	}
-	curl_easy_setopt(handler, CURLOPT_WRITEFUNCTION, write_null_callback);
-
-	if (curl_easy_setopt (handler, CURLOPT_HTTPHEADER,
-	                      message->headers) != CURLE_OK) {
-		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-		report->err_code = -1;
-		report->http_code = 0;
-		report->handler = NULL;
-		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-	}
-
-	if (curl_easy_setopt(handler, CURLOPT_VERBOSE,
-	                     rb_http_handler->verbose) != CURLE_OK) {
-		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-		report->err_code = -1;
-		report->http_code = 0;
-		report->handler = NULL;
-		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-	}
-
-	if (curl_easy_setopt (handler, CURLOPT_TIMEOUT_MS,
-	                      rb_http_handler->timeout) != CURLE_OK) {
-		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-		report->err_code = -1;
-		report->http_code = 0;
-		report->handler = NULL;
-		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-	}
-
-	if (curl_easy_setopt (handler, CURLOPT_CONNECTTIMEOUT_MS,
-	                      rb_http_handler->connttimeout) != CURLE_OK) {
-		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-		report->err_code = -1;
-		report->http_code = 0;
-		report->handler = NULL;
-		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-	}
-
-	if (curl_easy_setopt (handler, CURLOPT_POSTFIELDSIZE,
-	                      message->len) != CURLE_OK) {
-		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-		report->err_code = -1;
-		report->http_code = 0;
-		report->handler = NULL;
-		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-	}
-
-	if (curl_easy_setopt (handler, CURLOPT_POSTFIELDS,
-	                      message->payload) != CURLE_OK) {
-		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-		report->err_code = -1;
-		report->http_code = 0;
-		report->handler = NULL;
-		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-	}
-
-	if (curl_multi_add_handle (rb_http_handler->multi_handle,
-	                           handler) != CURLM_OK) {
-		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-		report->err_code = -1;
-		report->http_code = 0;
-		report->handler = NULL;
-		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-	}
-	if (curl_multi_perform (rb_http_handler->multi_handle,
-	                        &rb_http_handler->still_running) != CURLM_OK) {
-		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-		report->err_code = -1;
-		report->http_code = 0;
-		report->handler = NULL;
-		rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-	}
-}
-
-/**
- * [curl_recv_message  description]
- * @param  arg [description]
- * @return     [description]
- */
-void rb_http_recv_message (struct rb_http_handler_s *rb_http_handler) {
-
-	struct rb_http_report_s *report = NULL;
-	struct rb_http_message_s *message = NULL;
-	CURLMsg *msg = NULL;
-
-	struct timeval timeout;
-	int rc; /* select() return code */
-	CURLMcode mc; /* curl_multi_fdset() return code */
-
-	fd_set fdread;
-	fd_set fdwrite;
-	fd_set fdexcep;
-	int maxfd = -1;
-
-	long curl_timeo = -1;
-
-	FD_ZERO (&fdread);
-	FD_ZERO (&fdwrite);
-	FD_ZERO (&fdexcep);
-
-	/* set a suitable timeout to play around with */
-	timeout.tv_sec = 1;
-	timeout.tv_usec = 0;
-
-	if (curl_multi_timeout (rb_http_handler->multi_handle,
-	                        &curl_timeo) != CURLM_OK) {
-		struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
-		ireport->err_code = -1;
-		ireport->http_code = 0;
-		ireport->handler = NULL;
-		rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-	}
-
-	if (curl_timeo >= 0) {
-		timeout.tv_sec = curl_timeo / 1000;
-		if (timeout.tv_sec > 1)
-			timeout.tv_sec = 1;
-		else
-			timeout.tv_usec = (curl_timeo % 1000) * 1000;
-	}
-
-	/* get file descriptors from the transfers */
-	mc = curl_multi_fdset (rb_http_handler->multi_handle, &fdread, &fdwrite,
-	                       &fdexcep, &maxfd);
-
-	if (mc != CURLM_OK) {
-		fprintf (stderr, "curl_multi_fdset() failed, code %d.\n", mc);
-		struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
-		ireport->err_code = -1;
-		ireport->http_code = 0;
-		ireport->handler = NULL;
-		rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-	}
-
-	/* On success the value of maxfd is guaranteed to be >= -1. We call
-	   select(maxfd + 1, ...); specially in case of (maxfd == -1) there are
-	   no fds ready yet so we call select(0, ...) --or Sleep() on Windows--
-	   to sleep 100ms, which is the minimum suggested value in the
-	   curl_multi_fdset() doc. */
-
-	if (maxfd == -1) {
-		/* Portable sleep for platforms other than Windows. */
-		struct timeval wait = { 0, 100 * 1000 }; /* 100ms */
-		rc = select (0, NULL, NULL, NULL, &wait);
-	} else {
-		/* Note that on some platforms 'timeout' may be modified by select().
-		   If you need access to the original value save a copy beforehand. */
-		rc = select (maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
-	}
-
-	switch (rc) {
-	case -1:
-		/* select error */
-		break;
-	case 0: /* timeout */
-	default: /* action */
-		if (curl_multi_perform (rb_http_handler->multi_handle,
-		                        &rb_http_handler->still_running) != CURLM_OK) {
-			struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
-			ireport->err_code = -1;
-			ireport->http_code = 0;
-			ireport->handler = NULL;
-			rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-		}
-		break;
-	}
-
-	/* See how the transfers went */
-	while ((msg = curl_multi_info_read (
-	                  rb_http_handler->multi_handle,
-	                  &rb_http_handler->msgs_left))) {
-		if (msg->msg == CURLMSG_DONE) {
-			report = calloc (1, sizeof (struct rb_http_report_s));
-			if (curl_multi_remove_handle (rb_http_handler->multi_handle,
-			                              msg->easy_handle) != CURLM_OK ) {
-				struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
-				ireport->err_code = -1;
-				ireport->http_code = 0;
-				ireport->handler = NULL;
-				rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-			}
-
-			if (curl_easy_getinfo (msg->easy_handle,
-			                       CURLINFO_PRIVATE, (char **)&message) != CURLE_OK) {
-				struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
-				ireport->err_code = -1;
-				ireport->http_code = 0;
-				ireport->handler = NULL;
-				rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-			}
-
-			if (report == NULL) {
-				struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
-				ireport->err_code = -1;
-				ireport->http_code = 0;
-				ireport->handler = NULL;
-				rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-			}
-
-			report->err_code = msg->data.result;
-			report->handler = msg->easy_handle;
-			curl_easy_getinfo (msg->easy_handle,
-			                   CURLINFO_RESPONSE_CODE,
-			                   &report->http_code);
-
-			rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-		}
-	}
-}
-
-/**
- *
- */
 int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
                          cb_report report_fn, int timeout_ms) {
-	rd_fifoq_elm_t *rfqe;
-	struct rb_http_report_s *report = NULL;
-	struct rb_http_message_s *message = NULL;
-	int nowait = 0;
-	long http_code = 0;
 
-	if (timeout_ms == 0) {
-		nowait = 1;
+	switch (rb_http_handler->options->mode) {
+	case NORMAL_MODE:
+		return rb_http_get_reports_normal(rb_http_handler, report_fn, timeout_ms);
+		return 0;
+		break;
+	case CHUNKED_MODE:
+		return rb_http_get_reports_chunked(rb_http_handler, report_fn, timeout_ms);
+		break;
+	default:
+		exit(1);
 	}
-
-	while ((rfqe = rd_fifoq_pop0 (&rb_http_handler->rfq_reports,
-	                              nowait,
-	                              timeout_ms)) != NULL) {
-		if (rfqe->rfqe_ptr != NULL) {
-			report = rfqe->rfqe_ptr;
-			curl_easy_getinfo (report->handler,
-			                   CURLINFO_PRIVATE,
-			                   (char **)&message);
-			http_code = report->http_code;
-
-			report_fn (rb_http_handler,
-			           report->err_code,
-			           http_code, NULL,
-			           message->payload,
-			           message->len,
-			           message->client_opaque);
-
-			curl_slist_free_all (message->headers);
-			curl_easy_cleanup (report->handler);
-			ATOMIC_OP(sub, fetch, &rb_http_handler->left, 1);
-			if (message->free_message && message->payload != NULL) {
-				free (message->payload); message->payload = NULL;
-			}
-			free (message); message = NULL;
-			free (report); report = NULL;
-			rd_fifoq_elm_release (&rb_http_handler->rfq_reports, rfqe);
-		}
-	}
-
-	return rb_http_handler->left;
-}
-
-size_t write_null_callback (void *buffer,
-                            size_t size,
-                            size_t nmemb,
-                            void *opaque) {
-	(void) buffer;
-	(void) opaque;
-	return nmemb * size;
 }
