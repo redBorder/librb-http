@@ -88,8 +88,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><span class="preprocessor">#include &lt;pthread.h&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;stdlib.h&gt;</span></div>
 <div class="line"></div>
+<div class="line"><span class="preprocessor">#define RB_HTTP_NORMAL_MODE  &quot;0&quot;</span></div>
+<div class="line"><span class="preprocessor">#define RB_HTTP_CHUNKED_MODE &quot;1&quot;</span></div>
+<div class="line"></div>
 <div class="line"><span class="preprocessor">#define MESSAGE &quot;{\&quot;client_mac\&quot;: \&quot;54:26:96:db:88:01\&quot;, \&quot;application_name\&quot;: \&quot;wwww\&quot;, \&quot;sensor_uuid\&quot;:\&quot;abc\&quot;, \&quot;a\&quot;:5}&quot;</span></div>
-<div class="line"><span class="preprocessor">#define N_MESSAGE 1000 * 1</span></div>
+<div class="line"><span class="preprocessor">#define N_MESSAGE 5 * 1</span></div>
 <div class="line"><span class="preprocessor">#define URL &quot;http://eugeniodev:2057/rbdata/def/rb_flow/&quot;</span></div>
 <div class="line"></div>
 <div class="line"><span class="keyword">struct </span><a class="code" href="structrb__http__handler__s.html">rb_http_handler_s</a> *<a class="code" href="rb__http__handler__example_8c.html#a0165697b451a136ac74647662a5a39e1">handler</a> = NULL;</div>
@@ -135,9 +138,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"></div>
 <div class="line">    handler = <a class="code" href="rb__http__handler_8c.html#aa338cb73c0754c16c8a05621b995ea59">rb_http_handler_create</a> (<a class="code" href="rb__http__handler__example_8c.html#a41d49c9bf1512077295129c1406be4cd">URL</a>, NULL, 0);</div>
 <div class="line">    <a class="code" href="rb__http__handler_8c.html#ab306abb2b4a66b092205de2677d342aa">rb_http_handler_set_opt</a>(handler, <span class="stringliteral">&quot;HTTP_VERBOSE&quot;</span>, <span class="stringliteral">&quot;0&quot;</span>, NULL, 0);</div>
+<div class="line">    <a class="code" href="rb__http__handler_8c.html#ab306abb2b4a66b092205de2677d342aa">rb_http_handler_set_opt</a>(handler, <span class="stringliteral">&quot;HTTP_CONNTTIMEOUT&quot;</span>, <span class="stringliteral">&quot;5000&quot;</span>, NULL, 0);</div>
+<div class="line">    <a class="code" href="rb__http__handler_8c.html#ab306abb2b4a66b092205de2677d342aa">rb_http_handler_set_opt</a>(handler, <span class="stringliteral">&quot;HTTP_TIMEOUT&quot;</span>, <span class="stringliteral">&quot;15000&quot;</span>, NULL, 0);</div>
 <div class="line">    <a class="code" href="rb__http__handler_8c.html#ab306abb2b4a66b092205de2677d342aa">rb_http_handler_set_opt</a>(handler, <span class="stringliteral">&quot;RB_HTTP_MAX_MESSAGES&quot;</span>, <span class="stringliteral">&quot;512&quot;</span>, NULL, 0);</div>
 <div class="line">    <a class="code" href="rb__http__handler_8c.html#ab306abb2b4a66b092205de2677d342aa">rb_http_handler_set_opt</a>(handler, <span class="stringliteral">&quot;RB_HTTP_CONNECTIONS&quot;</span>, <span class="stringliteral">&quot;1&quot;</span>, NULL, 0);</div>
-<div class="line">    <a class="code" href="rb__http__handler_8c.html#ab306abb2b4a66b092205de2677d342aa">rb_http_handler_set_opt</a>(handler, <span class="stringliteral">&quot;RB_HTTP_MODE&quot;</span>, <span class="stringliteral">&quot;0&quot;</span>, NULL, 0);</div>
+<div class="line">    <a class="code" href="rb__http__handler_8c.html#ab306abb2b4a66b092205de2677d342aa">rb_http_handler_set_opt</a>(handler, <span class="stringliteral">&quot;RB_HTTP_MODE&quot;</span>, <a class="code" href="rb__http__handler__example_8c.html#a271effa2ab356edfe3b4e22d006c975f">RB_HTTP_NORMAL_MODE</a>, NULL, 0);</div>
 <div class="line"></div>
 <div class="line">    <a class="code" href="rb__http__handler_8c.html#aec9a18015fc9221b582348ccfb48cb34">rb_http_handler_run</a>(handler);</div>
 <div class="line"></div>
@@ -170,7 +175,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --> </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jan 4 2016 16:41:56 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Jan 4 2016 18:07:21 for librb-http by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>
