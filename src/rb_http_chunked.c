@@ -246,6 +246,31 @@ void *rb_http_process_chunked (void *arg) {
 			                  &report->http_code);
 
 			rd_fifoq_add(&rb_http_handler->rfq_reports, report);
+		} else {
+			rd_fifoq_elm_t *rfqe = (rd_fifoq_elm_t *) TAILQ_FIRST(
+			                           &rb_http_threaddata->rfq.rfq_q);
+			struct rb_http_message_s *message = (struct rb_http_message_s *) rfqe->rfqe_ptr;
+
+			if (time(NULL) - message->timestamp > rb_http_handler->options->conntimeout /
+			        1000) {
+				rd_fifoq_pop(&rb_http_threaddata->rfq);
+				struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+
+				report->rfq_msgs = calloc(1, sizeof(rd_fifoq_t));
+				rb_http_msg_q_init(report->rfq_msgs);
+				report->headers = headers;
+				report->err_code = res;
+				report->handler = rb_http_threaddata->easy_handle;
+				curl_easy_getinfo(rb_http_threaddata->easy_handle,
+				                  CURLINFO_RESPONSE_CODE,
+				                  &report->http_code);
+
+				rb_http_msg_q_add(report->rfq_msgs, message);
+				rd_fifoq_elm_release(&rb_http_threaddata->rfq, rfqe);
+				rd_fifoq_add(&rb_http_handler->rfq_reports, report);
+			} else {
+				curl_slist_free_all(headers);
+			}
 		}
 	}
 

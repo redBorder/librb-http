@@ -177,7 +177,7 @@ int rb_http_produce (struct rb_http_handler_s *handler,
 
 		if (flags & RB_HTTP_MESSAGE_F_COPY) {
 			message->payload = (char *) &message[1];
-			memcpy (message->payload, buff, len);
+			memcpy(message->payload, buff, len);
 		} else {
 			message->payload = buff;
 		}
@@ -193,7 +193,8 @@ int rb_http_produce (struct rb_http_handler_s *handler,
 				handler->next_thread = 0;
 			}
 
-			rd_fifoq_add (&handler->threads[handler->next_thread++]->rfq, message);
+			message->timestamp = time(NULL);
+			rd_fifoq_add(&handler->threads[handler->next_thread++]->rfq, message);
 		}
 	} else {
 		ATOMIC_OP(sub, fetch, &handler->left, 1);
