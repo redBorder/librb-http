@@ -1,0 +1,123 @@
+\hypertarget{structrb__http__threaddata__s}{}\section{rb\+\_\+http\+\_\+threaddata\+\_\+s Struct Reference}
+\label{structrb__http__threaddata__s}\index{rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}}
+
+
+{\ttfamily \#include $<$rb\+\_\+http\+\_\+handler.\+h$>$}
+
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+int \hyperlink{structrb__http__threaddata__s_ac1c6fb826f5db3bbaca00a316cb06d58}{chunks}
+\item 
+int \hyperlink{structrb__http__threaddata__s_a543467d6c1a80b4f1c4a8adfdc1dd4e6}{current\+\_\+messages}
+\item 
+rd\+\_\+fifoq\+\_\+t \hyperlink{structrb__http__threaddata__s_a00e385e1aa5823aee8d3db72936956e2}{rfq}
+\item 
+z\+\_\+stream $\ast$ \hyperlink{structrb__http__threaddata__s_a246a6899a601436b9c28e893b4c376e3}{strm}
+\item 
+rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+t $\ast$ \hyperlink{structrb__http__threaddata__s_abb3c07fa38012811cf4be59ef72b4748}{rfq\+\_\+pending}
+\item 
+C\+U\+R\+L $\ast$ \hyperlink{structrb__http__threaddata__s_a6931a61d737ef95f2cc45d23ea8c9a67}{easy\+\_\+handle}
+\item 
+long \hyperlink{structrb__http__threaddata__s_a67e29737b4f8a0be3bdc23a22fed5a0c}{post\+\_\+timestamp}
+\item 
+pthread\+\_\+t \hyperlink{structrb__http__threaddata__s_a60069683f9f9fdb21769e171162da3f1}{p\+\_\+thread}
+\item 
+struct \hyperlink{structrb__http__handler__s}{rb\+\_\+http\+\_\+handler\+\_\+s} $\ast$ \hyperlink{structrb__http__threaddata__s_a64b0cd10601b009f295181fabe882a3f}{rb\+\_\+http\+\_\+handler}
+\item 
+struct \hyperlink{structrb__http__message__s}{rb\+\_\+http\+\_\+message\+\_\+s} $\ast$ \hyperlink{structrb__http__threaddata__s_a5a0de7f05386fae47f1284bd82e3b7bf}{message\+\_\+left}
+\item 
+void $\ast$ \hyperlink{structrb__http__threaddata__s_abbaa8b640f2517967ac2d5915a8e2d50}{opaque}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+
+
+Definition at line 62 of file rb\+\_\+http\+\_\+handler.\+h.
+
+
+
+\subsection{Member Data Documentation}
+\hypertarget{structrb__http__threaddata__s_ac1c6fb826f5db3bbaca00a316cb06d58}{}\index{rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}!chunks@{chunks}}
+\index{chunks@{chunks}!rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}}
+\subsubsection[{chunks}]{\setlength{\rightskip}{0pt plus 5cm}int rb\+\_\+http\+\_\+threaddata\+\_\+s\+::chunks}\label{structrb__http__threaddata__s_ac1c6fb826f5db3bbaca00a316cb06d58}
+
+
+Definition at line 63 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{structrb__http__threaddata__s_a543467d6c1a80b4f1c4a8adfdc1dd4e6}{}\index{rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}!current\+\_\+messages@{current\+\_\+messages}}
+\index{current\+\_\+messages@{current\+\_\+messages}!rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}}
+\subsubsection[{current\+\_\+messages}]{\setlength{\rightskip}{0pt plus 5cm}int rb\+\_\+http\+\_\+threaddata\+\_\+s\+::current\+\_\+messages}\label{structrb__http__threaddata__s_a543467d6c1a80b4f1c4a8adfdc1dd4e6}
+
+
+Definition at line 64 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{structrb__http__threaddata__s_a6931a61d737ef95f2cc45d23ea8c9a67}{}\index{rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}!easy\+\_\+handle@{easy\+\_\+handle}}
+\index{easy\+\_\+handle@{easy\+\_\+handle}!rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}}
+\subsubsection[{easy\+\_\+handle}]{\setlength{\rightskip}{0pt plus 5cm}C\+U\+R\+L$\ast$ rb\+\_\+http\+\_\+threaddata\+\_\+s\+::easy\+\_\+handle}\label{structrb__http__threaddata__s_a6931a61d737ef95f2cc45d23ea8c9a67}
+
+
+Definition at line 68 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{structrb__http__threaddata__s_a5a0de7f05386fae47f1284bd82e3b7bf}{}\index{rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}!message\+\_\+left@{message\+\_\+left}}
+\index{message\+\_\+left@{message\+\_\+left}!rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}}
+\subsubsection[{message\+\_\+left}]{\setlength{\rightskip}{0pt plus 5cm}struct {\bf rb\+\_\+http\+\_\+message\+\_\+s}$\ast$ rb\+\_\+http\+\_\+threaddata\+\_\+s\+::message\+\_\+left}\label{structrb__http__threaddata__s_a5a0de7f05386fae47f1284bd82e3b7bf}
+
+
+Definition at line 72 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{structrb__http__threaddata__s_abbaa8b640f2517967ac2d5915a8e2d50}{}\index{rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}!opaque@{opaque}}
+\index{opaque@{opaque}!rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}}
+\subsubsection[{opaque}]{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ rb\+\_\+http\+\_\+threaddata\+\_\+s\+::opaque}\label{structrb__http__threaddata__s_abbaa8b640f2517967ac2d5915a8e2d50}
+
+
+Definition at line 73 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{structrb__http__threaddata__s_a60069683f9f9fdb21769e171162da3f1}{}\index{rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}!p\+\_\+thread@{p\+\_\+thread}}
+\index{p\+\_\+thread@{p\+\_\+thread}!rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}}
+\subsubsection[{p\+\_\+thread}]{\setlength{\rightskip}{0pt plus 5cm}pthread\+\_\+t rb\+\_\+http\+\_\+threaddata\+\_\+s\+::p\+\_\+thread}\label{structrb__http__threaddata__s_a60069683f9f9fdb21769e171162da3f1}
+
+
+Definition at line 70 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{structrb__http__threaddata__s_a67e29737b4f8a0be3bdc23a22fed5a0c}{}\index{rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}!post\+\_\+timestamp@{post\+\_\+timestamp}}
+\index{post\+\_\+timestamp@{post\+\_\+timestamp}!rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}}
+\subsubsection[{post\+\_\+timestamp}]{\setlength{\rightskip}{0pt plus 5cm}long rb\+\_\+http\+\_\+threaddata\+\_\+s\+::post\+\_\+timestamp}\label{structrb__http__threaddata__s_a67e29737b4f8a0be3bdc23a22fed5a0c}
+
+
+Definition at line 69 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{structrb__http__threaddata__s_a64b0cd10601b009f295181fabe882a3f}{}\index{rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}!rb\+\_\+http\+\_\+handler@{rb\+\_\+http\+\_\+handler}}
+\index{rb\+\_\+http\+\_\+handler@{rb\+\_\+http\+\_\+handler}!rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}}
+\subsubsection[{rb\+\_\+http\+\_\+handler}]{\setlength{\rightskip}{0pt plus 5cm}struct {\bf rb\+\_\+http\+\_\+handler\+\_\+s}$\ast$ rb\+\_\+http\+\_\+threaddata\+\_\+s\+::rb\+\_\+http\+\_\+handler}\label{structrb__http__threaddata__s_a64b0cd10601b009f295181fabe882a3f}
+
+
+Definition at line 71 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{structrb__http__threaddata__s_a00e385e1aa5823aee8d3db72936956e2}{}\index{rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}!rfq@{rfq}}
+\index{rfq@{rfq}!rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}}
+\subsubsection[{rfq}]{\setlength{\rightskip}{0pt plus 5cm}rd\+\_\+fifoq\+\_\+t rb\+\_\+http\+\_\+threaddata\+\_\+s\+::rfq}\label{structrb__http__threaddata__s_a00e385e1aa5823aee8d3db72936956e2}
+
+
+Definition at line 65 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{structrb__http__threaddata__s_abb3c07fa38012811cf4be59ef72b4748}{}\index{rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}!rfq\+\_\+pending@{rfq\+\_\+pending}}
+\index{rfq\+\_\+pending@{rfq\+\_\+pending}!rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}}
+\subsubsection[{rfq\+\_\+pending}]{\setlength{\rightskip}{0pt plus 5cm}rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+t$\ast$ rb\+\_\+http\+\_\+threaddata\+\_\+s\+::rfq\+\_\+pending}\label{structrb__http__threaddata__s_abb3c07fa38012811cf4be59ef72b4748}
+
+
+Definition at line 67 of file rb\+\_\+http\+\_\+handler.\+h.
+
+\hypertarget{structrb__http__threaddata__s_a246a6899a601436b9c28e893b4c376e3}{}\index{rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}!strm@{strm}}
+\index{strm@{strm}!rb\+\_\+http\+\_\+threaddata\+\_\+s@{rb\+\_\+http\+\_\+threaddata\+\_\+s}}
+\subsubsection[{strm}]{\setlength{\rightskip}{0pt plus 5cm}z\+\_\+stream$\ast$ rb\+\_\+http\+\_\+threaddata\+\_\+s\+::strm}\label{structrb__http__threaddata__s_a246a6899a601436b9c28e893b4c376e3}
+
+
+Definition at line 66 of file rb\+\_\+http\+\_\+handler.\+h.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+src/\hyperlink{rb__http__handler_8h}{rb\+\_\+http\+\_\+handler.\+h}\end{DoxyCompactItemize}
