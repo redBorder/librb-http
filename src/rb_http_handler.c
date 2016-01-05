@@ -141,15 +141,22 @@ void rb_http_handler_destroy (struct rb_http_handler_s *rb_http_handler,
 	int i = 0;
 	ATOMIC_OP(sub, fetch, &rb_http_handler->thread_running, 1);
 
-	for (i = 0; i < rb_http_handler->options->connections ; i++) {
-		pthread_join(rb_http_handler->threads[i]->p_thread, NULL);
-		curl_easy_cleanup(rb_http_handler->threads[i]->easy_handle);
-		free(rb_http_handler->threads[i]);
-	}
 
 	rd_fifoq_destroy(&rb_http_handler->rfq_reports);
 	if (rb_http_handler->options->url != NULL) {
 		free (rb_http_handler->options->url);
+	}
+
+	if (rb_http_handler->options->mode == NORMAL_MODE) {
+		pthread_join(rb_http_handler->threads[0]->p_thread, NULL);
+		curl_multi_cleanup(rb_http_handler->multi_handle);
+		free(rb_http_handler->threads[0]);
+	} else {
+		for (i = 0; i < rb_http_handler->options->connections ; i++) {
+			pthread_join(rb_http_handler->threads[i]->p_thread, NULL);
+			curl_easy_cleanup(rb_http_handler->threads[i]->easy_handle);
+			free(rb_http_handler->threads[i]);
+		}
 	}
 
 	free(rb_http_handler->options);
@@ -189,12 +196,16 @@ int rb_http_produce (struct rb_http_handler_s *handler,
 		}
 
 		if (message != NULL && message->len > 0 && message->payload != NULL) {
-			if (handler->next_thread == handler->options->connections) {
-				handler->next_thread = 0;
-			}
+			if (handler->options->mode == CHUNKED_MODE) {
+				if (handler->next_thread == handler->options->connections) {
+					handler->next_thread = 0;
+				}
 
-			message->timestamp = time(NULL);
-			rd_fifoq_add(&handler->threads[handler->next_thread++]->rfq, message);
+				message->timestamp = time(NULL);
+				rd_fifoq_add(&handler->threads[handler->next_thread++]->rfq, message);
+			} else {
+				rd_fifoq_add(&handler->threads[0]->rfq, message);
+			}
 		}
 	} else {
 		ATOMIC_OP(sub, fetch, &handler->left, 1);
@@ -233,7 +244,6 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 	switch (rb_http_handler->options->mode) {
 	case NORMAL_MODE:
 		return rb_http_get_reports_normal(rb_http_handler, report_fn, timeout_ms);
-		return 0;
 		break;
 	case CHUNKED_MODE:
 		return rb_http_get_reports_chunked(rb_http_handler, report_fn, timeout_ms);
