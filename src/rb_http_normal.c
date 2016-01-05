@@ -219,41 +219,33 @@ static void rb_http_recv_message (struct rb_http_handler_s *rb_http_handler) {
 	                  rb_http_handler->multi_handle,
 	                  &rb_http_handler->msgs_left))) {
 		if (msg->msg == CURLMSG_DONE) {
-			report = calloc (1, sizeof (struct rb_http_report_s));
-			if (curl_multi_remove_handle (rb_http_handler->multi_handle,
-			                              msg->easy_handle) != CURLM_OK ) {
-				struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
-				ireport->err_code = -1;
-				ireport->http_code = 0;
-				ireport->handler = NULL;
-				rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-			}
+			report = calloc(1, sizeof(struct rb_http_report_s));
 
-			if (curl_easy_getinfo (msg->easy_handle,
-			                       CURLINFO_PRIVATE, (char **)&message) != CURLE_OK) {
-				struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
-				ireport->err_code = -1;
-				ireport->http_code = 0;
-				ireport->handler = NULL;
-				rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
-			}
-
-			if (report == NULL) {
-				struct rb_http_report_s *ireport = calloc(1, sizeof(struct rb_http_report_s));
-				ireport->err_code = -1;
-				ireport->http_code = 0;
-				ireport->handler = NULL;
-				rd_fifoq_add (&rb_http_handler->rfq_reports, ireport);
+			if (curl_easy_getinfo(msg->easy_handle,
+			                      CURLINFO_PRIVATE, (char **)&message) != CURLE_OK) {
+				report->err_code = -1;
+				report->http_code = 0;
+				report->handler = NULL;
+				rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+				continue;
 			}
 
 			report->err_code = msg->data.result;
 			report->handler = msg->easy_handle;
-			curl_easy_getinfo (msg->easy_handle,
-			                   CURLINFO_RESPONSE_CODE,
-			                   &report->http_code);
+			curl_easy_getinfo(msg->easy_handle,
+			                  CURLINFO_RESPONSE_CODE,
+			                  &report->http_code);
 
+			if (curl_multi_remove_handle(rb_http_handler->multi_handle,
+			                             msg->easy_handle) != CURLM_OK ) {
+				report->err_code = -1;
+				report->http_code = 0;
+				report->handler = msg->easy_handle;
+				rd_fifoq_add(&rb_http_handler->rfq_reports, report);
+				continue;
+			}
 
-			rd_fifoq_add (&rb_http_handler->rfq_reports, report);
+			rd_fifoq_add(&rb_http_handler->rfq_reports, report);
 		}
 	}
 }
@@ -304,26 +296,33 @@ int rb_http_get_reports_normal(struct rb_http_handler_s *rb_http_handler,
 	                             timeout_ms)) != NULL) {
 		if (rfqe->rfqe_ptr != NULL) {
 			report = rfqe->rfqe_ptr;
-			curl_easy_getinfo (report->handler,
-			                   CURLINFO_PRIVATE,
-			                   (char **)&message);
-			http_code = report->http_code;
 
-			report_fn (rb_http_handler,
-			           report->err_code,
-			           http_code,
-			           NULL,
-			           message->payload,
-			           message->len,
-			           message->client_opaque);
+			if (report->handler != NULL ) {
+				curl_easy_getinfo (report->handler,
+				                   CURLINFO_PRIVATE,
+				                   (char **)&message);
 
-			curl_slist_free_all (message->headers);
-			curl_easy_cleanup (report->handler);
-			ATOMIC_OP(sub, fetch, &rb_http_handler->left, 1);
-			if (message->free_message && message->payload != NULL) {
-				free (message->payload); message->payload = NULL;
+				http_code = report->http_code;
+
+				if (message != NULL) {
+					ATOMIC_OP(sub, fetch, &rb_http_handler->left, 1);
+					report_fn (rb_http_handler,
+					           report->err_code,
+					           http_code,
+					           NULL,
+					           message->payload,
+					           message->len,
+					           message->client_opaque);
+					curl_slist_free_all (message->headers);
+
+					if (message->free_message && message->payload != NULL) {
+						free (message->payload); message->payload = NULL;
+						free (message); message = NULL;
+					}
+
+					curl_easy_cleanup (report->handler);
+				}
 			}
-			free (message); message = NULL;
 			free (report); report = NULL;
 			rd_fifoq_elm_release (&rb_http_handler->rfq_reports, rfqe);
 		}

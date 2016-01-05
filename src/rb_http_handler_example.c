@@ -10,7 +10,7 @@
 #define RB_HTTP_CHUNKED_MODE "1"
 
 #define MESSAGE "{\"client_mac\": \"54:26:96:db:88:01\", \"application_name\": \"wwww\", \"sensor_uuid\":\"abc\", \"a\":5}"
-#define N_MESSAGE 5 * 1
+#define N_MESSAGE 500 * 1
 #define URL "http://eugeniodev:2057/rbdata/def/rb_flow/"
 
 struct rb_http_handler_s *handler = NULL;
@@ -61,6 +61,7 @@ int main() {
 	rb_http_handler_set_opt(handler, "RB_HTTP_MAX_MESSAGES", "512", NULL, 0);
 	rb_http_handler_set_opt(handler, "RB_HTTP_CONNECTIONS", "1", NULL, 0);
 	rb_http_handler_set_opt(handler, "RB_HTTP_MODE", RB_HTTP_NORMAL_MODE, NULL, 0);
+
 
 	rb_http_handler_run(handler);
 
