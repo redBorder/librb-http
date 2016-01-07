@@ -24,7 +24,7 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 		rb_http_threaddata->strm->next_out = (Bytef *)ptr;
 		rb_http_threaddata->strm->avail_out = nmemb - (ulong) writed;
 
-		deflate(rb_http_threaddata->strm, Z_BLOCK);
+		deflate(rb_http_threaddata->strm, Z_SYNC_FLUSH);
 
 		writed = nmemb - rb_http_threaddata->strm->avail_out;
 
