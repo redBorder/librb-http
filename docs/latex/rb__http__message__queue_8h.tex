@@ -1,0 +1,70 @@
+\hypertarget{rb__http__message__queue_8h}{}\section{src/rb\+\_\+http\+\_\+message\+\_\+queue.h File Reference}
+\label{rb__http__message__queue_8h}\index{src/rb\+\_\+http\+\_\+message\+\_\+queue.\+h@{src/rb\+\_\+http\+\_\+message\+\_\+queue.\+h}}
+{\ttfamily \#include $<$sys/queue.\+h$>$}\\*
+{\ttfamily \#include $<$stdlib.\+h$>$}\\*
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structrb__http__message__s}{rb\+\_\+http\+\_\+message\+\_\+s}
+\end{DoxyCompactItemize}
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{rb__http__message__queue_8h_a84ad176b8439e2c23119357cade4d17b}{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+init}(q)~T\+A\+I\+L\+Q\+\_\+\+I\+N\+I\+T(q)
+\item 
+\#define \hyperlink{rb__http__message__queue_8h_a89b96056d77c90af889b4c531a18bde8}{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+add}(q,  e)~T\+A\+I\+L\+Q\+\_\+\+I\+N\+S\+E\+R\+T\+\_\+\+T\+A\+I\+L(q, e, tailq)
+\item 
+\#define \hyperlink{rb__http__message__queue_8h_add027071319d2d49bbaa83bd72ac1f2b}{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+empty}(q)~T\+A\+I\+L\+Q\+\_\+\+E\+M\+P\+T\+Y(q)
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+typedef \hyperlink{rb__http__message__queue_8h_a7839fa1e4a9d5107095e042f643b43e6}{T\+A\+I\+L\+Q\+\_\+\+H\+E\+A\+D} (, \hyperlink{structrb__http__message__s}{rb\+\_\+http\+\_\+message\+\_\+s}) rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+t
+\end{DoxyCompactItemize}
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{rb__http__message__queue_8h_a89b96056d77c90af889b4c531a18bde8}{}\index{rb\+\_\+http\+\_\+message\+\_\+queue.\+h@{rb\+\_\+http\+\_\+message\+\_\+queue.\+h}!rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+add@{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+add}}
+\index{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+add@{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+add}!rb\+\_\+http\+\_\+message\+\_\+queue.\+h@{rb\+\_\+http\+\_\+message\+\_\+queue.\+h}}
+\subsubsection[{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+add}]{\setlength{\rightskip}{0pt plus 5cm}\#define rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+add(
+\begin{DoxyParamCaption}
+\item[{}]{q, }
+\item[{}]{e}
+\end{DoxyParamCaption}
+)~T\+A\+I\+L\+Q\+\_\+\+I\+N\+S\+E\+R\+T\+\_\+\+T\+A\+I\+L(q, e, tailq)}\label{rb__http__message__queue_8h_a89b96056d77c90af889b4c531a18bde8}
+
+
+Definition at line 20 of file rb\+\_\+http\+\_\+message\+\_\+queue.\+h.
+
+\hypertarget{rb__http__message__queue_8h_add027071319d2d49bbaa83bd72ac1f2b}{}\index{rb\+\_\+http\+\_\+message\+\_\+queue.\+h@{rb\+\_\+http\+\_\+message\+\_\+queue.\+h}!rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+empty@{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+empty}}
+\index{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+empty@{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+empty}!rb\+\_\+http\+\_\+message\+\_\+queue.\+h@{rb\+\_\+http\+\_\+message\+\_\+queue.\+h}}
+\subsubsection[{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+empty}]{\setlength{\rightskip}{0pt plus 5cm}\#define rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+empty(
+\begin{DoxyParamCaption}
+\item[{}]{q}
+\end{DoxyParamCaption}
+)~T\+A\+I\+L\+Q\+\_\+\+E\+M\+P\+T\+Y(q)}\label{rb__http__message__queue_8h_add027071319d2d49bbaa83bd72ac1f2b}
+
+
+Definition at line 22 of file rb\+\_\+http\+\_\+message\+\_\+queue.\+h.
+
+\hypertarget{rb__http__message__queue_8h_a84ad176b8439e2c23119357cade4d17b}{}\index{rb\+\_\+http\+\_\+message\+\_\+queue.\+h@{rb\+\_\+http\+\_\+message\+\_\+queue.\+h}!rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+init@{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+init}}
+\index{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+init@{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+init}!rb\+\_\+http\+\_\+message\+\_\+queue.\+h@{rb\+\_\+http\+\_\+message\+\_\+queue.\+h}}
+\subsubsection[{rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+init}]{\setlength{\rightskip}{0pt plus 5cm}\#define rb\+\_\+http\+\_\+msg\+\_\+q\+\_\+init(
+\begin{DoxyParamCaption}
+\item[{}]{q}
+\end{DoxyParamCaption}
+)~T\+A\+I\+L\+Q\+\_\+\+I\+N\+I\+T(q)}\label{rb__http__message__queue_8h_a84ad176b8439e2c23119357cade4d17b}
+
+
+Definition at line 18 of file rb\+\_\+http\+\_\+message\+\_\+queue.\+h.
+
+
+
+\subsection{Function Documentation}
+\hypertarget{rb__http__message__queue_8h_a7839fa1e4a9d5107095e042f643b43e6}{}\index{rb\+\_\+http\+\_\+message\+\_\+queue.\+h@{rb\+\_\+http\+\_\+message\+\_\+queue.\+h}!T\+A\+I\+L\+Q\+\_\+\+H\+E\+A\+D@{T\+A\+I\+L\+Q\+\_\+\+H\+E\+A\+D}}
+\index{T\+A\+I\+L\+Q\+\_\+\+H\+E\+A\+D@{T\+A\+I\+L\+Q\+\_\+\+H\+E\+A\+D}!rb\+\_\+http\+\_\+message\+\_\+queue.\+h@{rb\+\_\+http\+\_\+message\+\_\+queue.\+h}}
+\subsubsection[{T\+A\+I\+L\+Q\+\_\+\+H\+E\+A\+D}]{\setlength{\rightskip}{0pt plus 5cm}typedef T\+A\+I\+L\+Q\+\_\+\+H\+E\+A\+D (
+\begin{DoxyParamCaption}
+\item[{{\bf rb\+\_\+http\+\_\+message\+\_\+s}}]{}
+\end{DoxyParamCaption}
+)}\label{rb__http__message__queue_8h_a7839fa1e4a9d5107095e042f643b43e6}

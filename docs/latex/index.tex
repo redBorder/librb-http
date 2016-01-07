@@ -4,15 +4,22 @@ Non-\/blocking high-\/level wrapper for libcurl.
 
 
 \begin{DoxyCode}
+\textcolor{preprocessor}{#include "\hyperlink{rb__http__handler_8h}{rb\_http\_handler.h}"}
+
 \textcolor{preprocessor}{#include <stdio.h>}
 \textcolor{preprocessor}{#include <string.h>}
 \textcolor{preprocessor}{#include <unistd.h>}
-\textcolor{preprocessor}{#include <signal.h>}
-\textcolor{preprocessor}{#include <signal.h>}
-\textcolor{preprocessor}{#include <librd/rdthread.h>}
-\textcolor{preprocessor}{#include <librbhttp/librb-http.h>}
+\textcolor{preprocessor}{#include <pthread.h>}
+\textcolor{preprocessor}{#include <stdlib.h>}
 
-\textcolor{keyword}{static} \textcolor{keywordtype}{int} running = 1;
+\textcolor{preprocessor}{#define RB\_HTTP\_NORMAL\_MODE  "0"}
+\textcolor{preprocessor}{#define RB\_HTTP\_CHUNKED\_MODE "1"}
+
+\textcolor{preprocessor}{#define MESSAGE "\{\(\backslash\)"client\_mac\(\backslash\)": \(\backslash\)"54:26:96:db:88:01\(\backslash\)", \(\backslash\)"application\_name\(\backslash\)": \(\backslash\)"wwww\(\backslash\)", \(\backslash\)"sensor\_uuid\(\backslash\)":\(\backslash\)
+      "abc\(\backslash\)", \(\backslash\)"a\(\backslash\)":5\}"}
+\textcolor{preprocessor}{#define N\_MESSAGE 5 * 1}
+\textcolor{preprocessor}{#define URL "http://eugeniodev:2057/rbdata/def/rb\_flow/"}
+
 \textcolor{keyword}{struct }\hyperlink{structrb__http__handler__s}{rb\_http\_handler\_s} *handler = NULL;
 
 \textcolor{keyword}{static} \textcolor{keywordtype}{void} my\_callback (\textcolor{keyword}{struct} \hyperlink{structrb__http__handler__s}{rb\_http\_handler\_s} *rb\_http\_handler,
@@ -23,6 +30,10 @@ Non-\/blocking high-\/level wrapper for libcurl.
                          \textcolor{keywordtype}{size\_t} bufsiz,
                          \textcolor{keywordtype}{void} *opaque) \{
 
+    (void) rb\_http\_handler;
+    (void) bufsiz;
+    (void) status\_code\_str;
+
     \textcolor{keywordflow}{if} (status\_code != 0) \{
         printf (\textcolor{stringliteral}{"CURL CODE: %d\(\backslash\)n"}, status\_code);
     \}
@@ -31,51 +42,59 @@ Non-\/blocking high-\/level wrapper for libcurl.
         printf (\textcolor{stringliteral}{"HTTP STATUS: %ld\(\backslash\)n"}, http\_status);
     \}
 
-    \textcolor{keywordflow}{if} (buff != NULL)
-        printf (\textcolor{stringliteral}{"MESSAGE: %s\(\backslash\)n"}, buff);
+    \textcolor{keywordflow}{if} (buff != NULL) \{
+        printf (\textcolor{stringliteral}{"MESSAGE: %s\(\backslash\)n\(\backslash\)n"}, buff);
+    \}
 
-    \textcolor{keywordflow}{if} (opaque != NULL)
+    \textcolor{keywordflow}{if} (opaque != NULL) \{
         printf (\textcolor{stringliteral}{"OPAQUE: %p\(\backslash\)n"}, opaque);
+    \}
+\}
 
-    (void) rb\_http\_handler;
-    (void) bufsiz;
-    (void) status\_code\_str;
+\textcolor{keywordtype}{void} *\hyperlink{rb__http__handler__example_8c_a57c5c030092520363d405723c56b28c2}{get\_reports} (\textcolor{keywordtype}{void} *ptr) \{
+    (void) ptr;
+
+    \textcolor{keywordflow}{while} (\hyperlink{rb__http__handler_8c_a890e981b619b1bdd5cc37fa16bb06f06}{rb\_http\_get\_reports}(handler, my\_callback, 100) != 0);
+
+    \textcolor{keywordflow}{return} NULL;
 \}
 
 \textcolor{keywordtype}{int} \hyperlink{rb__http__handler__example_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}() \{
-    \textcolor{keywordtype}{char} url[] = \textcolor{stringliteral}{"http://localhost:8080/librb-http/"};
-    \textcolor{keywordtype}{char} \textcolor{keywordtype}{string}[128];
 
-    handler = \hyperlink{librb-http_8h_aa84a3dadccb44fa421655ad1b09c3157}{rb\_http\_handler\_create} (url, NULL, 0);
-    \hyperlink{librb-http_8h_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"HTTP\_MAX\_TOTAL\_CONNECTIONS"}, \textcolor{stringliteral}{"4"}, NULL, 0);
-    \hyperlink{librb-http_8h_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"HTTP\_TIMEOUT"}, \textcolor{stringliteral}{"10"}, NULL, 0);
-    \hyperlink{librb-http_8h_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"HTTP\_CONNTTIMEOUT"}, \textcolor{stringliteral}{"3000"}, NULL, 0);
-    \hyperlink{librb-http_8h_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"HTTP\_VERBOSE"}, \textcolor{stringliteral}{"0"}, NULL, 0);
-    \hyperlink{librb-http_8h_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"RB\_HTTP\_MAX\_MESSAGES"}, \textcolor{stringliteral}{"512"}, NULL, 0);
+    handler = \hyperlink{rb__http__handler_8c_aa338cb73c0754c16c8a05621b995ea59}{rb\_http\_handler\_create} (\hyperlink{rb__http__handler__example_8c_a41d49c9bf1512077295129c1406be4cd}{URL}, NULL, 0);
+    \hyperlink{rb__http__handler_8c_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"HTTP\_VERBOSE"}, \textcolor{stringliteral}{"0"}, NULL, 0);
+    \hyperlink{rb__http__handler_8c_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"HTTP\_CONNTTIMEOUT"}, \textcolor{stringliteral}{"5000"}, NULL, 0);
+    \hyperlink{rb__http__handler_8c_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"HTTP\_TIMEOUT"}, \textcolor{stringliteral}{"15000"}, NULL, 0);
+    \hyperlink{rb__http__handler_8c_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"RB\_HTTP\_MAX\_MESSAGES"}, \textcolor{stringliteral}{"512"}, NULL, 0);
+    \hyperlink{rb__http__handler_8c_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"RB\_HTTP\_CONNECTIONS"}, \textcolor{stringliteral}{"1"}, NULL, 0);
+    \hyperlink{rb__http__handler_8c_ab306abb2b4a66b092205de2677d342aa}{rb\_http\_handler\_set\_opt}(handler, \textcolor{stringliteral}{"RB\_HTTP\_MODE"}, 
+      \hyperlink{rb__http__handler__example_8c_a271effa2ab356edfe3b4e22d006c975f}{RB\_HTTP\_NORMAL\_MODE}, NULL, 0);
 
-    printf (\textcolor{stringliteral}{"Sending 1024 messages\(\backslash\)n"});
+    \hyperlink{rb__http__handler_8c_aec9a18015fc9221b582348ccfb48cb34}{rb\_http\_handler\_run}(handler);
+
+    printf (\textcolor{stringliteral}{"Sending %d messages\(\backslash\)n"}, N\_MESSAGE);
     \textcolor{keywordtype}{int} i = 0;
 
-    \textcolor{comment}{// getchar();}
     \textcolor{keywordtype}{char} *message = NULL;
+    pthread\_t p\_thread;
 
-    \textcolor{keywordflow}{for} (i = 0 ; i < 1024 && running; i++) \{
-        sprintf (\textcolor{keywordtype}{string}, \textcolor{stringliteral}{"\{\(\backslash\)"message\(\backslash\)": \(\backslash\)"%d\(\backslash\)"\}"}, i);
-        \textcolor{keywordflow}{while} (\hyperlink{librb-http_8h_a0d0d31d9c2dc9ed04d6722e5653b4682}{rb\_http\_produce} (handler,
-                                message = strdup (\textcolor{keywordtype}{string}),
-                                strlen (\textcolor{keywordtype}{string}),
-                                \hyperlink{librb-http_8h_aef79f44f520e54cbedce1068fe324720}{RB\_HTTP\_MESSAGE\_F\_FREE},
+    pthread\_create (&p\_thread, NULL, &\hyperlink{rb__http__handler__example_8c_a57c5c030092520363d405723c56b28c2}{get\_reports}, NULL);
+
+    \textcolor{keywordflow}{for} (i = 0 ; i < \hyperlink{rb__http__handler__example_8c_a21d8868b2b841751e61089de6db4f02c}{N\_MESSAGE}; i++) \{
+        \textcolor{keywordflow}{while} (\hyperlink{rb__http__handler_8c_a0d0d31d9c2dc9ed04d6722e5653b4682}{rb\_http\_produce} (handler,
+                                message = strdup (\hyperlink{rb__http__handler__example_8c_af8a3e30cb4858ca8a098acae107286c0}{MESSAGE}),
+                                strlen (\hyperlink{rb__http__handler__example_8c_af8a3e30cb4858ca8a098acae107286c0}{MESSAGE}),
+                                \hyperlink{rb__http__handler_8h_aef79f44f520e54cbedce1068fe324720}{RB\_HTTP\_MESSAGE\_F\_FREE},
                                 NULL,
                                 0,
-                                NULL) > 0 && running) \{
-            \hyperlink{librb-http_8h_a890e981b619b1bdd5cc37fa16bb06f06}{rb\_http\_get\_reports} (handler, my\_callback, 1000);
+                                NULL) > 0) \{
             free(message);
         \}
     \}
 
-    \textcolor{keywordflow}{while} (\hyperlink{librb-http_8h_a890e981b619b1bdd5cc37fa16bb06f06}{rb\_http\_get\_reports} (handler, my\_callback, 100) && running);
+    pthread\_join(p\_thread, NULL);
 
-    \hyperlink{librb-http_8h_aea4aa423ff2034b027817632c746fd39}{rb\_http\_handler\_destroy} (handler, NULL, 0);
+    \hyperlink{rb__http__handler_8c_aa0bd3f75d87af6c49108638a0037de86}{rb\_http\_handler\_destroy}(handler, NULL, 0);
 
     \textcolor{keywordflow}{return} 0;
 \}
