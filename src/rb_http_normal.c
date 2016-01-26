@@ -104,6 +104,11 @@ static void rb_http_send_message(struct rb_http_handler_s *rb_http_handler,
 		rd_fifoq_add(&rb_http_handler->rfq_reports, report);
 	}
 
+	if (rb_http_handler->options->insecure) {
+		curl_easy_setopt(handler,CURLOPT_SSL_VERIFYPEER,0);
+		curl_easy_setopt(handler,CURLOPT_SSL_VERIFYHOST,0);
+	}
+
 	if (curl_multi_add_handle(rb_http_handler->multi_handle,
 	                          handler) != CURLM_OK) {
 		struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
