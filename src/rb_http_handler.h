@@ -1,7 +1,6 @@
 #ifndef RB_HTTP_HANDLER
 #define RB_HTTP_HANDLER
 
-#include "../config.h"
 #include "rb_http_message_queue.h"
 
 #include <stdio.h>

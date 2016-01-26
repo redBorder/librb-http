@@ -7,7 +7,8 @@ LIBVER=		1
 TESTS= tests/rb_http_handler_test.c
 SRCS=	 src/rb_http_handler.c src/rb_http_normal.c src/rb_http_chunked.c
 OBJS=	 $(SRCS:.c=.o)
-HDRS=  src/rb_http_handler.h src/rb_http_chunked.h src/rb_http_normal.h
+HDRS=  src/rb_http_handler.h src/rb_http_chunked.h src/rb_http_normal.h \
+	src/rb_http_message_queue.h
 
 .PHONY: version.c
 
