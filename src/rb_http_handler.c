@@ -34,7 +34,7 @@ struct rb_http_handler_s *rb_http_handler_create (const char *urls_str,
 	rb_http_handler->options->connections = DEFAULT_CONNECTIONS;
 	rb_http_handler->options->timeout = DEFAULT_TIMEOUT;
 	rb_http_handler->options->url = strdup(urls_str);
-	rb_http_handler->options->mode = -1;
+	rb_http_handler->options->mode = NORMAL_MODE;
 
 	curl_global_init(CURL_GLOBAL_ALL);
 
@@ -83,6 +83,7 @@ void rb_http_handler_run (struct rb_http_handler_s *rb_http_handler) {
 
 	switch (rb_http_handler->options->mode) {
 	case NORMAL_MODE:
+	default:
 		rb_http_threaddata = calloc(1, sizeof(struct rb_http_threaddata_s));
 		rb_http_handler->threads[0] = rb_http_threaddata;
 
@@ -126,8 +127,6 @@ void rb_http_handler_run (struct rb_http_handler_s *rb_http_handler) {
 			                rb_http_threaddata);
 		}
 		break;
-	default:
-		exit(1);
 	}
 }
 
