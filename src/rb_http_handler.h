@@ -55,6 +55,7 @@ struct rb_http_options_s {
 	long timeout;            // Total timeout
 	long conntimeout;        // Connection timeout
 	long verbose;            // Curl verbose mode if set to 1
+	int insecure;            // Curl certificate insecure
 };
 
 // @brief Contains information per thread.

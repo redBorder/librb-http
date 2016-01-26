@@ -35,6 +35,7 @@ struct rb_http_handler_s *rb_http_handler_create (const char *urls_str,
 	rb_http_handler->options->timeout = DEFAULT_TIMEOUT;
 	rb_http_handler->options->url = strdup(urls_str);
 	rb_http_handler->options->mode = NORMAL_MODE;
+	rb_http_handler->options->insecure = 0;
 
 	curl_global_init(CURL_GLOBAL_ALL);
 
@@ -66,6 +67,8 @@ int rb_http_handler_set_opt (struct rb_http_handler_s *rb_http_handler,
 		rb_http_handler->options->conntimeout = atol(val);
 	} else if (!strcmp(key, "RB_HTTP_MAX_MESSAGES")) {
 		rb_http_handler->options->max_messages = atoi(val);
+	} else if (!strcmp(key, "HTTP_INSECURE")) {
+		rb_http_handler->options->insecure = atol(val);
 	} else {
 		snprintf (err, errsize, "Error decoding option: \"%s: %s\"", key, val);
 		return -1;
@@ -120,6 +123,13 @@ void rb_http_handler_run (struct rb_http_handler_s *rb_http_handler) {
 			rb_http_threaddata->easy_handle = curl_easy_init();
 			rb_http_threaddata->chunks = 0;
 			rb_http_threaddata->opaque = NULL;
+
+			if (rb_http_handler->options->insecure) {
+				curl_easy_setopt(rb_http_threaddata->easy_handle,
+					CURLOPT_SSL_VERIFYPEER,0);
+				curl_easy_setopt(rb_http_threaddata->easy_handle,
+					CURLOPT_SSL_VERIFYHOST,0);
+			}
 
 			pthread_create (&rb_http_threaddata->p_thread,
 			                NULL,
