@@ -249,7 +249,8 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 		return rb_http_get_reports_chunked(rb_http_handler, report_fn, timeout_ms);
 		break;
 	default:
-		exit(1);
+		return rb_http_get_reports_normal(rb_http_handler, report_fn, timeout_ms);
+		break;
 	}
 
 	return rb_http_handler->left;
