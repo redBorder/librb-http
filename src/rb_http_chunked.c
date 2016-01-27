@@ -53,6 +53,7 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 				        rb_http_handler->options->post_timeout) {
 
 					message = rfqe->rfqe_ptr;
+					rd_fifoq_elm_release(&rb_http_threaddata->rfq, rfqe);
 
 					// We need to initialize a few things when starting new POST
 					if (rb_http_threaddata->chunks == 0 && writed == 0) {
@@ -83,7 +84,6 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 					}
 
 					rb_http_msg_q_add(rb_http_threaddata->rfq_pending, message);
-					rd_fifoq_elm_release(&rb_http_threaddata->rfq, rfqe);
 					rb_http_threaddata->current_messages++;
 				} else {
 					break;
