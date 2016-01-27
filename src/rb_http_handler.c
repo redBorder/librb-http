@@ -207,12 +207,12 @@ int rb_http_produce (struct rb_http_handler_s *handler,
 
 		if (message != NULL && message->len > 0 && message->payload != NULL) {
 			if (handler->options->mode == CHUNKED_MODE) {
-				if (handler->next_thread == handler->options->connections) {
-					handler->next_thread = 0;
-				}
+				const uint64_t next_thread = 
+					ATOMIC_OP(fetch,add,&handler->next_thread,1) 
+					% handler->options->connections;
 
 				message->timestamp = time(NULL);
-				rd_fifoq_add(&handler->threads[handler->next_thread++]->rfq, message);
+				rd_fifoq_add(&handler->threads[next_thread]->rfq, message);
 			} else {
 				rd_fifoq_add(&handler->threads[0]->rfq, message);
 			}

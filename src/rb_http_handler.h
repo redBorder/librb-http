@@ -36,7 +36,7 @@ struct rb_http_handler_s {
 	int still_running;       // NORMAL_MODE: Number of easy to be processed
 	int msgs_left;           // NORMAL_MODE
 	int left;                // NORMAL_MODE
-	int next_thread;
+	uint64_t next_thread;
 
 	struct rb_http_options_s *options; // Options
 	int thread_running;                // Keep threads running if set to 1
