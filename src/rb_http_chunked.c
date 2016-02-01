@@ -314,7 +314,6 @@ int rb_http_get_reports_chunked(struct rb_http_handler_s *rb_http_handler,
 							if (message->free_message && message->payload != NULL) {
 								free(message->payload);
 							}
-							free(message->client_opaque);
 							free(message);
 						}
 					}
