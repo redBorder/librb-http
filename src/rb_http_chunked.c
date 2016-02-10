@@ -37,7 +37,7 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 	} else {
 
 		clock_gettime(CLOCK_REALTIME, &spec);
-		now = round(spec.tv_nsec / 1.0e6);
+		now = round(spec.tv_sec);
 
 		// Read messages until we fill the buffer
 		if (&rb_http_threaddata->rfq != NULL) {
@@ -58,7 +58,7 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 					// We need to initialize a few things when starting new POST
 					if (rb_http_threaddata->chunks == 0 && writed == 0) {
 						clock_gettime(CLOCK_REALTIME, &spec);
-						rb_http_threaddata->post_timestamp = round(spec.tv_nsec / 1.0e6);
+						rb_http_threaddata->post_timestamp = round(spec.tv_sec);
 						rb_http_threaddata->strm = calloc(1, sizeof(z_stream));
 						rb_http_threaddata->strm->zalloc = Z_NULL;
 						rb_http_threaddata->strm->zfree  = Z_NULL;
@@ -90,7 +90,7 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 				}
 
 				clock_gettime(CLOCK_REALTIME, &spec);
-				now = round(spec.tv_nsec / 1.0e6);
+				now = round(spec.tv_sec);
 			}
 		}
 	}
