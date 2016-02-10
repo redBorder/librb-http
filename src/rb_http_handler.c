@@ -126,9 +126,9 @@ void rb_http_handler_run (struct rb_http_handler_s *rb_http_handler) {
 
 			if (rb_http_handler->options->insecure) {
 				curl_easy_setopt(rb_http_threaddata->easy_handle,
-					CURLOPT_SSL_VERIFYPEER,0);
+				                 CURLOPT_SSL_VERIFYPEER, 0);
 				curl_easy_setopt(rb_http_threaddata->easy_handle,
-					CURLOPT_SSL_VERIFYHOST,0);
+				                 CURLOPT_SSL_VERIFYHOST, 0);
 			}
 
 			pthread_create (&rb_http_threaddata->p_thread,
@@ -207,9 +207,9 @@ int rb_http_produce (struct rb_http_handler_s *handler,
 
 		if (message != NULL && message->len > 0 && message->payload != NULL) {
 			if (handler->options->mode == CHUNKED_MODE) {
-				const uint64_t next_thread = 
-					ATOMIC_OP(fetch,add,&handler->next_thread,1) 
-					% handler->options->connections;
+				const uint64_t next_thread =
+				    ATOMIC_OP(fetch, add, &handler->next_thread, 1)
+				    % handler->options->connections;
 
 				message->timestamp = time(NULL);
 				rd_fifoq_add(&handler->threads[next_thread]->rfq, message);
