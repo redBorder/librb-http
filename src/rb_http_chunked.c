@@ -40,7 +40,7 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 		now = round(spec.tv_sec);
 
 		// Read messages until we fill the buffer
-		if (&rb_http_threaddata->rfq != NULL) {
+		if (rb_http_threaddata != NULL) {
 			while (
 			    now - rb_http_threaddata->post_timestamp <
 			    rb_http_handler->options->post_timeout
@@ -190,6 +190,11 @@ void *rb_http_process_chunked (void *arg) {
 			rd_fifoq_add(&rb_http_handler->rfq_reports, report);
 		}
 
+    if (rb_http_handler->options->insecure) {
+      curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_SSL_VERIFYPEER, 0);
+      curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_SSL_VERIFYHOST, 0);
+    }
+
 		if (curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_TIMEOUT_MS,
 		                     rb_http_handler->options->timeout) != CURLE_OK) {
 			struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
@@ -290,7 +295,7 @@ int rb_http_get_reports_chunked(struct rb_http_handler_s *rb_http_handler,
 		nowait = 1;
 	}
 
-	if (&rb_http_handler->rfq_reports != NULL) {
+	if (rb_http_handler != NULL) {
 		while ((rfqe = rd_fifoq_pop0(&rb_http_handler->rfq_reports,
 		                             nowait,
 		                             timeout_ms)) != NULL) {
