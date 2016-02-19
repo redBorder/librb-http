@@ -220,10 +220,9 @@ int rb_http_produce (struct rb_http_handler_s *handler,
 	} else {
 		ATOMIC_OP(sub, fetch, &handler->left, 1);
 		error++;
+		snprintf(err,errsize,"librbhttp internal queue full");
 	}
 
-	(void) err;
-	(void) errsize;
 
 	return error;
 }
