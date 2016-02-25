@@ -14,83 +14,98 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
   struct rb_http_message_s *message = NULL;
   struct rb_http_threaddata_s *rb_http_threaddata =
       (struct rb_http_threaddata_s *)userp;
-
   struct rb_http_handler_s *rb_http_handler =
       (struct rb_http_handler_s *)rb_http_threaddata->rb_http_handler;
 
-  // Send remaining message if neccesary
+  // Send remaining message if neccesary. This happends when the previous
+  // message didn't fit on the buffer
   if (rb_http_threaddata->strm != NULL &&
       rb_http_threaddata->strm->avail_in > 0) {
 
+    // Update deflate buffers
     rb_http_threaddata->strm->next_out = (Bytef *)ptr;
     rb_http_threaddata->strm->avail_out = nmemb - (ulong)writed;
 
-    deflate(rb_http_threaddata->strm, Z_SYNC_FLUSH);
+    deflate(rb_http_threaddata->strm, Z_BLOCK);
 
+    // Compute writed bytes on buffer
     writed = nmemb - rb_http_threaddata->strm->avail_out;
 
-    // This message has been completely read
+    // This message has been completely read. We can finally add it to the
+    // queue
     if (rb_http_threaddata->strm->avail_in == 0) {
       rb_http_msg_q_add(rb_http_threaddata->rfq_pending,
                         rb_http_threaddata->message_left);
     }
   } else {
-
-    clock_gettime(CLOCK_REALTIME, &spec);
-    now = round(spec.tv_sec);
-
-    // Read messages until we fill the buffer
     if (rb_http_threaddata != NULL) {
-      while (now - rb_http_threaddata->post_timestamp <
-                 rb_http_handler->options->post_timeout &&
-             rb_http_threaddata->current_messages <
-                 rb_http_handler->options->max_batch_messages &&
-             (rfqe = rd_fifoq_pop_timedwait(&rb_http_threaddata->rfq, 500)) !=
-                 NULL &&
-             rfqe->rfqe_ptr != NULL) {
+      rb_http_threaddata->post_timestamp = 0;
+      // Read messages if...
+      while (
+          // ...we are allowed to send more message on this batch
+          rb_http_threaddata->current_messages <
+              rb_http_handler->options->max_batch_messages &&
+          // ...there are messages to be readed from the queue
+          (rfqe = rd_fifoq_pop_timedwait(&rb_http_threaddata->rfq, 500)) !=
+              NULL &&
+          // ...the message readed from the queue is not NULL
+          rfqe->rfqe_ptr != NULL) {
 
-        if (now - rb_http_threaddata->post_timestamp <
+        message = rfqe->rfqe_ptr;
+        rd_fifoq_elm_release(&rb_http_threaddata->rfq, rfqe);
+
+        // We need to initialize a few things when starting new POST
+        if (rb_http_threaddata->chunks == 0 && writed == 0) {
+          // Timer starts here because this is the first message on the POST
+          // request
+          clock_gettime(CLOCK_REALTIME, &spec);
+          rb_http_threaddata->post_timestamp =
+              round(spec.tv_sec) * 1000 + round(spec.tv_nsec) / (1000 * 1000);
+
+          // Prepare buffers for deflate
+          rb_http_threaddata->strm = calloc(1, sizeof(z_stream));
+          rb_http_threaddata->strm->zalloc = Z_NULL;
+          rb_http_threaddata->strm->zfree = Z_NULL;
+          rb_http_threaddata->strm->opaque = Z_NULL;
+          deflateInit(rb_http_threaddata->strm, Z_DEFAULT_COMPRESSION);
+
+          // Initialize the report queue
+          rb_http_threaddata->rfq_pending = calloc(1, sizeof(rd_fifoq_t));
+          rb_http_msg_q_init(rb_http_threaddata->rfq_pending);
+        }
+
+        // Check if timeout has not been triggered
+        clock_gettime(CLOCK_REALTIME, &spec);
+        now = round(spec.tv_sec) * 1000 + round(spec.tv_nsec) / (1000 * 1000);
+        if (now - rb_http_threaddata->post_timestamp >=
             rb_http_handler->options->post_timeout) {
-
-          message = rfqe->rfqe_ptr;
-          rd_fifoq_elm_release(&rb_http_threaddata->rfq, rfqe);
-
-          // We need to initialize a few things when starting new POST
-          if (rb_http_threaddata->chunks == 0 && writed == 0) {
-            clock_gettime(CLOCK_REALTIME, &spec);
-            rb_http_threaddata->post_timestamp = round(spec.tv_sec);
-            rb_http_threaddata->strm = calloc(1, sizeof(z_stream));
-            rb_http_threaddata->strm->zalloc = Z_NULL;
-            rb_http_threaddata->strm->zfree = Z_NULL;
-            rb_http_threaddata->strm->opaque = Z_NULL;
-            deflateInit(rb_http_threaddata->strm, Z_DEFAULT_COMPRESSION);
-            rb_http_threaddata->rfq_pending = calloc(1, sizeof(rd_fifoq_t));
-            rb_http_msg_q_init(rb_http_threaddata->rfq_pending);
-          }
-
-          rb_http_threaddata->strm->next_in = (Bytef *)message->payload;
-          rb_http_threaddata->strm->avail_in = message->len;
-          rb_http_threaddata->strm->next_out = (Bytef *)ptr + writed;
-          rb_http_threaddata->strm->avail_out = nmemb - (ulong)writed;
-
-          deflate(rb_http_threaddata->strm, Z_BLOCK);
-
-          writed = nmemb - rb_http_threaddata->strm->avail_out;
-
-          // This message hasn't been completely read
-          if (rb_http_threaddata->strm->avail_in > 0) {
-            rb_http_threaddata->message_left = message;
-            break;
-          }
-
-          rb_http_msg_q_add(rb_http_threaddata->rfq_pending, message);
-          rb_http_threaddata->current_messages++;
-        } else {
           break;
         }
 
+        // Update deflate buffers
+        rb_http_threaddata->strm->next_in = (Bytef *)message->payload;
+        rb_http_threaddata->strm->avail_in = message->len;
+        rb_http_threaddata->strm->next_out = (Bytef *)ptr + writed;
+        rb_http_threaddata->strm->avail_out = nmemb - (ulong)writed;
+
+        deflate(rb_http_threaddata->strm, Z_BLOCK);
+
+        // Compute writed bytes on buffer
+        writed = nmemb - rb_http_threaddata->strm->avail_out;
+
+        // This message hasn't been completely read. It will be read on next
+        // iteration so it is necessary to break here so we don't send an
+        // incomplete message
+        if (rb_http_threaddata->strm->avail_in > 0) {
+          rb_http_threaddata->message_left = message;
+          break;
+        }
+
+        rb_http_msg_q_add(rb_http_threaddata->rfq_pending, message);
+        rb_http_threaddata->current_messages++;
+
         clock_gettime(CLOCK_REALTIME, &spec);
-        now = round(spec.tv_sec);
+        now = round(spec.tv_nsec) * 1000 * 1000;
       }
     }
   }
@@ -257,29 +272,31 @@ void *rb_http_process_chunked(void *arg) {
     } else {
       rd_fifoq_elm_t *rfqe =
           (rd_fifoq_elm_t *)TAILQ_FIRST(&rb_http_threaddata->rfq.rfq_q);
+      if (rfqe != NULL) {
+        struct rb_http_message_s *message =
+            (struct rb_http_message_s *)rfqe->rfqe_ptr;
 
-      struct rb_http_message_s *message =
-          (struct rb_http_message_s *)rfqe->rfqe_ptr;
+        if (time(NULL) - message->timestamp >
+            rb_http_handler->options->conntimeout / 1000) {
+          rd_fifoq_pop(&rb_http_threaddata->rfq);
+          struct rb_http_report_s *report =
+              calloc(1, sizeof(struct rb_http_report_s));
+          report->rfq_msgs = calloc(1, sizeof(rd_fifoq_t));
 
-      if (time(NULL) - message->timestamp >
-          rb_http_handler->options->conntimeout / 1000) {
-        rd_fifoq_pop(&rb_http_threaddata->rfq);
-        struct rb_http_report_s *report =
-            calloc(1, sizeof(struct rb_http_report_s));
+          rb_http_msg_q_init(report->rfq_msgs);
 
-        report->rfq_msgs = calloc(1, sizeof(rd_fifoq_t));
-        rb_http_msg_q_init(report->rfq_msgs);
-        report->headers = headers;
-        report->err_code = res;
-        report->handler = rb_http_threaddata->easy_handle;
-        curl_easy_getinfo(rb_http_threaddata->easy_handle,
-                          CURLINFO_RESPONSE_CODE, &report->http_code);
+          report->headers = headers;
+          report->err_code = res;
+          report->handler = rb_http_threaddata->easy_handle;
 
-        rb_http_msg_q_add(report->rfq_msgs, message);
-        rd_fifoq_elm_release(&rb_http_threaddata->rfq, rfqe);
-        rd_fifoq_add(&rb_http_handler->rfq_reports, report);
-      } else {
-        curl_slist_free_all(headers);
+          curl_easy_getinfo(rb_http_threaddata->easy_handle,
+                            CURLINFO_RESPONSE_CODE, &report->http_code);
+          rb_http_msg_q_add(report->rfq_msgs, message);
+          rd_fifoq_elm_release(&rb_http_threaddata->rfq, rfqe);
+          rd_fifoq_add(&rb_http_handler->rfq_reports, report);
+        } else {
+          curl_slist_free_all(headers);
+        }
       }
     }
   }
