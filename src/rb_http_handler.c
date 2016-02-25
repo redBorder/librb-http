@@ -64,6 +64,8 @@ int rb_http_handler_set_opt(struct rb_http_handler_s *rb_http_handler,
     rb_http_handler->options->conntimeout = atol(val);
   } else if (!strcmp(key, "RB_HTTP_MAX_MESSAGES")) {
     rb_http_handler->options->max_messages = atoi(val);
+  } else if (!strcmp(key, "RB_HTTP_BATCH_TIMEOUT")) {
+    rb_http_handler->options->batch_timeout = atoi(val);
   } else if (!strcmp(key, "HTTP_INSECURE")) {
     rb_http_handler->options->insecure = atol(val);
   } else {
