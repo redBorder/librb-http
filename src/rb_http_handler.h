@@ -50,6 +50,7 @@ struct rb_http_options_s {
   int mode;               // NORMAL_MODE or GZIP_MODE
   int max_messages;       // Max messages in queue
   int max_batch_messages; // Max messages per POST
+  int batch_timeout;      // Max time to wait before send data
   int connections;        // Number of simultaneous connections
   long post_timeout;      //
   long timeout;           // Total timeout
