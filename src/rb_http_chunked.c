@@ -39,7 +39,6 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
     }
   } else {
     if (rb_http_threaddata != NULL) {
-      rb_http_threaddata->post_timestamp = 0;
       // Read messages if...
       while (
           // ...we are allowed to send more message on this batch
@@ -56,11 +55,12 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
 
         // We need to initialize a few things when starting new POST
         if (rb_http_threaddata->chunks == 0 && writed == 0) {
+
           // Timer starts here because this is the first message on the POST
           // request
           clock_gettime(CLOCK_REALTIME, &spec);
           rb_http_threaddata->post_timestamp =
-              round(spec.tv_sec) * 1000 + round(spec.tv_nsec) / (1000 * 1000);
+              spec.tv_sec * 1000 + spec.tv_nsec / (1000 * 1000);
 
           // Prepare buffers for deflate
           rb_http_threaddata->strm = calloc(1, sizeof(z_stream));
@@ -72,14 +72,6 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
           // Initialize the report queue
           rb_http_threaddata->rfq_pending = calloc(1, sizeof(rd_fifoq_t));
           rb_http_msg_q_init(rb_http_threaddata->rfq_pending);
-        }
-
-        // Check if timeout has not been triggered
-        clock_gettime(CLOCK_REALTIME, &spec);
-        now = round(spec.tv_sec) * 1000 + round(spec.tv_nsec) / (1000 * 1000);
-        if (now - rb_http_threaddata->post_timestamp >=
-            rb_http_handler->options->post_timeout) {
-          break;
         }
 
         // Update deflate buffers
@@ -104,8 +96,13 @@ static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
         rb_http_msg_q_add(rb_http_threaddata->rfq_pending, message);
         rb_http_threaddata->current_messages++;
 
+        // Check if timeout has been triggered
         clock_gettime(CLOCK_REALTIME, &spec);
-        now = round(spec.tv_nsec) * 1000 * 1000;
+        now = spec.tv_sec * 1000 + spec.tv_nsec / (1000 * 1000);
+        if (now - rb_http_threaddata->post_timestamp >=
+            rb_http_handler->options->post_timeout) {
+          break;
+        }
       }
     }
   }
