@@ -1,5 +1,3 @@
-[![build status](https://ci.redborder.lan/projects/25/status.png?ref=master)](https://ci.redborder.lan/projects/25?ref=master)
-
 # librb-http
 
 Non-blocking high-level wrapper for libcurl.
