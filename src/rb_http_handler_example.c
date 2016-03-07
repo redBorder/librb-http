@@ -12,7 +12,7 @@
 #define MESSAGE                                                                \
   "{\"client_mac\": \"54:26:96:db:88:01\", \"application_name\": \"wwww\", "   \
   "\"sensor_uuid\":\"abc\", \"a\":5}"
-#define N_MESSAGE 50 * 1
+#define N_MESSAGE 100 * 1
 #define URL "http://localhost:8080"
 
 struct rb_http_handler_s *handler = NULL;
@@ -46,8 +46,9 @@ static void my_callback(struct rb_http_handler_s *rb_http_handler,
 void *get_reports(void *ptr) {
   (void)ptr;
 
-  while (rb_http_get_reports(handler, my_callback, 100) != 0)
-    ;
+  while (1) {
+    rb_http_get_reports(handler, my_callback, 500);
+  }
 
   return NULL;
 }
@@ -58,27 +59,29 @@ int main() {
   rb_http_handler_set_opt(handler, "HTTP_VERBOSE", "0", NULL, 0);
   rb_http_handler_set_opt(handler, "HTTP_CONNTTIMEOUT", "5000", NULL, 0);
   rb_http_handler_set_opt(handler, "HTTP_TIMEOUT", "15000", NULL, 0);
-  rb_http_handler_set_opt(handler, "RB_HTTP_BATCH_TIMEOUT", "500", NULL, 0);
-  rb_http_handler_set_opt(handler, "RB_HTTP_MAX_MESSAGES", "512", NULL, 0);
+  rb_http_handler_set_opt(handler, "RB_HTTP_BATCH_TIMEOUT", "1000", NULL, 0);
+  rb_http_handler_set_opt(handler, "RB_HTTP_MAX_MESSAGES", "10000", NULL, 0);
   rb_http_handler_set_opt(handler, "RB_HTTP_CONNECTIONS", "1", NULL, 0);
-  rb_http_handler_set_opt(handler, "RB_HTTP_MODE", RB_HTTP_CHUNKED_MODE, NULL,
-                          0);
+  rb_http_handler_set_opt(handler, "RB_HTTP_MODE", "2", NULL, 0);
+  rb_http_handler_set_opt(handler, "RB_HTTP_DEFLATE", "1", NULL, 0);
 
   rb_http_handler_run(handler);
 
   printf("Sending %d messages\n", N_MESSAGE);
   int i = 0;
 
-  char *message = NULL;
   pthread_t p_thread;
 
   pthread_create(&p_thread, NULL, &get_reports, NULL);
 
   for (i = 0; i < N_MESSAGE; i++) {
-    while (rb_http_produce(handler, message = strdup(MESSAGE), strlen(MESSAGE),
+    char *message = calloc(20, sizeof(char));
+    sprintf(message, "MESSAGE %d", i);
+    while (rb_http_produce(handler, message, strlen(message),
                            RB_HTTP_MESSAGE_F_FREE, NULL, 0, NULL) > 0) {
       free(message);
     }
+    usleep(500000);
   }
 
   pthread_join(p_thread, NULL);
