@@ -1,331 +1,347 @@
 #include "rb_http_chunked.h"
-#include <math.h>
 #include "../config.h"
+#include <math.h>
 
 static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
                                   void *userp) {
 
-	(void) size;
+  (void)size;
 
-	rd_fifoq_elm_t *rfqe = NULL;
-	size_t writed = 0;
-	long now;
-	struct timespec spec;
-	struct rb_http_message_s *message = NULL;
-	struct rb_http_threaddata_s *rb_http_threaddata =
-	    (struct rb_http_threaddata_s *) userp;
+  rd_fifoq_elm_t *rfqe = NULL;
+  size_t writed = 0;
+  long now;
+  struct timespec spec;
+  struct rb_http_message_s *message = NULL;
+  struct rb_http_threaddata_s *rb_http_threaddata =
+      (struct rb_http_threaddata_s *)userp;
+  struct rb_http_handler_s *rb_http_handler =
+      (struct rb_http_handler_s *)rb_http_threaddata->rb_http_handler;
 
-	struct rb_http_handler_s *rb_http_handler =
-	    (struct rb_http_handler_s *) rb_http_threaddata->rb_http_handler;
+  // Send remaining message if neccesary. This happends when the previous
+  // message didn't fit on the buffer
+  if (rb_http_threaddata->strm != NULL &&
+      rb_http_threaddata->strm->avail_in > 0) {
 
-	// Send remaining message if neccesary
-	if ( rb_http_threaddata->strm != NULL
-	        && rb_http_threaddata->strm->avail_in > 0) {
+    // Update deflate buffers
+    rb_http_threaddata->strm->next_out = (Bytef *)ptr;
+    rb_http_threaddata->strm->avail_out = nmemb - (ulong)writed;
 
-		rb_http_threaddata->strm->next_out = (Bytef *)ptr;
-		rb_http_threaddata->strm->avail_out = nmemb - (ulong) writed;
+    deflate(rb_http_threaddata->strm, Z_SYNC_FLUSH);
 
-		deflate(rb_http_threaddata->strm, Z_SYNC_FLUSH);
+    // Compute writed bytes on buffer
+    writed = nmemb - rb_http_threaddata->strm->avail_out;
 
-		writed = nmemb - rb_http_threaddata->strm->avail_out;
+    // This message has been completely read. We can finally add it to the
+    // queue
+    if (rb_http_threaddata->strm->avail_in == 0) {
+      rb_http_msg_q_add(rb_http_threaddata->rfq_pending,
+                        rb_http_threaddata->message_left);
+    }
+  } else {
+    if (rb_http_threaddata != NULL) {
+      // Read messages if...
+      while (
+          // ...we are allowed to send more message on this batch
+          rb_http_threaddata->current_messages <
+              rb_http_handler->options->max_batch_messages &&
+          // ...there are messages to be readed from the queue
+          (rfqe = rd_fifoq_pop_timedwait(&rb_http_threaddata->rfq, 500)) !=
+              NULL &&
+          // ...the message readed from the queue is not NULL
+          rfqe->rfqe_ptr != NULL) {
 
-		// This message has been completely read
-		if (rb_http_threaddata->strm->avail_in == 0) {
-			rb_http_msg_q_add(rb_http_threaddata->rfq_pending,
-			                  rb_http_threaddata->message_left);
-		}
-	} else {
+        message = rfqe->rfqe_ptr;
+        rd_fifoq_elm_release(&rb_http_threaddata->rfq, rfqe);
 
-		clock_gettime(CLOCK_REALTIME, &spec);
-		now = round(spec.tv_nsec / 1.0e6);
+        // We need to initialize a few things when starting new POST
+        if (rb_http_threaddata->chunks == 0 && writed == 0) {
 
-		// Read messages until we fill the buffer
-		if (&rb_http_threaddata->rfq != NULL) {
-			while (
-			    now - rb_http_threaddata->post_timestamp <
-			    rb_http_handler->options->post_timeout
-			    && rb_http_threaddata->current_messages <
-			    rb_http_handler->options->max_batch_messages
-			    && (rfqe = rd_fifoq_pop_timedwait(&rb_http_threaddata->rfq, 500)) != NULL
-			    && rfqe->rfqe_ptr != NULL) {
+          // Timer starts here because this is the first message on the POST
+          // request
+          clock_gettime(CLOCK_REALTIME, &spec);
+          rb_http_threaddata->post_timestamp =
+              spec.tv_sec * 1000 + spec.tv_nsec / (1000 * 1000);
 
-				if (now - rb_http_threaddata->post_timestamp <
-				        rb_http_handler->options->post_timeout) {
+          // Prepare buffers for deflate
+          rb_http_threaddata->strm = calloc(1, sizeof(z_stream));
+          rb_http_threaddata->strm->zalloc = Z_NULL;
+          rb_http_threaddata->strm->zfree = Z_NULL;
+          rb_http_threaddata->strm->opaque = Z_NULL;
+          deflateInit(rb_http_threaddata->strm, Z_DEFAULT_COMPRESSION);
 
-					message = rfqe->rfqe_ptr;
-					rd_fifoq_elm_release(&rb_http_threaddata->rfq, rfqe);
+          // Initialize the report queue
+          rb_http_threaddata->rfq_pending = calloc(1, sizeof(rd_fifoq_t));
+          rb_http_msg_q_init(rb_http_threaddata->rfq_pending);
+        }
 
-					// We need to initialize a few things when starting new POST
-					if (rb_http_threaddata->chunks == 0 && writed == 0) {
-						clock_gettime(CLOCK_REALTIME, &spec);
-						rb_http_threaddata->post_timestamp = round(spec.tv_nsec / 1.0e6);
-						rb_http_threaddata->strm = calloc(1, sizeof(z_stream));
-						rb_http_threaddata->strm->zalloc = Z_NULL;
-						rb_http_threaddata->strm->zfree  = Z_NULL;
-						rb_http_threaddata->strm->opaque = Z_NULL;
-						deflateInit(rb_http_threaddata->strm, Z_DEFAULT_COMPRESSION);
-						rb_http_threaddata->rfq_pending = calloc(1, sizeof(rd_fifoq_t));
-						rb_http_msg_q_init(rb_http_threaddata->rfq_pending);
-					}
+        // Update deflate buffers
+        rb_http_threaddata->strm->next_in = (Bytef *)message->payload;
+        rb_http_threaddata->strm->avail_in = message->len;
+        rb_http_threaddata->strm->next_out = (Bytef *)ptr + writed;
+        rb_http_threaddata->strm->avail_out = nmemb - (ulong)writed;
 
-					rb_http_threaddata->strm->next_in = (Bytef *)message->payload;
-					rb_http_threaddata->strm->avail_in = message->len;
-					rb_http_threaddata->strm->next_out = (Bytef *)ptr + writed;
-					rb_http_threaddata->strm->avail_out = nmemb - (ulong) writed;
+        deflate(rb_http_threaddata->strm, Z_SYNC_FLUSH);
 
-					deflate(rb_http_threaddata->strm, Z_BLOCK);
+        // Compute writed bytes on buffer
+        writed = nmemb - rb_http_threaddata->strm->avail_out;
 
-					writed = nmemb - rb_http_threaddata->strm->avail_out;
+        // This message hasn't been completely read. It will be read on next
+        // iteration so it is necessary to break here so we don't send an
+        // incomplete message
+        if (rb_http_threaddata->strm->avail_in > 0) {
+          rb_http_threaddata->message_left = message;
+          break;
+        }
 
-					// This message hasn't been completely read
-					if (rb_http_threaddata->strm->avail_in > 0) {
-						rb_http_threaddata->message_left = message;
-						break;
-					}
+        rb_http_msg_q_add(rb_http_threaddata->rfq_pending, message);
+        rb_http_threaddata->current_messages++;
 
-					rb_http_msg_q_add(rb_http_threaddata->rfq_pending, message);
-					rb_http_threaddata->current_messages++;
-				} else {
-					break;
-				}
+        // Check if timeout has been triggered
+        clock_gettime(CLOCK_REALTIME, &spec);
+        now = spec.tv_sec * 1000 + spec.tv_nsec / (1000 * 1000);
+        if (now - rb_http_threaddata->post_timestamp >=
+            rb_http_handler->options->post_timeout) {
+          break;
+        }
+      }
+    }
+  }
 
-				clock_gettime(CLOCK_REALTIME, &spec);
-				now = round(spec.tv_nsec / 1.0e6);
-			}
-		}
-	}
+  // If there is no data to send
+  if (writed == 0) {
 
-	// If there is no data to send
-	if (writed == 0) {
+    // And we already sent data
+    if (rb_http_threaddata->chunks > 0) {
 
-		// And we already sent data
-		if (rb_http_threaddata->chunks > 0) {
+      // Send the zero-length chunk and reset chunks counter
+      deflateEnd(rb_http_threaddata->strm);
+      free(rb_http_threaddata->strm);
+      rb_http_threaddata->current_messages = 0;
+      rb_http_threaddata->strm = NULL;
+      rb_http_threaddata->chunks = 0;
+    } else {
 
-			// Send the zero-length chunk and reset chunks counter
-			deflateEnd(rb_http_threaddata->strm);
-			free(rb_http_threaddata->strm);
-			rb_http_threaddata->current_messages = 0;
-			rb_http_threaddata->strm = NULL;
-			rb_http_threaddata->chunks = 0;
-		} else {
+      // Is not the first time we are not getting any data. Pause transfer.
+      rb_http_threaddata->rfq_pending = calloc(1, sizeof(rd_fifoq_t));
+      rb_http_msg_q_init(rb_http_threaddata->rfq_pending);
+      return CURL_READFUNC_PAUSE;
+    }
+  } else {
+    // If we send data increase number of chunks
+    rb_http_threaddata->chunks++;
+  }
 
-			// Is not the first time we are not getting any data. Pause transfer.
-			rb_http_threaddata->rfq_pending = calloc(1, sizeof(rd_fifoq_t));
-			rb_http_msg_q_init(rb_http_threaddata->rfq_pending);
-			return CURL_READFUNC_PAUSE;
-		}
-	} else {
-		// If we send data increase number of chunks
-		rb_http_threaddata->chunks++;
-	}
-
-	return writed;
+  return writed;
 }
 
-static size_t write_null_callback (void *buffer,
-                                   size_t size,
-                                   size_t nmemb,
-                                   void *opaque) {
-	(void) buffer;
-	(void) opaque;
+static size_t write_null_callback(void *buffer, size_t size, size_t nmemb,
+                                  void *opaque) {
+  (void)buffer;
+  (void)opaque;
 
-	return nmemb * size;
+  return nmemb * size;
 }
 
-void *rb_http_process_chunked (void *arg) {
+void *rb_http_process_chunked(void *arg) {
 
-	struct rb_http_threaddata_s *rb_http_threaddata =
-	    (struct rb_http_threaddata_s *) arg;
+  struct rb_http_threaddata_s *rb_http_threaddata =
+      (struct rb_http_threaddata_s *)arg;
 
-	struct rb_http_handler_s *rb_http_handler =
-	    (struct rb_http_handler_s *)rb_http_threaddata->rb_http_handler;
+  struct rb_http_handler_s *rb_http_handler =
+      (struct rb_http_handler_s *)rb_http_threaddata->rb_http_handler;
 
-	assert(rb_http_threaddata != NULL);
-	assert(rb_http_handler != NULL);
-	assert(rb_http_handler->options != NULL);
+  assert(rb_http_threaddata != NULL);
+  assert(rb_http_handler != NULL);
+  assert(rb_http_handler->options != NULL);
 
-	while (1) {
-		if (curl_easy_setopt (rb_http_threaddata->easy_handle,
-		                      CURLOPT_URL,
-		                      rb_http_handler->options->url)
-		        != CURLE_OK) {
-			struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-			report->err_code = -1;
-			report->http_code = 0;
-			report->handler = NULL;
-			rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-		}
+  while (1) {
+    if (curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_URL,
+                         rb_http_handler->options->url) != CURLE_OK) {
+      struct rb_http_report_s *report =
+          calloc(1, sizeof(struct rb_http_report_s));
+      report->err_code = -1;
+      report->http_code = 0;
+      report->handler = NULL;
+      rd_fifoq_add(&rb_http_handler->rfq_reports, report);
+    }
 
-		struct curl_slist *headers = NULL;
+    struct curl_slist *headers = NULL;
 
-		headers = curl_slist_append(headers,
-		                            "Accept: application/json");
-		headers = curl_slist_append(headers,
-		                            "Content-Type: application/json");
-		headers = curl_slist_append(headers, "charsets: utf-8");
-		headers = curl_slist_append(headers, "Expect:");
-		headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
-		headers = curl_slist_append(headers, "Content-Encoding: deflate");
+    headers = curl_slist_append(headers, "Accept: application/json");
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    headers = curl_slist_append(headers, "charsets: utf-8");
+    headers = curl_slist_append(headers, "Expect:");
+    headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
+    headers = curl_slist_append(headers, "Content-Encoding: deflate");
 
-		curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_WRITEFUNCTION,
-		                 write_null_callback);
+    curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_WRITEFUNCTION,
+                     write_null_callback);
 
-		if (curl_easy_setopt (rb_http_threaddata->easy_handle, CURLOPT_HTTPHEADER,
-		                      headers) != CURLE_OK) {
-			struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-			report->err_code = -1;
-			report->http_code = 0;
-			report->handler = NULL;
-			rd_fifoq_add (&rb_http_handler->rfq_reports, report);
-		}
+    if (curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_HTTPHEADER,
+                         headers) != CURLE_OK) {
+      struct rb_http_report_s *report =
+          calloc(1, sizeof(struct rb_http_report_s));
+      report->err_code = -1;
+      report->http_code = 0;
+      report->handler = NULL;
+      rd_fifoq_add(&rb_http_handler->rfq_reports, report);
+    }
 
-		curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_NOSIGNAL, 1);
+    curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_NOSIGNAL, 1);
 
-		if (curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_VERBOSE,
-		                     rb_http_handler->options->verbose) != CURLE_OK) {
-			struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-			report->err_code = -1;
-			report->http_code = 0;
-			report->handler = NULL;
-			rd_fifoq_add(&rb_http_handler->rfq_reports, report);
-		}
+    if (curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_VERBOSE,
+                         rb_http_handler->options->verbose) != CURLE_OK) {
+      struct rb_http_report_s *report =
+          calloc(1, sizeof(struct rb_http_report_s));
+      report->err_code = -1;
+      report->http_code = 0;
+      report->handler = NULL;
+      rd_fifoq_add(&rb_http_handler->rfq_reports, report);
+    }
 
-		if (curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_TIMEOUT_MS,
-		                     rb_http_handler->options->timeout) != CURLE_OK) {
-			struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-			report->err_code = -1;
-			report->http_code = 0;
-			report->handler = NULL;
-			rd_fifoq_add(&rb_http_handler->rfq_reports, report);
-		}
+    if (rb_http_handler->options->insecure) {
+      curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_SSL_VERIFYPEER,
+                       0);
+      curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_SSL_VERIFYHOST,
+                       0);
+    }
 
-		if (curl_easy_setopt(rb_http_threaddata->easy_handle,
-		                     CURLOPT_CONNECTTIMEOUT_MS,
-		                     rb_http_handler->options->conntimeout) != CURLE_OK) {
-			struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
-			report->err_code = -1;
-			report->http_code = 0;
-			report->handler = NULL;
-			rd_fifoq_add(&rb_http_handler->rfq_reports, report);
-		}
+    if (curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_TIMEOUT_MS,
+                         rb_http_handler->options->timeout) != CURLE_OK) {
+      struct rb_http_report_s *report =
+          calloc(1, sizeof(struct rb_http_report_s));
+      report->err_code = -1;
+      report->http_code = 0;
+      report->handler = NULL;
+      rd_fifoq_add(&rb_http_handler->rfq_reports, report);
+    }
 
-		curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_POST, 1L);
-		curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_READDATA,
-		                 rb_http_threaddata);
-		curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_READFUNCTION,
-		                 read_callback_batch);
-		CURLcode res;
-		int cnt = 0;
+    if (curl_easy_setopt(rb_http_threaddata->easy_handle,
+                         CURLOPT_CONNECTTIMEOUT_MS,
+                         rb_http_handler->options->conntimeout) != CURLE_OK) {
+      struct rb_http_report_s *report =
+          calloc(1, sizeof(struct rb_http_report_s));
+      report->err_code = -1;
+      report->http_code = 0;
+      report->handler = NULL;
+      rd_fifoq_add(&rb_http_handler->rfq_reports, report);
+    }
 
-		do {
-			pthread_mutex_lock(&rb_http_threaddata->rfq.rfq_lock);
-			cnt = rb_http_threaddata->rfq.rfq_cnt;
-			pthread_mutex_unlock(&rb_http_threaddata->rfq.rfq_lock);
+    curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_POST, 1L);
+    curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_READDATA,
+                     rb_http_threaddata);
+    curl_easy_setopt(rb_http_threaddata->easy_handle, CURLOPT_READFUNCTION,
+                     read_callback_batch);
+    CURLcode res;
+    int cnt = 0;
 
-			if (cnt == 0) {
-				sleep(1);
-				if (ATOMIC_OP(sub, fetch,
-				              &rb_http_threaddata->rb_http_handler->thread_running, 0) == 0) {
-					curl_slist_free_all(headers);
-					return NULL;
-				}
-			}
-		}	while (cnt == 0);
+    do {
+      pthread_mutex_lock(&rb_http_threaddata->rfq.rfq_lock);
+      cnt = rb_http_threaddata->rfq.rfq_cnt;
+      pthread_mutex_unlock(&rb_http_threaddata->rfq.rfq_lock);
 
-		res = curl_easy_perform(rb_http_threaddata->easy_handle);
+      if (cnt == 0) {
+        sleep(1);
+        if (ATOMIC_OP(sub, fetch,
+                      &rb_http_threaddata->rb_http_handler->thread_running,
+                      0) == 0) {
+          curl_slist_free_all(headers);
+          return NULL;
+        }
+      }
+    } while (cnt == 0);
 
-		if (res == CURLE_OK) {
+    res = curl_easy_perform(rb_http_threaddata->easy_handle);
 
-			struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+    if (res == CURLE_OK) {
 
-			report->rfq_msgs = rb_http_threaddata->rfq_pending;
-			report->headers = headers;
-			report->err_code = res;
-			report->handler = rb_http_threaddata->easy_handle;
-			curl_easy_getinfo(rb_http_threaddata->easy_handle,
-			                  CURLINFO_RESPONSE_CODE,
-			                  &report->http_code);
+      struct rb_http_report_s *report =
+          calloc(1, sizeof(struct rb_http_report_s));
 
-			rd_fifoq_add(&rb_http_handler->rfq_reports, report);
-		} else {
-			rd_fifoq_elm_t *rfqe = (rd_fifoq_elm_t *) TAILQ_FIRST(
-			                           &rb_http_threaddata->rfq.rfq_q);
-			struct rb_http_message_s *message = (struct rb_http_message_s *) rfqe->rfqe_ptr;
+      report->rfq_msgs = rb_http_threaddata->rfq_pending;
+      report->headers = headers;
+      report->err_code = res;
+      report->handler = rb_http_threaddata->easy_handle;
+      curl_easy_getinfo(rb_http_threaddata->easy_handle, CURLINFO_RESPONSE_CODE,
+                        &report->http_code);
 
-			if (time(NULL) - message->timestamp > rb_http_handler->options->conntimeout /
-			        1000) {
-				rd_fifoq_pop(&rb_http_threaddata->rfq);
-				struct rb_http_report_s *report = calloc(1, sizeof(struct rb_http_report_s));
+      rd_fifoq_add(&rb_http_handler->rfq_reports, report);
+    } else {
+      rd_fifoq_elm_t *rfqe =
+          (rd_fifoq_elm_t *)TAILQ_FIRST(&rb_http_threaddata->rfq.rfq_q);
+      if (rfqe != NULL) {
+        struct rb_http_message_s *message =
+            (struct rb_http_message_s *)rfqe->rfqe_ptr;
 
-				report->rfq_msgs = calloc(1, sizeof(rd_fifoq_t));
-				rb_http_msg_q_init(report->rfq_msgs);
-				report->headers = headers;
-				report->err_code = res;
-				report->handler = rb_http_threaddata->easy_handle;
-				curl_easy_getinfo(rb_http_threaddata->easy_handle,
-				                  CURLINFO_RESPONSE_CODE,
-				                  &report->http_code);
+        if (time(NULL) - message->timestamp >
+            rb_http_handler->options->conntimeout / 1000) {
+          rd_fifoq_pop(&rb_http_threaddata->rfq);
+          struct rb_http_report_s *report =
+              calloc(1, sizeof(struct rb_http_report_s));
+          report->rfq_msgs = calloc(1, sizeof(rd_fifoq_t));
 
-				rb_http_msg_q_add(report->rfq_msgs, message);
-				rd_fifoq_elm_release(&rb_http_threaddata->rfq, rfqe);
-				rd_fifoq_add(&rb_http_handler->rfq_reports, report);
-			} else {
-				curl_slist_free_all(headers);
-			}
-		}
-	}
+          rb_http_msg_q_init(report->rfq_msgs);
 
-	return NULL;
+          report->headers = headers;
+          report->err_code = res;
+          report->handler = rb_http_threaddata->easy_handle;
+
+          curl_easy_getinfo(rb_http_threaddata->easy_handle,
+                            CURLINFO_RESPONSE_CODE, &report->http_code);
+          rb_http_msg_q_add(report->rfq_msgs, message);
+          rd_fifoq_elm_release(&rb_http_threaddata->rfq, rfqe);
+          rd_fifoq_add(&rb_http_handler->rfq_reports, report);
+        } else {
+          curl_slist_free_all(headers);
+        }
+      }
+    }
+  }
+
+  return NULL;
 }
 
 int rb_http_get_reports_chunked(struct rb_http_handler_s *rb_http_handler,
                                 cb_report report_fn, int timeout_ms) {
-	rd_fifoq_elm_t *rfqe = NULL;
-	struct rb_http_report_s *report = NULL;
-	struct rb_http_message_s *message = NULL;
-	int nowait = 0;
-	long http_code = 0;
+  rd_fifoq_elm_t *rfqe = NULL;
+  struct rb_http_report_s *report = NULL;
+  struct rb_http_message_s *message = NULL;
+  int nowait = 0;
+  long http_code = 0;
 
-	if (timeout_ms == 0) {
-		nowait = 1;
-	}
+  if (timeout_ms == 0) {
+    nowait = 1;
+  }
 
-	if (&rb_http_handler->rfq_reports != NULL) {
-		while ((rfqe = rd_fifoq_pop0(&rb_http_handler->rfq_reports,
-		                             nowait,
-		                             timeout_ms)) != NULL) {
-			if (rfqe->rfqe_ptr != NULL) {
-				report = (struct rb_http_report_s *)rfqe->rfqe_ptr;
-				http_code = report->http_code;
-				if (report->rfq_msgs != NULL) {
+  if (rb_http_handler != NULL) {
+    while ((rfqe = rd_fifoq_pop0(&rb_http_handler->rfq_reports, nowait,
+                                 timeout_ms)) != NULL) {
+      if (rfqe->rfqe_ptr != NULL) {
+        report = (struct rb_http_report_s *)rfqe->rfqe_ptr;
+        http_code = report->http_code;
+        if (report->rfq_msgs != NULL) {
 
-					while (!rb_http_msg_q_empty(report->rfq_msgs)) {
-						message = rb_http_msg_q_pop(report->rfq_msgs);
-						if (message != NULL) {
-							ATOMIC_OP(sub, fetch, &rb_http_handler->left, 1);
-							report_fn(rb_http_handler,
-							          report->err_code,
-							          http_code,
-							          NULL,
-							          message->payload,
-							          message->len,
-							          message->client_opaque);
+          while (!rb_http_msg_q_empty(report->rfq_msgs)) {
+            message = rb_http_msg_q_pop(report->rfq_msgs);
+            if (message != NULL) {
+              ATOMIC_OP(sub, fetch, &rb_http_handler->left, 1);
+              report_fn(rb_http_handler, report->err_code, http_code, NULL,
+                        message->payload, message->len, message->client_opaque);
 
-							if (message->free_message && message->payload != NULL) {
-								free(message->payload);
-							}
-							free(message->client_opaque);
-							free(message);
-						}
-					}
-				}
-				curl_slist_free_all(report->headers);
-				free(report->rfq_msgs);
-				free(report);
-			}
-			rd_fifoq_elm_release(&rb_http_handler->rfq_reports, rfqe);
-		}
-	}
+              if (message->free_message && message->payload != NULL) {
+                free(message->payload);
+              }
+              free(message);
+            }
+          }
+        }
+        curl_slist_free_all(report->headers);
+        free(report->rfq_msgs);
+        free(report);
+      }
+      rd_fifoq_elm_release(&rb_http_handler->rfq_reports, rfqe);
+    }
+  }
 
-	return rb_http_handler->left;
+  return rb_http_handler->left;
 }
