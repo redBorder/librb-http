@@ -27,6 +27,10 @@ function checks {
     mkl_lib_check --static=-lcurl "libcurl" "" fail CC "-lcurl -lpthread -lz" \
        "#include <curl/curl.h>"
 
+    mkl_lib_check "libm" "" fail CC "-lm"
+
+    mkl_lib_check "libpthread" "" fail CC "-lpthread"
+
     # Check libcurl is new enough
     mkl_meta_set "curlversion" "name" "libcurl MAX_TOTAL_CONNECTIONS"
     mkl_meta_set "curlversion" "desc" "libcurl 7.45.0 or later is required for the Max connections option"
