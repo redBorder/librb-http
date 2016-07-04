@@ -27,7 +27,7 @@ static void my_callback(struct rb_http_handler_s *rb_http_handler,
   (void)status_code_str;
 
   if (status_code != 0) {
-    printf("CURL CODE: %d\n", status_code);
+    printf("CURL CODE: %d (%s)\n", status_code, status_code_str);
   }
 
   if (status_code == 0) {
