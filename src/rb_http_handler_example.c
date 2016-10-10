@@ -10,7 +10,7 @@
 #define RB_HTTP_CHUNKED_MODE "1"
 
 #define MESSAGE "{\"client_mac\": \"54:26:96:db:88:01\", \"application_name\": \"wwww\", \"sensor_uuid\":\"abc\", \"a\":5}"
-#define N_MESSAGE 5 * 1
+#define N_MESSAGE 500 * 1
 #define URL "http://eugeniodev:2057/rbdata/def/rb_flow/"
 
 struct rb_http_handler_s *handler = NULL;
