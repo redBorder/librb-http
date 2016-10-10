@@ -345,12 +345,12 @@ void * rb_http_recv_message (void * arg) {
  *
  */
 void rb_http_get_reports (struct rb_http_handler_s * rb_http_handler,
-                          cb_report report_fn) {
+                          cb_report report_fn, int timeout_ms) {
 	rd_fifoq_elm_t * rfqe;
 	CURLMsg * report = NULL;
 	struct rb_http_message_s * message = NULL;
 
-	while ((rfqe = rd_fifoq_pop (&rb_http_handler->rfq_reports))) {
+	while ((rfqe = rd_fifoq_pop_timedwait (&rb_http_handler->rfq_reports,timeout_ms))) {
 		if (rfqe != NULL && rfqe->rfqe_ptr != NULL) {
 			report = rfqe->rfqe_ptr;
 			curl_easy_getinfo (report->easy_handle,
