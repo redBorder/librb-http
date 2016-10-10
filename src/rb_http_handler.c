@@ -6,6 +6,7 @@
 #include "rb_http_handler.h"
 #include "rb_http_normal.h"
 #include "rb_http_chunked.h"
+#include "../config.h"
 
 struct rb_http_handler_s *rb_http_handler_create (const char *urls_str,
         char *err,
