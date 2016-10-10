@@ -134,14 +134,18 @@ struct rb_http_handler_s * rb_http_handler (
  * @brief Free memory from a handler
  * @param rb_http_handler Handler that will freed
  */
-void rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler) {
+int rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler,
+                             char * err,
+                             size_t errsize) {
 	rb_http_handler->thread_running = 0;
 
-	// rd_thread_kill_join (rb_http_handler->rd_thread_send, NULL);
-	// rd_thread_kill_join (rb_http_handler->rd_thread_recv, NULL);
+	if (CURLM_OK != curl_multi_cleanup (rb_http_handler->multi_handle)) {
+		snprintf (err, errsize, "Error cleaning up curl multi");
+	}
 
-	curl_multi_cleanup (rb_http_handler->multi_handle);
-	pthread_mutex_destroy (&rb_http_handler->multi_handle_mutex);
+	if (pthread_mutex_destroy (&rb_http_handler->multi_handle_mutex) > 0) {
+		snprintf (err, errsize, "Error destroying mutex");
+	}
 	rd_fifoq_destroy (&rb_http_handler->rfq);
 
 	if (rb_http_handler->urls) {
