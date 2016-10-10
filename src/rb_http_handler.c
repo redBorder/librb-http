@@ -66,10 +66,10 @@ struct rb_http_report_s {
 ////////////////////
 static void *rb_http_send_message (void *arg);
 static void *rb_http_recv_message (void *arg);
-static size_t write_null_callback (void * buffer,
-                       size_t size,
-                       size_t nmemb,
-                       void * opaque);
+static size_t write_null_callback (void *buffer,
+                                   size_t size,
+                                   size_t nmemb,
+                                   void *opaque);
 
 /**
  * @brief Creates a handler to produce messages.
@@ -110,12 +110,12 @@ struct rb_http_handler_s *rb_http_handler_create (
 		}
 		rb_http_handler->thread_running = 1;
 		const int set_max_connection_rc = curl_multi_setopt (
-		                                    rb_http_handler->multi_handle,
-		                                    CURLMOPT_MAX_TOTAL_CONNECTIONS,
-		                                    DEFAULT_MAX_TOTAL_CONNECTIONS);
+		                                      rb_http_handler->multi_handle,
+		                                      CURLMOPT_MAX_TOTAL_CONNECTIONS,
+		                                      DEFAULT_MAX_TOTAL_CONNECTIONS);
 		if (CURLM_OK != set_max_connection_rc) {
 			snprintf (err, errsize, "Error setting MAX_TOTAL_CONNECTIONS: %s",
-				curl_multi_strerror(set_max_connection_rc));
+			          curl_multi_strerror(set_max_connection_rc));
 			return NULL;
 		}
 
@@ -592,11 +592,11 @@ int rb_http_get_reports (struct rb_http_handler_s *rb_http_handler,
 	return rb_http_handler->still_running;
 }
 
-size_t write_null_callback (void * buffer,
-                       size_t size,
-                       size_t nmemb,
-                       void * opaque) {
+size_t write_null_callback (void *buffer,
+                            size_t size,
+                            size_t nmemb,
+                            void *opaque) {
 	(void) buffer;
 	(void) opaque;
-	return nmemb*size;
+	return nmemb * size;
 }
