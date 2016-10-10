@@ -28,6 +28,8 @@ struct rb_http_handler_s {
 	int still_running;
 	int thread_running;
 	int msgs_left;
+	int left;
+	int max_messages;
 	long curlmopt_maxconnects;
 	char ** urls;
 	pthread_mutex_t multi_handle_mutex;
@@ -84,6 +86,7 @@ struct rb_http_handler_s * rb_http_handler (const char * urls_str,
 		pthread_mutex_init (&rb_http_handler->multi_handle_mutex, NULL);
 		rb_http_handler->multi_handle = curl_multi_init();
 		rb_http_handler->thread_running = 1;
+		rb_http_handler->max_messages = max_messages;
 		curl_multi_setopt (rb_http_handler->multi_handle,
 		                   CURLMOPT_MAX_TOTAL_CONNECTIONS, curlmopt_maxconnects);
 
@@ -132,35 +135,47 @@ void rb_http_handler_destroy (struct rb_http_handler_s * rb_http_handler) {
  * @param message Message to be enqueued.
  * @param options Options
  */
-void rb_http_produce (struct rb_http_handler_s * handler,
-                      char * buff,
-                      size_t len,
-                      int flags,
-                      void *opaque) {
+int rb_http_produce (struct rb_http_handler_s * handler,
+                     char * buff,
+                     size_t len,
+                     int flags,
+                     void *opaque) {
 
-	struct rb_http_message_s * message = calloc (1,
-	                                     sizeof (struct rb_http_message_s)
-	                                     + ((flags & RB_HTTP_MESSAGE_F_COPY) ? len : 0));
+	int error = 0;
 
-	message->len = len;
-	message->client_opaque = opaque;
+	pthread_mutex_lock (&handler->multi_handle_mutex);
+	if (handler->left < handler->max_messages) {
+		pthread_mutex_unlock (&handler->multi_handle_mutex);
+		handler->left++;
+		struct rb_http_message_s * message = calloc (1,
+		                                     sizeof (struct rb_http_message_s)
+		                                     + ((flags & RB_HTTP_MESSAGE_F_COPY) ? len : 0));
 
-	if (flags & RB_HTTP_MESSAGE_F_COPY) {
-		message->payload = (char *) &message[1];
-		memcpy (message->payload, buff, len);
+		message->len = len;
+		message->client_opaque = opaque;
+
+		if (flags & RB_HTTP_MESSAGE_F_COPY) {
+			message->payload = (char *) &message[1];
+			memcpy (message->payload, buff, len);
+		} else {
+			message->payload = buff;
+		}
+
+		if (flags & RB_HTTP_MESSAGE_F_FREE) {
+			message->free_message = 1;
+		} else {
+			message->free_message = 0;
+		}
+
+		if (message != NULL && message->len > 0 && message->payload != NULL) {
+			rd_fifoq_add (&handler->rfq, message);
+		}
 	} else {
-		message->payload = buff;
+		error++;
+		pthread_mutex_unlock (&handler->multi_handle_mutex);
 	}
 
-	if (flags & RB_HTTP_MESSAGE_F_FREE) {
-		message->free_message = 1;
-	} else {
-		message->free_message = 0;
-	}
-
-	if (message != NULL && message->len > 0 && message->payload != NULL) {
-		rd_fifoq_add (&handler->rfq, message);
-	}
+	return error;
 }
 
 /**
@@ -304,6 +319,7 @@ void * rb_http_recv_message (void * arg) {
 		                  &rb_http_handler->msgs_left))) {
 			if (msg->msg == CURLMSG_DONE) {
 				if (msg->data.result == 0) {
+					rb_http_handler->left--;
 					curl_multi_remove_handle (rb_http_handler->multi_handle, msg->easy_handle);
 					curl_easy_getinfo (msg->easy_handle,
 					                   CURLINFO_PRIVATE, &message);
