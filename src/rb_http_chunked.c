@@ -1,5 +1,6 @@
-#include "rb_http_chunked.h"
 #include "../config.h"
+#include "rb_http_chunked.h"
+
 #include <math.h>
 
 static size_t read_callback_batch(void *ptr, size_t size, size_t nmemb,
@@ -308,6 +309,7 @@ int rb_http_get_reports_chunked(struct rb_http_handler_s *rb_http_handler,
   struct rb_http_message_s *message = NULL;
   int nowait = 0;
   long http_code = 0;
+  char *str_error = NULL;
 
   if (timeout_ms == 0) {
     nowait = 1;
@@ -325,7 +327,8 @@ int rb_http_get_reports_chunked(struct rb_http_handler_s *rb_http_handler,
             message = rb_http_msg_q_pop(report->rfq_msgs);
             if (message != NULL) {
               ATOMIC_OP(sub, fetch, &rb_http_handler->left, 1);
-              report_fn(rb_http_handler, report->err_code, http_code, NULL,
+              str_error = strdup(curl_easy_strerror(report->err_code));
+              report_fn(rb_http_handler, report->err_code, http_code, str_error,
                         message->payload, message->len, message->client_opaque);
 
               if (message->free_message && message->payload != NULL) {
