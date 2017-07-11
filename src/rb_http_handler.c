@@ -4,7 +4,6 @@
  * @brief Main library.
  */
 #include "rb_http_handler.h"
-#include "../config.h"
 #include "rb_http_chunked.h"
 #include "rb_http_normal.h"
 

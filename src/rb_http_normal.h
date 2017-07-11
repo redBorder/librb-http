@@ -1,11 +1,14 @@
 #include "rb_http_handler.h"
 
+#define ATOMIC_OP(OP1, OP2, PTR, VAL)                                          \
+  __atomic_##OP1##_##OP2(PTR, VAL, __ATOMIC_SEQ_CST)
+
 /**
  * [rb_http_process_default  description]
  * @param  arg [description]
  * @return     [description]
  */
-void *rb_http_process_normal (void *arg);
+void *rb_http_process_normal(void *arg);
 
 /**
  * [rb_http_get_reports_normal  description]
@@ -14,5 +17,5 @@ void *rb_http_process_normal (void *arg);
  * @param  timeout_ms      [description]
  * @return                 [description]
  */
-int rb_http_get_reports_normal (struct rb_http_handler_s *rb_http_handler,
-                                cb_report report_fn, int timeout_ms);
+int rb_http_get_reports_normal(struct rb_http_handler_s *rb_http_handler,
+                               cb_report report_fn, int timeout_ms);

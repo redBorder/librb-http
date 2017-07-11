@@ -1,4 +1,3 @@
-#include "../config.h"
 #include "rb_http_normal.h"
 
 static size_t write_null_callback(void *buffer, size_t size, size_t nmemb,

@@ -7,7 +7,6 @@
 # Libraries
 *.lib
 *.a
-!configure.lib
 
 # Shared objects (inc. Windows DLLs)
 *.dll
@@ -23,21 +22,6 @@
 *.x86_64
 *.hex
 
-# Dependendes
-*.d
-
-# mklove
-Makefile.config
-config.cache
-config.h
-config.log
-config.log.old
-version.c
-
 # Binary
-bin/
-librbhttp.lds
-
-# Sublime files
-*.sublime-workspace
-*.sublime-project
+target/
+example

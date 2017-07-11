@@ -1,43 +1,17 @@
-PKGNAME=	librbhttp
-LIBNAME=	librbhttp
-LIBVER=		1
+CC 						     ?= gcc
+SHARED_LIBRARY      = librbhttp.so
+RUST_STATIC_LIBRARY = librbhttp.a
+LIBS                = -lcurl -lz -lpthread -lrd
 
-#BIN= bin/rb_http_handler
-#BIN_FILES= bin/*
-TESTS= tests/rb_http_handler_test.c
-SRCS=	 src/rb_http_handler.c src/rb_http_normal.c src/rb_http_chunked.c
-OBJS=	 $(SRCS:.c=.o)
-HDRS=  src/rb_http_handler.h src/rb_http_chunked.h src/rb_http_normal.h \
-	src/rb_http_message_queue.h
-
-.PHONY: version.c
-
-all: lib
-
-include mklove/Makefile.base
-
-librbhttp.lds: librbhttp.lds.pre
-	cp $< $@
-
-test: build-test run-tests
-
-build-test:
-	$(CC) $(CFLAGS) $(TESTS) src/rb_http_handler.c librbhttp.a -lcmocka $(LDFLAGS) $(LIBS) -o bin/run_tests
+build:
+	cargo build
+	$(CC) -shared -o $(SHARED_LIBRARY) \
+		-Wl,--whole-archive \
+		target/debug/$(RUST_STATIC_LIBRARY) \
+		-Wl,--no-whole-archive
 
 example:
-	$(CC) $(CFLAGS) src/rb_http_handler_example.c librbhttp.a $(LDFLAGS) $(LIBS) -o bin/example
+	$(CC) examples/example.c -L. -lrbhttp $(LIBS) -o example
 
-run-tests:
-	-CMOCKA_MESSAGE_OUTPUT=XML CMOCKA_XML_FILE=./test-results.xml bin/run_tests
-	rm bin/run_tests
-
-version.c:
-	@rm -f $@
-	@echo "const char *librb-http_revision=\"`git describe --abbrev=6 --dirty --tags --always`\";" >> $@
-	@echo 'const char *librb-http_version="1.0.0";' >> $@
-
-install: lib-install
-
-clean: lib-clean
-
--include $(DEPS)
+clean:
+	rm -rf target/
