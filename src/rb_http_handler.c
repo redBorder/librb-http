@@ -168,6 +168,7 @@ void rb_http_handler_destroy(struct rb_http_handler_s *rb_http_handler,
   curl_global_cleanup();
 }
 
+<<<<<<< HEAD
 int rb_http_produce(struct rb_http_handler_s *handler, char *buff, size_t len,
                     int flags, char *err, size_t errsize, void *opaque) {
 
@@ -215,6 +216,58 @@ int rb_http_produce(struct rb_http_handler_s *handler, char *buff, size_t len,
   (void)errsize;
 
   return error;
+=======
+int rb_http_produce (struct rb_http_handler_s *handler,
+                     char *buff,
+                     size_t len,
+                     int flags,
+                     char *err,
+                     size_t errsize,
+                     void *opaque) {
+
+	int error = 0;
+	if (ATOMIC_OP(add, fetch, &handler->left, 1) < handler->options->max_messages) {
+		struct rb_http_message_s *message = calloc(1,
+		                                    sizeof(struct rb_http_message_s) +
+		                                    ((flags & RB_HTTP_MESSAGE_F_COPY) ? len : 0));
+
+		message->len = len;
+		message->client_opaque = opaque;
+
+		if (flags & RB_HTTP_MESSAGE_F_COPY) {
+			message->payload = (char *) &message[1];
+			memcpy(message->payload, buff, len);
+		} else {
+			message->payload = buff;
+		}
+
+		if (flags & RB_HTTP_MESSAGE_F_FREE) {
+			message->free_message = 1;
+		} else {
+			message->free_message = 0;
+		}
+
+		if (message != NULL && message->len > 0 && message->payload != NULL) {
+			if (handler->options->mode == CHUNKED_MODE) {
+				const uint64_t next_thread =
+				    ATOMIC_OP(fetch, add, &handler->next_thread, 1)
+				    % handler->options->connections;
+
+				message->timestamp = time(NULL);
+				rd_fifoq_add(&handler->threads[next_thread]->rfq, message);
+			} else {
+				rd_fifoq_add(&handler->threads[0]->rfq, message);
+			}
+		}
+	} else {
+		ATOMIC_OP(sub, fetch, &handler->left, 1);
+		error++;
+		snprintf(err,errsize,"librbhttp internal queue full");
+	}
+
+
+	return error;
+>>>>>>> 86e4328... Verbose error on full queue
 }
 
 int rb_http_batch_produce(struct rb_http_handler_s *handler, char *buff,
