@@ -1,13 +1,16 @@
-use bytes::Bytes;
+use bytes::{Bytes, BytesMut, BufMut};
 use futures::Future;
 use hyper::Method;
-use hyper::{Request, Response, Uri};
-use hyper::client::Client;
+use hyper::{Request, Uri};
+use hyper::client::{Client, HttpConnector, FutureResponse};
 use hyper::header::ContentType;
 use std::thread;
 use std::sync::mpsc;
-use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc::{Sender, Receiver, RecvTimeoutError};
+use std::time::Duration;
 use tokio_core::reactor::Core;
+
+const BATCH_SIZE: usize = 64 * 1024;
 
 pub struct Handler {
     url: Uri,
@@ -29,9 +32,9 @@ impl Handler {
         self
     }
 
-    pub fn report_handler(mut self, handler: Box<Fn(Response)>) -> Self {
-        unimplemented!();
-    }
+    // pub fn report_handler(mut self, handler: Box<Fn(Response)>) -> Self {
+    //     unimplemented!();
+    // }
 
     pub fn run(&mut self) {
         let (tx, rx): (Sender<Bytes>, Receiver<Bytes>) = mpsc::channel();
@@ -40,19 +43,38 @@ impl Handler {
         let url = self.url.clone();
 
         self.join_handler = Some(thread::spawn(move || {
+            let mut bytes = BytesMut::with_capacity(BATCH_SIZE);
             let mut core = Core::new().unwrap();
             let client = Client::new(&core.handle());
 
-            for message in rx {
-                let mut req = Request::new(Method::Post, url.clone());
-                req.headers_mut().set(ContentType::json());
-                req.set_body(message);
+            loop {
+                match rx.recv_timeout(Duration::from_millis(1000)) {
+                    Ok(message) => {
+                        if message.len() < bytes.remaining_mut() {
+                            bytes.put(message.as_ref());
+                            continue;
+                        }
 
-                let post = client.request(req).map(|res| {
-                    println!("POST: {}", res.status());
-                });
+                        println!("BATCH");
 
-                core.run(post).expect("Error on request");
+                        let mut req = Request::new(Method::Post, url.clone());
+                        req.headers_mut().set(ContentType::json());
+                        req.set_body(bytes.freeze());
+
+                        let work = client.request(req);
+                        core.run(work).expect("Error on POST");
+
+                        bytes = BytesMut::with_capacity(BATCH_SIZE);
+                        bytes.put(message.as_ref());
+                    }
+                    Err(RecvTimeoutError::Timeout) => {
+                        println!("TIMEOUT");
+                    }
+                    Err(RecvTimeoutError::Disconnected) => {
+                        println!("DISCONNECTED");
+                        break;
+                    }
+                }
             }
         }));
     }
